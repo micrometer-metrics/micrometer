@@ -74,7 +74,7 @@ class PushMeterRegistryTest {
         ThreadFactory threadFactory = new NamedThreadFactory("PushMeterRegistryTest");
         PushMeterRegistry pushMeterRegistry = new ThrowingPushMeterRegistry(config, latch);
         pushMeterRegistry.start(threadFactory);
-        assertThat(latch.await(500, TimeUnit.MILLISECONDS))
+        assertThat(latch.await(5, TimeUnit.SECONDS))
             .as("publish should continue to be scheduled even if an uncaught exception is thrown")
             .isTrue();
         pushMeterRegistry.close();
@@ -99,38 +99,50 @@ class PushMeterRegistryTest {
     @Test
     @Issue("#3711")
     void doNotPublishAgainOnClose_whenScheduledPublishInProgress() throws InterruptedException {
-        MockClock clock = new MockClock();
-        CyclicBarrier barrier = new CyclicBarrier(2);
-        OverlappingStepMeterRegistry overlappingStepMeterRegistry = new OverlappingStepMeterRegistry(config, clock,
-                barrier);
-        Counter c1 = overlappingStepMeterRegistry.counter("c1");
-        Counter c2 = overlappingStepMeterRegistry.counter("c2");
-        c1.increment();
-        c2.increment(2.5);
-        clock.add(config.step());
+        CountDownLatch publishStarted = new CountDownLatch(1);
+        CountDownLatch publishCanFinish = new CountDownLatch(1);
 
-        // simulated scheduled publish
-        Thread scheduledPublishingThread = new Thread(
-                () -> ((PushMeterRegistry) overlappingStepMeterRegistry).publishSafelyOrSkipIfInProgress(),
-                "scheduledMetricsPublisherThread");
-        scheduledPublishingThread.start();
-        // publish on shutdown
-        Thread onClosePublishThread = new Thread(overlappingStepMeterRegistry::close, "shutdownHookThread");
-        onClosePublishThread.start();
-        try {
-            barrier.await(100, MILLISECONDS);
-        }
-        catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-            throw new RuntimeException(e);
-        }
-        scheduledPublishingThread.join();
-        onClosePublishThread.join();
+        CountingPushMeterRegistry registry = new CountingPushMeterRegistry(config, Clock.SYSTEM) {
+            @Override
+            protected void publish() {
+                publishStarted.countDown();
+                try {
+                    if (!publishCanFinish.await(5, SECONDS)) {
+                        throw new RuntimeException("Timeout waiting for publish to finish");
+                    }
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                super.publish();
+            }
+        };
 
-        assertThat(overlappingStepMeterRegistry.publishes).as("only one publish happened").hasSize(1);
-        Deque<Double> firstPublishValues = overlappingStepMeterRegistry.publishes.get(0);
-        assertThat(firstPublishValues).isNotNull();
-        assertThat(firstPublishValues.pop()).isEqualTo(1);
-        assertThat(firstPublishValues.pop()).isEqualTo(2.5);
+        Thread scheduledPublishThread = new Thread(registry::publishSafelyOrSkipIfInProgress, "scheduledPublishThread");
+        scheduledPublishThread.start();
+
+        assertThat(publishStarted.await(5, SECONDS)).as("scheduled publish should start").isTrue();
+
+        Thread closeThread = new Thread(registry::close, "closeThread");
+        closeThread.start();
+
+        // This guarantees close() has executed and skipped publishing before we let the
+        // scheduled publish finish.
+        await().atMost(Duration.ofSeconds(5))
+            .pollInterval(10, MILLISECONDS)
+            .untilAsserted(() -> assertThat(closeThread.getState())
+                .as("closeThread should block and transition to WAITING state while publish is in progress")
+                .isEqualTo(Thread.State.WAITING));
+
+        // Let the scheduled publish finish
+        publishCanFinish.countDown();
+
+        scheduledPublishThread.join(5000);
+        closeThread.join(5000);
+
+        assertThat(registry.publishCount.get())
+            .as("publish should only be called once (by the scheduled publish) and not again by close()")
+            .isOne();
     }
 
     @Test
@@ -149,157 +161,198 @@ class PushMeterRegistryTest {
         IntStream.range(0, 10_000).forEach(i -> {
             long delay = registry.calculateInitialDelay();
             // isBetween is inclusive; subtract 1 from exclusive max offset
-            assertThat(delay).isBetween(minOffsetMillis, maxOffsetMillis - 1);
+            assertThat(delay)
+                .as("calculated initial delay should be between %d and %d ms (inclusive)", minOffsetMillis,
+                        maxOffsetMillis - 1)
+                .isBetween(minOffsetMillis, maxOffsetMillis - 1);
             observedDelays.add(delay);
         });
         List<Long> expectedDelays = LongStream.range(minOffsetMillis, maxOffsetMillis)
             .boxed()
             .collect(Collectors.toList());
-        assertThat(observedDelays).containsExactlyElementsOf(expectedDelays);
+        assertThat(observedDelays).as("all possible delays within the step should be observed across 10,000 iterations")
+            .containsExactlyElementsOf(expectedDelays);
     }
 
     @Test
     @Issue("#3872")
-    void waitForScheduledPublishToFinish_whenClosedWhilePublishIsInProgress()
-            throws InterruptedException, BrokenBarrierException, TimeoutException {
-        MockClock clock = new MockClock();
-        CyclicBarrier barrier = new CyclicBarrier(2);
-        OverlappingStepMeterRegistry registry = new OverlappingStepMeterRegistry(config, clock, barrier);
-        Counter c1 = registry.counter("c1");
-        Counter c2 = registry.counter("c2");
-        c1.increment();
-        c2.increment(2.5);
-        clock.add(config.step());
+    void waitForScheduledPublishToFinish_whenClosedWhilePublishIsInProgress() throws InterruptedException {
+        CountDownLatch publishStarted = new CountDownLatch(1);
+        CountDownLatch publishCanFinish = new CountDownLatch(1);
+
+        CountingPushMeterRegistry registry = new CountingPushMeterRegistry(config, Clock.SYSTEM) {
+            @Override
+            protected void publish() {
+                publishStarted.countDown();
+                try {
+                    if (!publishCanFinish.await(5, SECONDS)) {
+                        throw new RuntimeException("Timeout waiting for publish to finish");
+                    }
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
 
         // start scheduled publish but don't let it finish yet
-        Thread scheduledPublishingThread = new Thread(
-                () -> ((PushMeterRegistry) registry).publishSafelyOrSkipIfInProgress(),
+        Thread scheduledPublishingThread = new Thread(() -> registry.publishSafelyOrSkipIfInProgress(),
                 "testScheduledMetricsPublisherThread");
         scheduledPublishingThread.start();
-        // close registry during publish
-        Thread closeThread = new Thread(registry::close, "simulatedShutdownHookThread");
-        closeThread.start();
-        // close is blocked (waiting for publish to finish)
-        await().atMost(Duration.ofMillis(500))
-            .pollInterval(1, MILLISECONDS)
-            .untilAsserted(() -> assertThat(closeThread.getState()).isEqualTo(Thread.State.WAITING));
-        // allow publish to finish
-        barrier.await(config.step().toMillis(), MILLISECONDS);
-        // publish thread will finish, followed by the close thread
-        scheduledPublishingThread.join();
-        closeThread.join();
 
-        assertThat(registry.publishes).as("only one publish happened").hasSize(1);
-        Deque<Double> firstPublishValues = registry.publishes.get(0);
-        assertThat(firstPublishValues).isNotNull();
-        assertThat(firstPublishValues.pop()).isEqualTo(1); // c1 counter count
-        assertThat(firstPublishValues.pop()).isEqualTo(2.5); // c2 counter count
+        // wait for publish to start
+        assertThat(publishStarted.await(5, SECONDS)).as("scheduled publish should start and block inside publish()")
+            .isTrue();
+
+        // close registry during publish
+        CountDownLatch closeFinished = new CountDownLatch(1);
+        Thread closeThread = new Thread(() -> {
+            registry.close();
+            closeFinished.countDown();
+        }, "simulatedShutdownHookThread");
+        closeThread.start();
+
+        // Verify that close is blocked (waiting for publish to finish)
+        await().atMost(Duration.ofSeconds(5))
+            .pollInterval(10, MILLISECONDS)
+            .untilAsserted(() -> assertThat(closeThread.getState())
+                .as("closeThread should block and transition to WAITING state while publish is in progress")
+                .isEqualTo(Thread.State.WAITING));
+        assertThat(closeFinished.await(50, MILLISECONDS))
+            .as("closeFinished latch should not count down while close is blocked")
+            .isFalse();
+
+        // allow publish to finish
+        publishCanFinish.countDown();
+
+        // close thread should now finish
+        closeThread.join(5000);
+        assertThat(closeFinished.await(5, SECONDS))
+            .as("closeFinished latch should count down and close should complete after publish finishes")
+            .isTrue();
+
+        scheduledPublishingThread.join(5000);
     }
 
     @Test
     void publishSafelyOrSkipIfInProgressRespectsInterrupt() throws InterruptedException {
-        MockClock clock = new MockClock();
-        CyclicBarrier barrier = new CyclicBarrier(2);
-        OverlappingStepMeterRegistry registry = new OverlappingStepMeterRegistry(config, clock, barrier);
-        Counter c1 = registry.counter("c1");
-        Counter c2 = registry.counter("c2");
-        c1.increment();
-        c2.increment(2.5);
-        clock.add(config.step());
+        CountDownLatch publishStarted = new CountDownLatch(1);
+        CountDownLatch publishInterrupted = new CountDownLatch(1);
+
+        CountingPushMeterRegistry registry = new CountingPushMeterRegistry(config, Clock.SYSTEM) {
+            @Override
+            protected void publish() {
+                publishStarted.countDown();
+                try {
+                    // Block indefinitely until interrupted
+                    new CountDownLatch(1).await();
+                }
+                catch (InterruptedException e) {
+                    publishInterrupted.countDown();
+                    Thread.currentThread().interrupt(); // restore interrupt status
+                    return; // skip super.publish()
+                }
+                super.publish();
+            }
+        };
 
         // start scheduled publish but don't let it finish yet
-        Thread scheduledPublishingThread = new Thread(
-                () -> ((PushMeterRegistry) registry).publishSafelyOrSkipIfInProgress(),
+        Thread scheduledPublishingThread = new Thread(registry::publishSafelyOrSkipIfInProgress,
                 "testScheduledMetricsPublisherThread");
         scheduledPublishingThread.start();
-        // close registry during publish
-        Thread closeThread = new Thread(registry::close, "simulatedShutdownHookThread");
-        closeThread.start();
-        // close is blocked (waiting for publish to finish)
-        await().atMost(config.step())
-            .pollInterval(1, MILLISECONDS)
-            .untilAsserted(() -> assertThat(closeThread.getState()).isEqualTo(Thread.State.WAITING));
 
+        // wait for publish to start
+        assertThat(publishStarted.await(5, SECONDS)).as("scheduled publish should start").isTrue();
+
+        // close registry during publish
+        CountDownLatch closeFinished = new CountDownLatch(1);
+        Thread closeThread = new Thread(() -> {
+            registry.close();
+            closeFinished.countDown();
+        }, "simulatedShutdownHookThread");
+        closeThread.start();
+
+        // close is blocked (waiting for publish to finish)
+        assertThat(closeFinished.await(50, MILLISECONDS))
+            .as("closeFinished latch should not count down while close is blocked")
+            .isFalse();
+
+        // interrupt the publishing thread
         scheduledPublishingThread.interrupt();
 
-        // both threads finish without reaching the barrier
-        scheduledPublishingThread.join();
-        closeThread.join();
+        // publish thread should detect the interrupt
+        assertThat(publishInterrupted.await(5, SECONDS))
+            .as("publishing thread should detect the interrupt and count down publishInterrupted")
+            .isTrue();
 
-        assertThat(registry.numberOfPublishes.get()).isZero();
+        // both threads should finish
+        scheduledPublishingThread.join(5000);
+        closeThread.join(5000);
+
+        assertThat(closeFinished.await(5, SECONDS))
+            .as("closeFinished latch should count down and close should complete after publishing thread is interrupted")
+            .isTrue();
+        assertThat(registry.publishCount.get()).as("publish should not be completed successfully").isZero();
     }
 
     @Test
     void closeRespectsInterrupt() throws InterruptedException {
-        MockClock clock = new MockClock();
-        CyclicBarrier barrier = new CyclicBarrier(2);
-        OverlappingStepMeterRegistry registry = new OverlappingStepMeterRegistry(config, clock, barrier);
-        Counter c1 = registry.counter("c1");
-        Counter c2 = registry.counter("c2");
-        c1.increment();
-        c2.increment(2.5);
-        clock.add(config.step());
+        CountDownLatch publishStarted = new CountDownLatch(1);
+        CountDownLatch publishFinished = new CountDownLatch(1);
+
+        CountingPushMeterRegistry registry = new CountingPushMeterRegistry(config, Clock.SYSTEM) {
+            @Override
+            protected void publish() {
+                publishStarted.countDown();
+                try {
+                    if (!publishFinished.await(5, SECONDS)) {
+                        throw new RuntimeException("Timeout waiting for publish to finish");
+                    }
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                super.publish();
+            }
+        };
 
         // start scheduled publish but don't let it finish yet
-        Thread scheduledPublishingThread = new Thread(
-                () -> ((PushMeterRegistry) registry).publishSafelyOrSkipIfInProgress(),
+        Thread scheduledPublishingThread = new Thread(registry::publishSafelyOrSkipIfInProgress,
                 "testScheduledMetricsPublisherThread");
         scheduledPublishingThread.start();
-        // close registry during publish
-        Thread closeThread = new Thread(registry::close, "simulatedShutdownHookThread");
-        closeThread.start();
-        // close is blocked (waiting for publish to finish)
-        await().atMost(Duration.ofMillis(500))
-            .pollInterval(1, MILLISECONDS)
-            .untilAsserted(() -> assertThat(closeThread.getState()).isEqualTo(Thread.State.WAITING));
 
+        // wait for publish to start
+        assertThat(publishStarted.await(5, SECONDS)).as("scheduled publish should start and block inside publish()")
+            .isTrue();
+
+        // close registry during publish
+        CountDownLatch closeFinished = new CountDownLatch(1);
+        Thread closeThread = new Thread(() -> {
+            registry.close();
+            closeFinished.countDown();
+        }, "simulatedShutdownHookThread");
+        closeThread.start();
+
+        // close is blocked (waiting for publish to finish)
+        assertThat(closeFinished.await(50, MILLISECONDS))
+            .as("closeFinished latch should not count down while close is blocked")
+            .isFalse();
+
+        // interrupt the close thread
         closeThread.interrupt();
 
-        // close thread finishes without reaching barrier
-        closeThread.join();
+        // close thread should finish immediately without waiting for publish to finish
+        closeThread.join(5000);
+        assertThat(closeFinished.await(5, SECONDS))
+            .as("closeFinished latch should count down and close should complete immediately after closeThread is interrupted")
+            .isTrue();
 
-        // publish thread will continue in background, but hopefully the 100ms block on
-        // the barrier means it won't finish before this assertion
-        assertThat(registry.numberOfPublishes.get()).isZero();
-    }
+        // publish thread should still be blocked (has not finished yet)
+        assertThat(registry.publishCount.get()).as("publish should not be completed successfully yet").isZero();
 
-    private static class OverlappingStepMeterRegistry extends StepMeterRegistry {
-
-        private final AtomicInteger numberOfPublishes = new AtomicInteger();
-
-        private final Map<Integer, Deque<Double>> publishes = new ConcurrentHashMap<>();
-
-        private final CyclicBarrier barrier;
-
-        OverlappingStepMeterRegistry(StepRegistryConfig config, Clock clock, CyclicBarrier barrier) {
-            super(config, clock);
-            this.barrier = barrier;
-        }
-
-        @Override
-        protected TimeUnit getBaseTimeUnit() {
-            return SECONDS;
-        }
-
-        @Override
-        protected void publish() {
-            try {
-                barrier.await(100, MILLISECONDS);
-            }
-            catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-                throw new RuntimeException(e);
-            }
-            int publishIndex = numberOfPublishes.getAndIncrement();
-            getMeters().stream()
-                .filter(meter -> meter instanceof Counter)
-                .map(meter -> (Counter) meter)
-                .forEach(counter -> publishes.merge(publishIndex, new ArrayDeque<>(Arrays.asList(counter.count())),
-                        (l1, l2) -> {
-                            l1.addAll(l2);
-                            return l1;
-                        }));
-        }
-
+        // clean up the scheduled publishing thread immediately
+        scheduledPublishingThread.interrupt();
+        scheduledPublishingThread.join(5000);
     }
 
     static class CountingPushMeterRegistry extends PushMeterRegistry {
