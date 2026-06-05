@@ -158,15 +158,15 @@ class PushMeterRegistryTest {
             long delay = registry.calculateInitialDelay();
             // isBetween is inclusive; subtract 1 from exclusive max offset
             assertThat(delay)
-                .as("calculated initial delay should be between %d and %d ms (inclusive)", minOffsetMillis, maxOffsetMillis - 1)
+                .as("calculated initial delay should be between %d and %d ms (inclusive)", minOffsetMillis,
+                        maxOffsetMillis - 1)
                 .isBetween(minOffsetMillis, maxOffsetMillis - 1);
             observedDelays.add(delay);
         });
         List<Long> expectedDelays = LongStream.range(minOffsetMillis, maxOffsetMillis)
             .boxed()
             .collect(Collectors.toList());
-        assertThat(observedDelays)
-            .as("all possible delays within the step should be observed across 10,000 iterations")
+        assertThat(observedDelays).as("all possible delays within the step should be observed across 10,000 iterations")
             .containsExactlyElementsOf(expectedDelays);
     }
 
