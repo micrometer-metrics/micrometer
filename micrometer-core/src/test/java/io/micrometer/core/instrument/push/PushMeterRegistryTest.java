@@ -142,6 +142,35 @@ class PushMeterRegistryTest {
     }
 
     @Test
+    @Issue("#2818")
+    void publishTimeIsRandomizedWithinStep() {
+        Duration startTime = Duration.ofMillis(4);
+        MockClock clock = new MockClock();
+        clock.add(-1, MILLISECONDS); // set time to 0
+        clock.add(startTime);
+        PushMeterRegistry registry = new CountingPushMeterRegistry(config, clock);
+        long minOffsetMillis = 8; // 4 (start) + 8 (offset) = 12 (2ms into next step)
+        // exclusive upper bound
+        long maxOffsetMillis = 14; // 4 (start) + 14 (offset) = 18 (8ms into next step;
+                                   // 80% of step is 8ms)
+        Set<Long> observedDelays = new HashSet<>((int) (maxOffsetMillis - minOffsetMillis));
+        IntStream.range(0, 10_000).forEach(i -> {
+            long delay = registry.calculateInitialDelay();
+            // isBetween is inclusive; subtract 1 from exclusive max offset
+            assertThat(delay)
+                .as("calculated initial delay should be between %d and %d ms (inclusive)", minOffsetMillis, maxOffsetMillis - 1)
+                .isBetween(minOffsetMillis, maxOffsetMillis - 1);
+            observedDelays.add(delay);
+        });
+        List<Long> expectedDelays = LongStream.range(minOffsetMillis, maxOffsetMillis)
+            .boxed()
+            .collect(Collectors.toList());
+        assertThat(observedDelays)
+            .as("all possible delays within the step should be observed across 10,000 iterations")
+            .containsExactlyElementsOf(expectedDelays);
+    }
+
+    @Test
     @Issue("#3872")
     void waitForScheduledPublishToFinish_whenClosedWhilePublishIsInProgress() throws InterruptedException {
         CountDownLatch publishStarted = new CountDownLatch(1);
