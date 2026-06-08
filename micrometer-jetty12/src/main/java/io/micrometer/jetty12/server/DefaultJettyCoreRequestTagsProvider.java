@@ -18,8 +18,10 @@ package io.micrometer.jetty12.server;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.http.HttpMethods;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.eclipse.jetty.server.Request;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default {@link JettyCoreRequestTagsProvider}.
@@ -34,15 +36,20 @@ public class DefaultJettyCoreRequestTagsProvider implements JettyCoreRequestTags
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
     @Override
-    public Iterable<Tag> getTags(Request request) {
+    public Iterable<Tag> getTags(@Nullable Request request) {
         return Tags.of(method(request), status(request), outcome(request));
     }
 
-    private Tag method(Request request) {
-        return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
+    private Tag method(@Nullable Request request) {
+        if (request == null) {
+            return METHOD_UNKNOWN;
+        }
+
+        String method = request.getMethod();
+        return HttpMethods.isStandard(method) ? Tag.of("method", method) : METHOD_UNKNOWN;
     }
 
-    private Tag status(Request request) {
+    private Tag status(@Nullable Request request) {
         if (request == null)
             return STATUS_UNKNOWN;
 
@@ -52,7 +59,7 @@ public class DefaultJettyCoreRequestTagsProvider implements JettyCoreRequestTags
         return STATUS_UNKNOWN;
     }
 
-    private Tag outcome(Request request) {
+    private Tag outcome(@Nullable Request request) {
         Outcome outcome = Outcome.UNKNOWN;
         if (request != null) {
             Object status = request.getAttribute(TimedHandler.RESPONSE_STATUS_ATTRIBUTE);
