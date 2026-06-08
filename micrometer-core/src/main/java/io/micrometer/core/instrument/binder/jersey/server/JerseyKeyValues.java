@@ -17,11 +17,13 @@ package io.micrometer.core.instrument.binder.jersey.server;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.util.StringUtils;
+import io.micrometer.core.instrument.binder.http.HttpMethods;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Factory methods for {@link KeyValue KeyValues} associated with a request-response
@@ -60,9 +62,14 @@ class JerseyKeyValues {
      * @param request the container request
      * @return the method KeyValue whose value is a capitalized method (e.g. GET).
      */
-    static KeyValue method(ContainerRequest request) {
-        return (request != null)
-                ? JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.METHOD.withValue(request.getMethod())
+    static KeyValue method(@Nullable ContainerRequest request) {
+        if (request == null) {
+            return METHOD_UNKNOWN;
+        }
+
+        String method = request.getMethod();
+        return HttpMethods.isStandard(method)
+                ? JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.METHOD.withValue(method)
                 : METHOD_UNKNOWN;
     }
 

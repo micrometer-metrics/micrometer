@@ -1,0 +1,52 @@
+/*
+ * Copyright 2026 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.jetty12.server;
+
+import io.micrometer.core.instrument.Tag;
+import org.eclipse.jetty.server.Request;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+/**
+ * Tests for {@link DefaultJettyCoreRequestTagsProvider}.
+ */
+class DefaultJettyCoreRequestTagsProviderTests {
+
+    private final DefaultJettyCoreRequestTagsProvider provider = new DefaultJettyCoreRequestTagsProvider();
+
+    @Test
+    void nullRequestShouldResultInUnknownMethod() {
+        assertThat(provider.getTags(null)).contains(Tag.of("method", "UNKNOWN"));
+    }
+
+    @Test
+    void unknownMethodShouldResultInUnknownTagValue() {
+        Request request = mock(Request.class);
+        when(request.getMethod()).thenReturn("WELL");
+        assertThat(provider.getTags(request)).contains(Tag.of("method", "UNKNOWN"));
+    }
+
+    @Test
+    void knownMethodShouldResultInTagValue() {
+        Request request = mock(Request.class);
+        when(request.getMethod()).thenReturn("GET");
+        assertThat(provider.getTags(request)).contains(Tag.of("method", "GET"));
+    }
+
+}

@@ -52,17 +52,22 @@ public class DefaultGrpcServerObservationConvention implements GrpcServerObserva
     public KeyValues getLowCardinalityKeyValues(GrpcServerObservationContext context) {
         KeyValue statusCodeKeyValue = context.getStatusCode() != null
                 ? LowCardinalityKeyNames.STATUS_CODE.withValue(context.getStatusCode().name()) : STATUS_CODE_UNKNOWN;
-        KeyValue peerNameKeyValue = context.getPeerName() != null
-                ? LowCardinalityKeyNames.PEER_NAME.withValue(context.getPeerName()) : PEER_NAME_UNKNOWN;
-        KeyValue peerPortKeyValue = context.getPeerPort() != null
-                ? LowCardinalityKeyNames.PEER_PORT.withValue(context.getPeerPort().toString()) : PEER_PORT_UNKNOWN;
         KeyValue method = context.getMethodName() != null
                 ? LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()) : METHOD_UNKNOWN;
         KeyValue service = context.getServiceName() != null
                 ? LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()) : SERVICE_UNKNOWN;
 
-        return KeyValues.of(statusCodeKeyValue, peerNameKeyValue, peerPortKeyValue, method, service,
+        return KeyValues.of(statusCodeKeyValue, method, service,
                 LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
+    }
+
+    @Override
+    public KeyValues getHighCardinalityKeyValues(GrpcServerObservationContext context) {
+        KeyValue peerNameKeyValue = context.getPeerName() != null
+                ? LowCardinalityKeyNames.PEER_NAME.withValue(context.getPeerName()) : PEER_NAME_UNKNOWN;
+        KeyValue peerPortKeyValue = context.getPeerPort() != null
+                ? LowCardinalityKeyNames.PEER_PORT.withValue(context.getPeerPort().toString()) : PEER_PORT_UNKNOWN;
+        return KeyValues.of(peerNameKeyValue, peerPortKeyValue);
     }
 
 }

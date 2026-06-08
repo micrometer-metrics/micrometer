@@ -84,12 +84,22 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
                 return "grpc.status_code";
             }
         },
+
+        /**
+         * This is low cardinality only for client observations, for server observations,
+         * it should be considered as high cardinality.
+         */
         PEER_NAME {
             @Override
             public String asString() {
                 return "net.peer.name";
             }
         },
+
+        /**
+         * This is low cardinality only for client observations, for server observations,
+         * it should be considered as high cardinality.
+         */
         PEER_PORT {
             @Override
             public String asString() {

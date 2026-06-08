@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jersey.server;
 
 import io.micrometer.common.KeyValues;
+import io.micrometer.core.instrument.binder.http.HttpMethods;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
@@ -56,7 +57,8 @@ public class DefaultJerseyObservationConvention implements JerseyObservationConv
         if (context.getCarrier() == null) {
             return null;
         }
-        return "HTTP " + context.getCarrier().getMethod();
+        String method = context.getCarrier().getMethod();
+        return "HTTP " + (HttpMethods.isStandard(method) ? method : "UNKNOWN");
     }
 
 }
