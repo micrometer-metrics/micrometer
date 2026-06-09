@@ -118,6 +118,10 @@ NOTE: `TimedAspect` doesn't support meta-annotations with `@Timed`.
 
 To support using the `@MeterTag` annotation on method parameters, you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
 
+NOTE: Micrometer does not provide a `ValueExpressionResolver` implementation out of the box.
+You need to supply your own (for example, one backed by Spring Expression Language) or use one provided by your framework.
+`CustomValueExpressionResolver` in the examples below is a sample SpEL-based implementation — it is **not** part of the Micrometer API.
+
 [source,java,subs=+attributes]
 -----
 include::{include-java}/metrics/TimedAspectTest.java[tags=resolvers,indent=0]
