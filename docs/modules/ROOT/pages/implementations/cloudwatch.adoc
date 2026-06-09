@@ -5,6 +5,8 @@ Tommy Ludwig <tludwig@vmware.com>
 
 https://aws.amazon.com/cloudwatch/[Amazon CloudWatch] is a dimensional time-series SaaS on Amazon's cloud.
 
+NOTE: CloudWatch is *dimensional*, uses *client-side* xref:../concepts/rate-aggregation.adoc[rate aggregation] (Micrometer pre-aggregates before pushing), and uses a *client-push* model. See xref:../concepts/implementations.adoc[Supported Monitoring Systems] for a comparison across registries.
+
 include::_install.adoc[]
 
 == Configuring
