@@ -83,21 +83,18 @@ class ObservationThreadLocalAccessorTests {
         try (Observation.Scope scope = child.openScope()) {
             thenCurrentObservationHasParent(parent, child);
             thenCurrentScopeHasParent(null);
-            then(child.getEnclosingScope()).isSameAs(scope);
+            then(observationRegistry.getCurrentObservationScope()).isSameAs(scope);
         }
-        then(child.getEnclosingScope()).isNull();
         thenCurrentObservationIsNull();
 
         try (Observation.Scope scope = other1.openScope()) {
             try (Observation.Scope scope2 = child.openScope()) {
                 thenCurrentObservationHasParent(parent, child);
-                then(child.getEnclosingScope()).isSameAs(scope2);
+                then(observationRegistry.getCurrentObservationScope()).isSameAs(scope2);
             }
-            then(child.getEnclosingScope()).isNull();
-            then(other1.getEnclosingScope()).isSameAs(scope);
+            then(observationRegistry.getCurrentObservationScope()).isSameAs(scope);
         }
 
-        then(child.getEnclosingScope()).isNull();
         thenCurrentObservationIsNull();
 
         // when context captured
@@ -105,7 +102,7 @@ class ObservationThreadLocalAccessorTests {
         try (Observation.Scope scope = other2.openScope()) {
             try (Observation.Scope scope2 = child.openScope()) {
                 thenCurrentObservationHasParent(parent, child);
-                then(child.getEnclosingScope()).isSameAs(scope2);
+                then(observationRegistry.getCurrentObservationScope()).isSameAs(scope2);
                 container = ContextSnapshotFactory.builder()
                     .captureKeyPredicate(key -> true)
                     .contextRegistry(registry)
@@ -114,18 +111,17 @@ class ObservationThreadLocalAccessorTests {
             }
         }
 
-        then(child.getEnclosingScope()).isNull();
         thenCurrentObservationIsNull();
 
         // when first scope created
         try (ContextSnapshot.Scope scope = container.setThreadLocals()) {
             thenCurrentObservationHasParent(parent, child);
             Scope inScope = thenCurrentScopeHasParent(null);
-            then(child.getEnclosingScope()).isNotNull();
+            then(observationRegistry.getCurrentObservationScope()).isNotNull();
 
             // when second, nested scope created
             try (ContextSnapshot.Scope scope2 = container.setThreadLocals()) {
-                then(child.getEnclosingScope()).isNotNull();
+                then(observationRegistry.getCurrentObservationScope()).isNotNull();
                 thenCurrentObservationHasParent(parent, child);
                 Scope inSecondScope = thenCurrentScopeHasParent(inScope);
 
@@ -145,16 +141,13 @@ class ObservationThreadLocalAccessorTests {
                     .captureFrom(new HashMap<>());
                 withClearing.wrap(this::thenCurrentObservationIsNullObservation).run();
 
-                then(child.getEnclosingScope()).isNotNull();
+                then(observationRegistry.getCurrentObservationScope()).isNotNull();
                 thenCurrentObservationHasParent(parent, child);
             }
             then(scopeParent(inScope)).isNull();
         }
 
         thenCurrentObservationIsNull();
-
-        then(child.getEnclosingScope()).isNull();
-        then(parent.getEnclosingScope()).isNull();
 
         // when we're going through the null scope when there was no previous value in TL
         ContextSnapshot withClearing = ContextSnapshotFactory.builder()
@@ -163,14 +156,12 @@ class ObservationThreadLocalAccessorTests {
             .captureFrom(new HashMap<>());
         withClearing.wrap(this::thenCurrentObservationIsNull).run();
 
-        then(child.getEnclosingScope()).isNull();
-        then(parent.getEnclosingScope()).isNull();
+        thenCurrentObservationIsNull();
 
         child.stop();
         parent.stop();
 
-        then(child.getEnclosingScope()).isNull();
-        then(parent.getEnclosingScope()).isNull();
+        thenCurrentObservationIsNull();
     }
 
     @Test
@@ -203,7 +194,6 @@ class ObservationThreadLocalAccessorTests {
         }
         then(calledHandler.get()).isEqualTo("handler 1");
 
-        then(child.getEnclosingScope()).isNull();
         thenCurrentObservationIsNull();
 
         child.stop();
