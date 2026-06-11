@@ -21,7 +21,6 @@ import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
-import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
@@ -194,12 +193,13 @@ class SimpleObservation implements Observation {
         return scope;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     @Deprecated
     public @Nullable Scope getEnclosingScope() {
         getEnclosingScopeLogger.log(
-                "getEnclosingScope() is deprecated, will always return null, and will be removed in a future release. Please do not use it.");
-        return null;
+                "getEnclosingScope() is deprecated, will always return a no-op scope, and will be removed in a future release. Please do not use it.");
+        return Scope.NOOP;
     }
 
     @Override
@@ -307,23 +307,6 @@ class SimpleObservation implements Observation {
                     "reset() is deprecated, will do nothing, and will be removed in a future release. Please do not use it.");
         }
 
-        /**
-         * This method is called e.g. via
-         * {@link ObservationThreadLocalAccessor#restore(Observation)}. In that case,
-         * we're calling {@link ObservationThreadLocalAccessor#reset()} first, and we're
-         * closing all the scopes, HOWEVER those are called on the Observation scope that
-         * was present there in thread local at the time of calling the method, NOT on the
-         * scope that we want to make current (that one can contain some leftovers from
-         * previous scope openings like creation of e.g. Brave scope in the TracingContext
-         * that is there inside the Observation's Context.
-         *
-         * When we want to go back to the enclosing scope and want to make that scope
-         * current we need to be sure that there are no remaining scoped objects inside
-         * Observation's context. This is why BEFORE rebuilding the scope structure we
-         * need to notify the handlers to clear them first (again this is a separate scope
-         * to the one that was cleared by the reset method) via calling
-         * {@link ObservationHandler#onScopeReset(Context)}.
-         */
         @Override
         @Deprecated
         public void makeCurrent() {
