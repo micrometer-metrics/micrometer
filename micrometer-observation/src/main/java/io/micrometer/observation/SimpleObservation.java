@@ -20,6 +20,7 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 import org.jspecify.annotations.Nullable;
 
@@ -38,6 +39,8 @@ import java.util.Iterator;
  * @since 1.10.0
  */
 class SimpleObservation implements Observation {
+
+    private static final WarnThenDebugLogger getEnclosingScopeLogger = new WarnThenDebugLogger(SimpleObservation.class);
 
     final ObservationRegistry registry;
 
@@ -194,7 +197,8 @@ class SimpleObservation implements Observation {
     @Override
     @Deprecated
     public @Nullable Scope getEnclosingScope() {
-        // TODO log deprecation warning
+        getEnclosingScopeLogger.log(
+                "getEnclosingScope() is deprecated, will always return null, and will be removed in a future release. Please do not use it.");
         return null;
     }
 
@@ -259,6 +263,10 @@ class SimpleObservation implements Observation {
 
         private static final InternalLogger log = InternalLoggerFactory.getInstance(SimpleScope.class);
 
+        private static final WarnThenDebugLogger resetLogger = new WarnThenDebugLogger(SimpleScope.class);
+
+        private static final WarnThenDebugLogger makeCurrentLogger = new WarnThenDebugLogger(SimpleScope.class);
+
         final ObservationRegistry registry;
 
         private final Observation currentObservation;
@@ -295,7 +303,8 @@ class SimpleObservation implements Observation {
         @Override
         @Deprecated
         public void reset() {
-            // TODO log deprecation warning
+            resetLogger.log(
+                    "reset() is deprecated, will do nothing, and will be removed in a future release. Please do not use it.");
         }
 
         /**
@@ -318,7 +327,8 @@ class SimpleObservation implements Observation {
         @Override
         @Deprecated
         public void makeCurrent() {
-            // TODO log deprecation warning
+            makeCurrentLogger.log(
+                    "makeCurrent() is deprecated, will do nothing, and will be removed in a future release. Please do not use it.");
         }
 
         @Override
