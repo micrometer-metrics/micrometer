@@ -42,7 +42,7 @@ dependencies {
 
     jmh libs.jmhCore
 
-    jmh libs.logback12
+    jmh "ch.qos.logback:logback-classic:$logback12Version"
 
     // Nebula doesn't like having jmhAnnotationProcessor without jmh so we just add it twice.
     jmh libs.jmhAnnotationProcessor

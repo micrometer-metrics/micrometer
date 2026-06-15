@@ -61,6 +61,12 @@ apply plugin: 'io.github.gradle-nexus.publish-plugin'
 allprojects {
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
+    ext.jersey2Version = '2.47'
+    ext.logback12Version = '1.2.13'
+    ext.jooq14Version = '3.14.16'
+    ext.nettyBom42Version = '4.2.15.Final'
+    ext.jetty9Version = '9.4.58.v20250814'
+    ext.jetty11Version = '11.0.16'
 
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
@@ -507,8 +513,8 @@ nexusPublishing {
 
 tasks.register('verifyDependencyVersions') {
     doLast {
-        assertDependencyVersionPrefix(libs.jooq, '3.14.')
-        assertDependencyVersionPrefix(libs.logback12, '1.2.')
+        assert jooq14Version.startsWith('3.14.')
+        assert logback12Version.startsWith('1.2.')
     }
 }
 

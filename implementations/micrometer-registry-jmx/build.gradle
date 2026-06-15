@@ -4,5 +4,5 @@ dependencies {
     api libs.dropwizardMetricsJmx
 
     testImplementation project(':micrometer-test')
-    testImplementation libs.logback12
+    testImplementation "ch.qos.logback:logback-classic:$logback12Version"
 }
