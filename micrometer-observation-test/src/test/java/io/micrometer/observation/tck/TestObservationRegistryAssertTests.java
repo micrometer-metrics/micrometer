@@ -22,6 +22,7 @@ import io.micrometer.observation.ObservationRegistry;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.BDDAssertions;
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 
@@ -34,6 +35,13 @@ import static org.assertj.core.api.BDDAssertions.then;
 class TestObservationRegistryAssertTests {
 
     TestObservationRegistry registry = TestObservationRegistry.create();
+
+    @AfterEach
+    void tearDown() {
+        // Clean up the thread-local current observation scope after each test to prevent
+        // thread pollution and ensure test isolation.
+        registry.setCurrentObservationScope(null);
+    }
 
     @Test
     void should_clear_context_entries() {
