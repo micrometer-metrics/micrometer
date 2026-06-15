@@ -46,8 +46,8 @@ dependencies {
     testImplementation "org.eclipse.jetty:jetty-client:$jetty9Version"
     testImplementation "org.eclipse.jetty:jetty-server:$jetty9Version"
     testImplementation "org.eclipse.jetty:jetty-servlet:$jetty9Version"
-    testImplementation "org.glassfish.jersey.core:jersey-server:$jersey2Version"
-    testImplementation "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:$jersey2Version"
+    testImplementation libs.jersey2Server
+    testImplementation libs.jersey2TestFrameworkJdkHttp
     // necessary for Jersey test framework
-    testRuntimeOnly "org.glassfish.jersey.inject:jersey-hk2:$jersey2Version"
+    testRuntimeOnly libs.jersey2Hk2
 }

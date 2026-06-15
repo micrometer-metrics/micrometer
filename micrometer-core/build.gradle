@@ -116,7 +116,7 @@ dependencies {
     optionalApi libs.jakarta.servletApi
     optionalApi "org.eclipse.jetty:jetty-client:$jetty9Version"
     optionalApi libs.tomcatEmbed
-    optionalApi "org.glassfish.jersey.core:jersey-server:$jersey2Version"
+    optionalApi libs.jersey2Server
     optionalApi libs.grpcApi
     optionalApi libs.grpcKotlinStub
     optionalApi platform(libs.nettyBom)
@@ -138,7 +138,7 @@ dependencies {
 
     optionalApi libs.mongoSync
 
-    optionalApi "org.jooq:jooq:$jooq14Version"
+    optionalApi libs.jooq
 
     optionalApi libs.kafkaClients
     optionalApi libs.kafkaStreams
@@ -189,8 +189,8 @@ dependencies {
 
     testImplementation libs.commonsPool2
 
-    testImplementation "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:$jersey2Version"
-    testRuntimeOnly "org.glassfish.jersey.inject:jersey-hk2:$jersey2Version"
+    testImplementation libs.jersey2TestFrameworkInmemory
+    testRuntimeOnly libs.jersey2Hk2
 
     testImplementation libs.wiremockJunit5
     testImplementation libs.wiremock
