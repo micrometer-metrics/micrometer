@@ -43,6 +43,10 @@ import static java.util.Collections.emptyList;
 /**
  * {@link MeterBinder} for Apache Log4j 2. Please use at least 2.21.0 since there was a
  * bug in earlier versions that prevented Micrometer to increment its counters correctly.
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * clean up the {@code LoggerContext} property change listener and the metrics filters
+ * this binder registers.
  *
  * @see <a href=
  * "https://github.com/apache/logging-log4j2/issues/1550">logging-log4j2#1550</a>

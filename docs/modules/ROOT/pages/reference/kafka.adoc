@@ -29,3 +29,7 @@ Setting up instrumentation with Apache Kafka using Kafka Streams.
 include::{include-core-test-java}/io/micrometer/core/instrument/binder/kafka/KafkaStreamsMetricsTest.java[tags=example, indent=0]
 -----
 
+[[lifecycle]]
+== Lifecycle
+
+NOTE: `KafkaClientMetrics` and `KafkaStreamsMetrics` implement `AutoCloseable`. When used outside a lifecycle-aware container, call `close()` on application shutdown so the binder can clean up the resources it registered or started, such as listeners, schedulers, or meters.

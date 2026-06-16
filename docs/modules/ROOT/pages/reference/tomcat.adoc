@@ -13,3 +13,8 @@ include::{include-core-test-java}/io/micrometer/core/instrument/binder/tomcat/To
 // Example of Tomcat metrics
 include::{include-core-test-java}/io/micrometer/core/instrument/binder/tomcat/TomcatMetricsTest.java[tags=example, indent=0]
 -----
+
+[[lifecycle]]
+== Lifecycle
+
+NOTE: `TomcatMetrics` implements `AutoCloseable`. When used outside a lifecycle-aware container, call `close()` on application shutdown so the binder can clean up the resources it registered or started, such as listeners, schedulers, or meters.

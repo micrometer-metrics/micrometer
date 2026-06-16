@@ -544,8 +544,4 @@ tasks.register('build') {
     dependsOn check
 }
 
-wrapper {
-    gradleVersion = '9.5.0'
-}
-
 defaultTasks 'build'

@@ -104,7 +104,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
                 // @formatter:off
                 post.withJsonContent(meters.stream()
-                    .map(m -> m.match(
+                    .map(m -> m.<@Nullable String>match(
                             batch::writeGauge,
                             batch::writeCounter,
                             batch::writeTimer,

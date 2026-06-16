@@ -20,15 +20,13 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default implementation of {@link Observation}.
@@ -41,6 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class SimpleObservation implements Observation {
 
+    private static final WarnThenDebugLogger getEnclosingScopeLogger = new WarnThenDebugLogger(SimpleObservation.class);
+
     final ObservationRegistry registry;
 
     private final Context context;
@@ -52,8 +52,6 @@ class SimpleObservation implements Observation {
     private final Deque<ObservationHandler> handlers;
 
     private final Collection<ObservationFilter> filters;
-
-    final Map<Thread, Scope> lastScope = new ConcurrentHashMap<>();
 
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
@@ -192,14 +190,16 @@ class SimpleObservation implements Observation {
     public Scope openScope() {
         Scope scope = new SimpleScope(this.registry, this);
         notifyOnScopeOpened();
-        lastScope.put(Thread.currentThread(), scope);
         return scope;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     @Deprecated
     public @Nullable Scope getEnclosingScope() {
-        return lastScope.get(Thread.currentThread());
+        getEnclosingScopeLogger.log(
+                "getEnclosingScope() is deprecated, will always return a no-op scope, and will be removed in a future release. Please do not use it.");
+        return Scope.NOOP;
     }
 
     @Override
@@ -247,22 +247,6 @@ class SimpleObservation implements Observation {
         }
     }
 
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    void notifyOnScopeMakeCurrent() {
-        for (ObservationHandler handler : this.handlers) {
-            handler.onScopeOpened(this.context);
-        }
-    }
-
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    void notifyOnScopeReset() {
-        for (ObservationHandler handler : this.handlers) {
-            handler.onScopeReset(this.context);
-        }
-    }
-
     @SuppressWarnings("unchecked")
     void notifyOnObservationStopped(Context context) {
         // We're closing from end till the beginning - e.g. we started with handlers with
@@ -278,6 +262,10 @@ class SimpleObservation implements Observation {
     static class SimpleScope implements Scope {
 
         private static final InternalLogger log = InternalLoggerFactory.getInstance(SimpleScope.class);
+
+        private static final WarnThenDebugLogger resetLogger = new WarnThenDebugLogger(SimpleScope.class);
+
+        private static final WarnThenDebugLogger makeCurrentLogger = new WarnThenDebugLogger(SimpleScope.class);
 
         final ObservationRegistry registry;
 
@@ -301,13 +289,6 @@ class SimpleObservation implements Observation {
         public void close() {
             if (currentObservation instanceof SimpleObservation) {
                 SimpleObservation observation = (SimpleObservation) currentObservation;
-                SimpleScope lastScopeForThisObservation = getLastScope(this);
-                if (lastScopeForThisObservation != null) {
-                    observation.lastScope.put(Thread.currentThread(), lastScopeForThisObservation);
-                }
-                else {
-                    observation.lastScope.remove(Thread.currentThread());
-                }
                 observation.notifyOnScopeClosed();
             }
             else if (currentObservation != null && !currentObservation.isNoop()) {
@@ -319,78 +300,18 @@ class SimpleObservation implements Observation {
             this.registry.setCurrentObservationScope(previousObservationScope);
         }
 
-        private @Nullable SimpleScope getLastScope(SimpleScope simpleScope) {
-            SimpleScope scope = simpleScope;
-            do {
-                scope = (SimpleScope) scope.previousObservationScope;
-            }
-            while (scope != null && !this.currentObservation.equals(scope.currentObservation));
-            return scope;
-        }
-
         @Override
         @Deprecated
         public void reset() {
-            SimpleScope scope = this;
-            if (scope.currentObservation instanceof SimpleObservation) {
-                SimpleObservation simpleObservation = (SimpleObservation) scope.currentObservation;
-                do {
-                    // We don't want to remove any enclosing scopes when resetting
-                    // we just want to remove any scopes if they are present (that's why
-                    // we're not calling scope#close)
-                    simpleObservation.notifyOnScopeReset();
-                    scope = (SimpleScope) scope.previousObservationScope;
-                }
-                while (scope != null);
-            }
-            registry.setCurrentObservationScope(null);
+            resetLogger.log(
+                    "reset() is deprecated, will do nothing, and will be removed in a future release. Please do not use it.");
         }
 
-        /**
-         * This method is called e.g. via
-         * {@link ObservationThreadLocalAccessor#restore(Observation)}. In that case,
-         * we're calling {@link ObservationThreadLocalAccessor#reset()} first, and we're
-         * closing all the scopes, HOWEVER those are called on the Observation scope that
-         * was present there in thread local at the time of calling the method, NOT on the
-         * scope that we want to make current (that one can contain some leftovers from
-         * previous scope openings like creation of e.g. Brave scope in the TracingContext
-         * that is there inside the Observation's Context.
-         *
-         * When we want to go back to the enclosing scope and want to make that scope
-         * current we need to be sure that there are no remaining scoped objects inside
-         * Observation's context. This is why BEFORE rebuilding the scope structure we
-         * need to notify the handlers to clear them first (again this is a separate scope
-         * to the one that was cleared by the reset method) via calling
-         * {@link ObservationHandler#onScopeReset(Context)}.
-         */
         @Override
         @Deprecated
         public void makeCurrent() {
-            SimpleScope scope = this;
-            do {
-                // We don't want to remove any enclosing scopes when resetting
-                // we just want to remove any scopes if they are present (that's why we're
-                // not calling scope#close)
-                if (scope.currentObservation instanceof SimpleObservation) {
-                    ((SimpleObservation) scope.currentObservation).notifyOnScopeReset();
-                }
-                scope = (SimpleScope) scope.previousObservationScope;
-            }
-            while (scope != null);
-
-            Deque<SimpleScope> scopes = new ArrayDeque<>();
-            scope = this;
-            do {
-                scopes.addFirst(scope);
-                scope = (SimpleScope) scope.previousObservationScope;
-            }
-            while (scope != null);
-            for (SimpleScope simpleScope : scopes) {
-                if (simpleScope.currentObservation instanceof SimpleObservation) {
-                    ((SimpleObservation) simpleScope.currentObservation).notifyOnScopeMakeCurrent();
-                }
-            }
-            this.registry.setCurrentObservationScope(this);
+            makeCurrentLogger.log(
+                    "makeCurrent() is deprecated, will do nothing, and will be removed in a future release. Please do not use it.");
         }
 
         @Override

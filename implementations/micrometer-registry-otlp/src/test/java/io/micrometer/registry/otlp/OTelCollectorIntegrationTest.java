@@ -236,9 +236,8 @@ class OTelCollectorIntegrationTest {
         assertThat(families).allSatisfy(family -> {
             assertThat(family.getMetricCount()).isEqualTo(1);
             assertThat(family.getMetric(0).getHistogram().getPositiveDeltaCount()).isPositive();
-            // TODO: Check Exemplars after support is added to the collector,
-            //  see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/47159
-            //  assertThat(family.getMetric(0).getHistogram().getExemplarsCount()).isPositive();
+            assertThat(family.getMetric(0).getHistogram().getExemplarsCount()).isPositive();
+            assertThat(family.getMetric(0).getHistogram().getExemplarsList()).isNotEmpty();
         });
         // @formatter:on
     }

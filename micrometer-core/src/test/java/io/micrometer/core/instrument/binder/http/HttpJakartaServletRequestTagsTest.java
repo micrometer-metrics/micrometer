@@ -44,6 +44,18 @@ class HttpJakartaServletRequestTagsTest {
     }
 
     @Test
+    void unknownMethodShouldContributeUnknownMethodTagValue() {
+        Tag unknownMethod = Tag.of("method", "UNKNOWN");
+        HttpServletRequest jakartaRequest = mockJakartaRequest("WELL");
+        Tag result = HttpJakartaServletRequestTags.method(jakartaRequest);
+        assertThat(result).isEqualTo(unknownMethod);
+
+        javax.servlet.http.HttpServletRequest javaxRequest = mockJavaxRequest("WELL");
+        result = HttpRequestTags.method(javaxRequest);
+        assertThat(result).isEqualTo(unknownMethod);
+    }
+
+    @Test
     void requestShouldContributeMethodTag() {
         Tag httpGet = Tag.of("method", "GET");
         HttpServletRequest jakartaRequest = mockJakartaRequest("GET");

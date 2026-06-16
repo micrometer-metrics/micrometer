@@ -60,6 +60,10 @@ import static java.util.Collections.emptyList;
  * notes</a> and <a href="https://bugs.openjdk.org/browse/JDK-8265136">JDK-8265136</a>. If
  * you want better accuracy, please make sure that you use a newer version and the new
  * metrics are enabled.
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * clean up the GC notification listeners this binder registers on the JVM's
+ * {@link GarbageCollectorMXBean}s.
  *
  * @author Jon Schneider
  * @author Tommy Ludwig

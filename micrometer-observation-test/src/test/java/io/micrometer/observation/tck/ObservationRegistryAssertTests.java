@@ -17,6 +17,7 @@ package io.micrometer.observation.tck;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
@@ -38,6 +39,13 @@ class ObservationRegistryAssertTests {
 
         registry.observationConfig().observationHandler(c -> true); // prevent Noop
                                                                     // instances
+    }
+
+    @AfterEach
+    void tearDown() {
+        // Clean up the thread-local current observation scope after each test to prevent
+        // thread pollution and ensure test isolation.
+        registry.setCurrentObservationScope(null);
     }
 
     @Test

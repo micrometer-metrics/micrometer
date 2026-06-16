@@ -47,16 +47,6 @@ public class NullObservation extends SimpleObservation {
     }
 
     @Override
-    void notifyOnScopeMakeCurrent() {
-        // Don't want to call handlers
-    }
-
-    @Override
-    void notifyOnScopeReset() {
-        // Don't want to call handlers
-    }
-
-    @Override
     void notifyOnObservationStopped(Context context) {
         // Don't want to call handlers
     }
