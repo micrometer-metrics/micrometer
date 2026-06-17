@@ -70,6 +70,7 @@ allprojects {
     ext.logback12Version = '1.2.13'
     ext.jetty9Version = '9.4.58.v20250814'
     ext.jetty11Version = '11.0.16'
+    ext.nettyBomDocsVersion = '4.2.15.Final'
 
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
