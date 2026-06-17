@@ -50,6 +50,8 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private static final long DEFAULT_MAX_SIZE_BYTES = 10L * 1024 * 1024;
 
+    private static final Duration DEFAULT_PINNED_THRESHOLD = Duration.ofMillis(20);
+
     private static final String LIVE_THREADS_DESCRIPTION = "Approximate current number of virtual threads that are unfinished";
 
     private static final String METER_NAME_PREFIX = "jvm.threads.virtual.";
@@ -182,7 +184,7 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {
         private RecordingConfig() {
-            this(DEFAULT_MAX_AGE, DEFAULT_MAX_SIZE_BYTES, Duration.ofMillis(20));
+            this(DEFAULT_MAX_AGE, DEFAULT_MAX_SIZE_BYTES, DEFAULT_PINNED_THRESHOLD);
         }
 
         private RecordingConfig {
