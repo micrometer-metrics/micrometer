@@ -69,6 +69,7 @@ allprojects {
     // these legacy versions/maintenance lines are rarely updated and can be managed manually.
     ext.logback12Version = '1.2.13'
     ext.jetty9Version = '9.4.58.v20250814'
+    ext.jetty11Version = '11.0.16'
 
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
