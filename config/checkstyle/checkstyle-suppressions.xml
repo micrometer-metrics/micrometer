@@ -21,6 +21,7 @@
 	<suppress id="SLF4JIllegalImportCheck" files="benchmarks[\\/].+" />
 	<suppress id="SLF4JIllegalImportCheck" files="micrometer-osgi-test" />
 	<suppress id="SLF4JIllegalImportCheck" files="MeterRegistryLoggingTest" />
+	<suppress id="SLF4JIllegalImportCheck" files="MdcToKeyValuesObservationFilter" />
 
 	<suppress id="sysout" files="ClearCustomMetricDescriptors.java"/>
 	<suppress id="sysout" files="HttpSender.java"/>

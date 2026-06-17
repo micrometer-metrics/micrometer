@@ -31,6 +31,7 @@ jar {
             javax.servlet.*;resolution:=optional,\
             io.micrometer.context.*;resolution:=optional,\
             org.aspectj.*;resolution:=optional,\
+            org.slf4j.*;resolution:=optional,\
             *
         '''.stripIndent()
     }
@@ -47,6 +48,10 @@ dependencies {
     // Aspects
     optionalApi libs.aspectjrt
 
+    // MDC source for MdcToKeyValuesObservationFilter
+    optionalApi libs.slf4jApi
+
+    testImplementation libs.slf4jApi
     testRuntimeOnly libs.logback12
 
     testImplementation(libs.archunitJunit5) {
