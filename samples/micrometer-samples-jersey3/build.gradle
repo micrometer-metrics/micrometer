@@ -9,7 +9,7 @@ dependencies {
     runtimeOnly(libs.logbackLatest)
 
     implementation "org.glassfish.jersey.containers:jersey-container-jdk-http:3.1.11"
-    runtimeOnly "org.glassfish.jersey.inject:jersey-hk2:3.1.11"
+    runtimeOnly "org.glassfish.jersey.inject:jersey-hk2:3.1.12"
 
     testImplementation "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:3.1.11"
     testImplementation libs.junitJupiter
