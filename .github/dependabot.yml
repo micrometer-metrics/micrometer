@@ -113,6 +113,17 @@ updates:
           - version-update:semver-minor
     open-pull-requests-limit: 10
   - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-caffeine3"
+    schedule:
+      interval: daily
+    target-branch: "1.17.x"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
     directory: "/"
     schedule:
       interval: daily
@@ -140,6 +151,16 @@ updates:
     open-pull-requests-limit: 10
   - package-ecosystem: gradle
     directory: "/samples/micrometer-samples-jooq"
+    schedule:
+      interval: daily
+    target-branch: "main"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-caffeine3"
     schedule:
       interval: daily
     target-branch: "main"
