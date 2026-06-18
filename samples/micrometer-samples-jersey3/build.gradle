@@ -8,10 +8,10 @@ dependencies {
     // Test sample project with SLFJ4 2.x / Logback; see gh-3415
     runtimeOnly(libs.logbackLatest)
 
-    implementation libs.jersey3ContainerJdkHttp
-    runtimeOnly libs.jersey3Hk2
+    implementation "org.glassfish.jersey.containers:jersey-container-jdk-http:3.1.11"
+    runtimeOnly "org.glassfish.jersey.inject:jersey-hk2:3.1.11"
 
-    testImplementation libs.jersey3TestFrameworkJdkHttp
+    testImplementation "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:3.1.11"
     testImplementation libs.junitJupiter
     testRuntimeOnly libs.junitPlatformLauncher
     testImplementation libs.assertj

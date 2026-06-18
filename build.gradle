@@ -61,6 +61,17 @@ apply plugin: 'io.github.gradle-nexus.publish-plugin'
 allprojects {
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
+    // Legacy/older versions of dependencies are defined as ext properties here instead of
+    // the Version Catalog to prevent Dependabot from clobbering them when it upgrades
+    // the primary/newer versions in the catalog.
+    // Because Dependabot's static parser cannot resolve these dynamic Gradle variables,
+    // these versions will never be automatically upgraded. This is acceptable because
+    // these legacy versions/maintenance lines are rarely updated and can be managed manually.
+    ext.logback12Version = '1.2.13'
+    ext.jetty9Version = '9.4.58.v20250814'
+    ext.jetty11Version = '11.0.16'
+    ext.nettyBomDocsVersion = '4.2.15.Final'
+    ext.slf4j2Version = '2.0.17'
 
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
@@ -508,7 +519,7 @@ nexusPublishing {
 tasks.register('verifyDependencyVersions') {
     doLast {
         assertDependencyVersionPrefix(libs.jooq, '3.14.')
-        assertDependencyVersionPrefix(libs.logback12, '1.2.')
+        assert logback12Version.startsWith('1.2.')
     }
 }
 

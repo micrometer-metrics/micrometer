@@ -111,10 +111,10 @@ dependencies {
     optionalApi libs.hibernateEntitymanager
 
     // server runtime monitoring
-    optionalApi libs.jetty9Server
+    optionalApi "org.eclipse.jetty:jetty-server:$jetty9Version"
     // jakarta servlet
     optionalApi libs.jakarta.servletApi
-    optionalApi libs.jetty9Client
+    optionalApi "org.eclipse.jetty:jetty-client:$jetty9Version"
     optionalApi libs.tomcatEmbed
     optionalApi libs.jersey2Server
     optionalApi libs.grpcApi
@@ -131,7 +131,7 @@ dependencies {
     optionalApi libs.hystrix
 
     // log monitoring
-    optionalApi libs.logback12
+    optionalApi "ch.qos.logback:logback-classic:$logback12Version"
     optionalApi libs.log4j
 
     optionalApi libs.okhttp

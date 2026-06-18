@@ -9,7 +9,7 @@ dependencies {
     implementation project(':micrometer-core')
     implementation project(':micrometer-observation')
     implementation(libs.colt)
-    implementation(libs.logback12)
+    implementation("ch.qos.logback:logback-classic:$logback12Version")
     implementation(libs.slf4jApi)
 
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver'].each { sys ->

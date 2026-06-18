@@ -38,13 +38,11 @@ jackson-databind = "2.20.2"
 javax-cache = "1.1.1"
 javax-inject = "1"
 jaxb = "2.3.1"
-jetty9 = "9.4.58.v20250814"
-jetty11 = "11.0.16"
 jetty12 = "12.0.8"
-jersey3 = "3.1.11"
+jersey2 = "2.47"
 jmh = "1.37"
-# latest version of jOOQ to run tests against
-jooqNew = "3.20.8"
+# latest version of jOOQ that supports Java 8
+jooq = "3.14.16"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
 junit = "5.14.4"
@@ -136,24 +134,15 @@ javax-inject = { module = "javax.inject:javax.inject", version.ref = "javax-inje
 javax-servletApi = { module = "javax.servlet:javax.servlet-api", version = "4.0.1" }
 jaxbApi = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb" }
 jcstressCore = { module = "org.openjdk.jcstress:jcstress-core", version = "0.16" }
-jetty9Client = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty9" }
-jetty9Server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty9" }
-jetty9Servlet = { module = "org.eclipse.jetty:jetty-servlet", version.ref = "jetty9" }
-jetty11Server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty11" }
 jetty12Server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty12" }
 jetty12Client = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty12" }
-jersey2Server = { module = "org.glassfish.jersey.core:jersey-server", version = "2.47" }
-jersey2Hk2 = { module = "org.glassfish.jersey.inject:jersey-hk2", version = "2.47" }
-jersey2TestFrameworkInmemory = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory", version = "2.47" }
-jersey2TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http", version = "2.47" }
-jersey3ContainerJdkHttp = { module = "org.glassfish.jersey.containers:jersey-container-jdk-http", version.ref = "jersey3" }
-jersey3Hk2 = { module = "org.glassfish.jersey.inject:jersey-hk2", version.ref = "jersey3" }
-jersey3TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http", version.ref = "jersey3" }
+jersey2Server = { module = "org.glassfish.jersey.core:jersey-server", version.ref = "jersey2" }
+jersey2Hk2 = { module = "org.glassfish.jersey.inject:jersey-hk2", version.ref = "jersey2" }
+jersey2TestFrameworkInmemory = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory", version.ref = "jersey2" }
+jersey2TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http", version.ref = "jersey2" }
 jmhCore = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmhAnnotationProcessor = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
-# 3.14.x is the newest version of OSS jOOQ that supports Java 8
-jooq = { module = "org.jooq:jooq", version = "3.14.16" }
-jooqLatest = { module = "org.jooq:jooq", version.ref = "jooqNew" }
+jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
 jsonPath = { module = "com.jayway.jsonpath:json-path", version = "2.10.0" }
 jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
 jsr107 = { module = "org.jsr107.ri:cache-ri-impl", version.ref = "jsr107" }
@@ -168,7 +157,6 @@ kafkaJunit = { module = "com.github.charithe:kafka-junit", version.ref = "kafka-
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.7.3" }
 latencyUtils = { module = "org.latencyutils:LatencyUtils", version.ref = "latency-utils" }
 lmaxDisruptor = "com.lmax:disruptor:3.4.4"
-logback12 = { module = "ch.qos.logback:logback-classic", version = "1.2.13" }
 logbackLatest = {module = "ch.qos.logback:logback-classic", version.ref = "logback-latest" }
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
@@ -177,7 +165,6 @@ mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", v
 mockitoCore5 = { module = "org.mockito:mockito-core", version.ref = "mockito5" }
 mongoSync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongo" }
 nettyBom = { module = "io.netty:netty-bom", version.ref = "netty" }
-nettyBom42 = { module = "io.netty:netty-bom", version = "4.2.15.Final" }
 newrelicApi = { module = "com.newrelic.agent.java:newrelic-api", version.ref = "newrelic-api" }
 nullAway = { module = "com.uber.nullaway:nullaway", version = "0.12.15" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }

@@ -5,5 +5,5 @@ plugins {
 dependencies {
     implementation project(':micrometer-core')
     implementation libs.hazelcast
-    implementation libs.logback12
+    implementation "ch.qos.logback:logback-classic:$logback12Version"
 }
