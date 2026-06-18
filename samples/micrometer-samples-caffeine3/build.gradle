@@ -1,6 +1,6 @@
 dependencies {
     implementation project(':micrometer-core')
-    implementation "com.github.ben-manes.caffeine:caffeine:3.2.3"
+    implementation "com.github.ben-manes.caffeine:caffeine:3.2.4"
 
     testImplementation project(':micrometer-test')
     testImplementation platform(libs.junitBom)
