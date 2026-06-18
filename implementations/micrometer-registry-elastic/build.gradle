@@ -8,5 +8,5 @@ dependencies {
     testImplementation 'org.testcontainers:elasticsearch:1.16.3'
     testImplementation libs.testcontainers.junitJupiter
     testImplementation libs.jsonPath
-    testImplementation libs.logback12
+    testImplementation "ch.qos.logback:logback-classic:$logback12Version"
 }
