@@ -10,7 +10,7 @@ if (!javaLanguageVersion.canCompileOrRun(21)) {
 
 dependencies {
     implementation project(":micrometer-core")
-    implementation "org.jooq:jooq:3.21.4"
+    implementation "org.jooq:jooq:3.21.6"
 
     testImplementation platform(libs.junitBom)
     testImplementation libs.junitJupiter
