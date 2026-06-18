@@ -31,17 +31,23 @@ updates:
     schedule:
       interval: daily
     target-branch: "1.16.x"
+    milestone: 296
     ignore:
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
+    groups:
+      jersey:
+        patterns:
+          - "org.glassfish.jersey.*"
     open-pull-requests-limit: 10
   - package-ecosystem: gradle
     directory: "/samples/micrometer-samples-jooq"
     schedule:
       interval: daily
     target-branch: "1.16.x"
+    milestone: 296
     ignore:
       - dependency-name: "*"
         update-types:
@@ -74,17 +80,23 @@ updates:
     schedule:
       interval: daily
     target-branch: "1.17.x"
+    milestone: 317
     ignore:
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
+    groups:
+      jersey:
+        patterns:
+          - "org.glassfish.jersey.*"
     open-pull-requests-limit: 10
   - package-ecosystem: gradle
     directory: "/samples/micrometer-samples-jooq"
     schedule:
       interval: daily
     target-branch: "1.17.x"
+    milestone: 317
     ignore:
       - dependency-name: "*"
         update-types:
@@ -96,6 +108,7 @@ updates:
     schedule:
       interval: daily
     target-branch: "1.17.x"
+    milestone: 317
     ignore:
       - dependency-name: "*"
         update-types:
@@ -123,16 +136,22 @@ updates:
     schedule:
       interval: daily
     target-branch: "main"
+    milestone: 337
     ignore:
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
+    groups:
+      jersey:
+        patterns:
+          - "org.glassfish.jersey.*"
     open-pull-requests-limit: 10
   - package-ecosystem: gradle
     directory: "/samples/micrometer-samples-jooq"
     schedule:
       interval: daily
     target-branch: "main"
+    milestone: 337
     ignore:
       - dependency-name: "*"
         update-types:
@@ -143,6 +162,7 @@ updates:
     schedule:
       interval: daily
     target-branch: "main"
+    milestone: 337
     ignore:
       - dependency-name: "*"
         update-types:
