@@ -62,13 +62,15 @@ class HumioMeterRegistryTest {
     @Test
     void publishDropsNullMeterEvents(@WiremockResolver.Wiremock WireMockServer server) {
         HumioMeterRegistry registry = humioMeterRegistry(server);
-        registry.timer("my.timer", "status", "success");
-        registry.gauge("my.gauge", Double.NaN);
+        registry.counter("my.counter").increment();
+        clock.add(config.step());
+        Measurement measurement = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        Meter.builder("my.meter", Meter.Type.GAUGE, List.of(measurement)).register(registry);
 
         server.stubFor(any(anyUrl()));
         registry.publish();
         server.verify(postRequestedFor(urlMatching("/api/v1/ingest/humio-structured")).withRequestBody(equalTo(
-                "[{\"events\": [{\"timestamp\":\"1970-01-01T00:00:00.001Z\",\"attributes\":{\"name\":\"my_timer\",\"count\":0,\"sum\":0,\"avg\":0,\"max\":0,\"status\":\"success\"}}]}]")));
+                "[{\"events\": [{\"timestamp\":\"1970-01-01T00:01:00.001Z\",\"attributes\":{\"name\":\"my_counter\",\"count\":1}}]}]")));
     }
 
     @Test
