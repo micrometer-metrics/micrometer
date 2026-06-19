@@ -64,8 +64,7 @@ class HumioMeterRegistryTest {
         HumioMeterRegistry registry = humioMeterRegistry(server);
         registry.counter("my.counter").increment();
         clock.add(config.step());
-        Measurement measurement = new Measurement(() -> Double.NaN, Statistic.VALUE);
-        Meter.builder("my.meter", Meter.Type.GAUGE, List.of(measurement)).register(registry);
+        Meter.builder("my.empty", Meter.Type.OTHER, List.<Measurement>of()).register(registry);
 
         server.stubFor(any(anyUrl()));
         registry.publish();
