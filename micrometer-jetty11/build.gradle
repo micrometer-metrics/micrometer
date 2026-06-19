@@ -1,4 +1,4 @@
-description = 'Micrometer instrumentation for Jetty 11'
+description = 'Micrometer instrumentation for Jetty 11. This module is deprecated in favor of the micrometer-jetty12 module.'
 
 dependencies {
     api project(":micrometer-core")
