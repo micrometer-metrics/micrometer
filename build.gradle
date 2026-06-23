@@ -70,7 +70,7 @@ allprojects {
     // Because Dependabot's static parser cannot resolve these dynamic Gradle variables,
     // these versions will never be automatically upgraded. This is acceptable because
     // these legacy versions/maintenance lines are rarely updated and can be managed manually.
-    ext.logback12Version = '1.2.13'
+    ext.logback12Version = '1.5.35'
     ext.jetty9Version = '9.4.58.v20250814'
     ext.jetty11Version = '11.0.16'
     ext.nettyBomDocsVersion = '4.2.15.Final'
