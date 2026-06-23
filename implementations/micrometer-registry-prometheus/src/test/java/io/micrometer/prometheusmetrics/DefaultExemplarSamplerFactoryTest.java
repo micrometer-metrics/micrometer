@@ -20,52 +20,25 @@ import io.prometheus.metrics.config.PrometheusPropertiesLoader;
 import io.prometheus.metrics.tracer.common.SpanContext;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Proxy;
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 class DefaultExemplarSamplerFactoryTest {
 
     @Test
-    @SuppressWarnings("unchecked")
-    void exemplarSamplerConfigsByHistogramUpperBoundsCacheIsEffective() throws Exception {
-        SpanContext spanContext = (SpanContext) Proxy.newProxyInstance(
-                SpanContext.class.getClassLoader(),
-                new Class<?>[]{SpanContext.class},
-                (proxy, method, args) -> {
-                    if (method.getName().equals("equals")) {
-                        return proxy == args[0];
-                    }
-                    if (method.getName().equals("hashCode")) {
-                        return System.identityHashCode(proxy);
-                    }
-                    if (method.getReturnType().equals(String.class)) {
-                        return "";
-                    }
-                    if (method.getReturnType().equals(boolean.class)) {
-                        return false;
-                    }
-                    return null;
-                }
-        );
-
+    void exemplarSamplerConfigsByHistogramUpperBoundsCacheIsEffective() {
         ExemplarsProperties properties = PrometheusPropertiesLoader.load().getExemplarProperties();
-        DefaultExemplarSamplerFactory factory = new DefaultExemplarSamplerFactory(spanContext, properties);
+        DefaultExemplarSamplerFactory factory = new DefaultExemplarSamplerFactory(mock(SpanContext.class), properties);
 
-        double[] bounds1 = new double[]{1.0, 2.0, 5.0, Double.POSITIVE_INFINITY};
-        double[] bounds2 = new double[]{1.0, 2.0, 5.0, Double.POSITIVE_INFINITY};
+        double[] bounds1 = new double[] { 1.0, 2.0, 5.0, Double.POSITIVE_INFINITY };
+        double[] bounds2 = new double[] { 1.0, 2.0, 5.0, Double.POSITIVE_INFINITY };
 
-        // Create exemplar samplers with two different array instances having the same values
+        // Create samplers with two different array instances having the same values
         factory.createExemplarSampler(bounds1);
         factory.createExemplarSampler(bounds2);
 
-        Field field = DefaultExemplarSamplerFactory.class.getDeclaredField("exemplarSamplerConfigsByHistogramUpperBounds");
-        field.setAccessible(true);
-        Map<?, ?> map = (Map<?, ?>) field.get(factory);
-
         // If the cache is effective, there should only be 1 entry in the map
-        assertThat(map).hasSize(1);
+        assertThat(factory.exemplarSamplerConfigsByHistogramUpperBounds).hasSize(1);
     }
+
 }

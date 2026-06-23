@@ -35,7 +35,8 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
 
     private final ConcurrentMap<Integer, ExemplarSamplerConfig> exemplarSamplerConfigsByNumberOfExemplars = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<DoubleArrayKey, ExemplarSamplerConfig> exemplarSamplerConfigsByHistogramUpperBounds = new ConcurrentHashMap<>();
+    // VisibleForTesting
+    final ConcurrentMap<DoubleArrayKey, ExemplarSamplerConfig> exemplarSamplerConfigsByHistogramUpperBounds = new ConcurrentHashMap<>();
 
     private final SpanContext spanContext;
 
@@ -54,7 +55,8 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
     @Override
     public ExemplarSampler createExemplarSampler(double[] histogramUpperBounds) {
         ExemplarSamplerConfig config = exemplarSamplerConfigsByHistogramUpperBounds.computeIfAbsent(
-                new DoubleArrayKey(histogramUpperBounds), key -> new ExemplarSamplerConfig(exemplarsProperties, histogramUpperBounds));
+                new DoubleArrayKey(histogramUpperBounds),
+                key -> new ExemplarSamplerConfig(exemplarsProperties, histogramUpperBounds));
         return new ExemplarSampler(config, spanContext);
     }
 
