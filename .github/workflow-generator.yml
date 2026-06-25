@@ -1,0 +1,10 @@
+workflow.generator:
+  actions.checkout.fetch-depth: 0
+  workflows:
+    release-train:
+      build:
+        runs-on: ubuntu22-4-16
+      test:
+        additional-java-versions: [11, 17, 24]
+        runs-on: ubuntu22-4-16
+  project.java.versions.primary: 21
