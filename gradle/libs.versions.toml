@@ -37,7 +37,7 @@ jackson-databind = "2.22.0"
 javax-cache = "1.1.1"
 javax-inject = "1"
 jaxb = "2.3.1"
-jetty12 = "12.0.8"
+jetty12 = "12.1.10"
 jersey2 = "2.48"
 jmh = "1.37"
 # latest version of jOOQ that supports Java 8
