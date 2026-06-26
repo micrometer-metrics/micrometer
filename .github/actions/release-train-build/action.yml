@@ -1,0 +1,21 @@
+name: Build Release
+description: Creates the artifacts for the release
+runs:
+  using: composite
+  steps:
+    - name: Build Setup
+      shell: bash
+      run: |
+        echo "RELEASE_VERSION=${GITHUB_REF_NAME/release\//}" >> "$GITHUB_ENV"
+    - name: Build Info
+      shell: bash
+      run: |
+        echo 'Ref type: ${{ github.ref_type }}'
+        echo 'Ref name: ${{ github.ref_name }}'
+        echo 'Ref: ${{ github.ref }}'
+        echo 'Commit: ${{ github.sha }}'
+        echo 'Version: ${{ env.RELEASE_VERSION }}'
+        ./gradlew --version
+    - name: Build Release
+      shell: bash
+      run: ./gradlew publishNebulaPublicationToDeploymentRepository -PdeploymentRepository=$(pwd)/deployment-repository -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain -x test
