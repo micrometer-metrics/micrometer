@@ -79,17 +79,21 @@ class JvmGcMetricsTest {
     void gcMetricsAvailableAfterGc() {
         binder.bindTo(registry);
         System.gc();
-        await().timeout(200, TimeUnit.MILLISECONDS)
-            .alias("NotificationListener takes time after GC")
-            .untilAsserted(() -> assertThat(registry.get("jvm.gc.live.data.size").gauge().value()).isPositive());
-        assertThat(registry.get("jvm.gc.memory.allocated").counter().count()).isPositive();
-        assertThat(registry.get("jvm.gc.max.data.size").gauge().value()).isPositive();
-        Timer gcTimer = registry.get("jvm.gc.pause").tag("cause", "System.gc()").timer();
-        assertThat(gcTimer).isNotNull();
-        assertThat(gcTimer.count()).isPositive();
-        assertThat(gcTimer.getId().getTag("gc")).isNotBlank();
-        assertThat(gcTimer.getId().getTag("key")).isEqualTo("value");
-        assertThat(gcTimer.getId().getTag("action")).isNotBlank();
+        // GC notifications are posted and processed asynchronously. We must assert all
+        // metrics inside the await block to avoid race conditions where some metrics are
+        // not yet updated when the await block exits early (e.g. if a different GC
+        // notification triggers it).
+        await().atMost(5, TimeUnit.SECONDS).alias("NotificationListener takes time after GC").untilAsserted(() -> {
+            assertThat(registry.get("jvm.gc.live.data.size").gauge().value()).isPositive();
+            assertThat(registry.get("jvm.gc.memory.allocated").counter().count()).isPositive();
+            assertThat(registry.get("jvm.gc.max.data.size").gauge().value()).isPositive();
+            Timer gcTimer = registry.get("jvm.gc.pause").tag("cause", "System.gc()").timer();
+            assertThat(gcTimer).isNotNull();
+            assertThat(gcTimer.count()).isPositive();
+            assertThat(gcTimer.getId().getTag("gc")).isNotBlank();
+            assertThat(gcTimer.getId().getTag("key")).isEqualTo("value");
+            assertThat(gcTimer.getId().getTag("action")).isNotBlank();
+        });
 
         if (!binder.isGenerationalGc) {
             return;
@@ -209,7 +213,7 @@ class JvmGcMetricsTest {
 
     private void checkPhaseCountAndCollectionTime(long initialPauseCount, long initialConcurrentCount,
             long initialPauseTimeMs, long initialConcurrentTimeMs) {
-        await().atMost(200, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             long pauseCount = 0;
             long concurrentCount = 0;
             long pauseTimeMs = 0;
