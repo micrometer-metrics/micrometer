@@ -46,6 +46,12 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private static final String SUBMIT_FAILED_EVENT = "jdk.VirtualThreadSubmitFailed";
 
+    private static final Duration DEFAULT_MAX_AGE = Duration.ofSeconds(5);
+
+    private static final long DEFAULT_MAX_SIZE_BYTES = 10L * 1024 * 1024;
+
+    private static final Duration DEFAULT_PINNED_THRESHOLD = Duration.ofMillis(20);
+
     private static final String LIVE_THREADS_DESCRIPTION = "Approximate current number of virtual threads that are unfinished";
 
     private static final String METER_NAME_PREFIX = "jvm.threads.virtual.";
@@ -60,6 +66,29 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     public VirtualThreadMetrics(Iterable<Tag> tags) {
         this(new RecordingConfig(), tags);
+    }
+
+    /**
+     * Creates a new {@code VirtualThreadMetrics} with the specified JFR pinned-event
+     * threshold. Events shorter than the threshold will not be recorded by JFR.
+     * @param pinnedThreshold minimum duration a virtual thread must be pinned before the
+     * JFR event is emitted; must not be {@code null} or negative
+     * @since 1.18.0
+     */
+    public VirtualThreadMetrics(Duration pinnedThreshold) {
+        this(new RecordingConfig(DEFAULT_MAX_AGE, DEFAULT_MAX_SIZE_BYTES, pinnedThreshold), emptyList());
+    }
+
+    /**
+     * Creates a new {@code VirtualThreadMetrics} with the specified JFR pinned-event
+     * threshold and tags. Events shorter than the threshold will not be recorded by JFR.
+     * @param pinnedThreshold minimum duration a virtual thread must be pinned before the
+     * JFR event is emitted; must not be {@code null} or negative
+     * @param tags tags to apply to all meters registered by this binder
+     * @since 1.18.0
+     */
+    public VirtualThreadMetrics(Duration pinnedThreshold, Iterable<Tag> tags) {
+        this(new RecordingConfig(DEFAULT_MAX_AGE, DEFAULT_MAX_SIZE_BYTES, pinnedThreshold), tags);
     }
 
     private VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
@@ -155,7 +184,7 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {
         private RecordingConfig() {
-            this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(20));
+            this(DEFAULT_MAX_AGE, DEFAULT_MAX_SIZE_BYTES, DEFAULT_PINNED_THRESHOLD);
         }
 
         private RecordingConfig {
@@ -163,6 +192,9 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
             Objects.requireNonNull(pinnedThreshold, "pinnedThreshold must not be null");
             if (maxSizeBytes < 0) {
                 throw new IllegalArgumentException("maxSizeBytes must be positive");
+            }
+            if (pinnedThreshold.isNegative()) {
+                throw new IllegalArgumentException("pinnedThreshold must not be negative");
             }
         }
     }
