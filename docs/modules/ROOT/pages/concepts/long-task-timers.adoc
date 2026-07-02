@@ -11,6 +11,18 @@ Long task timers publish at least the following statistics:
 
 Unlike a regular `Timer`, a long task timer does not publish statistics about completed tasks.
 
+[[ltt-step-registries]]
+== Behavior in Step (Push) Registries
+
+In registries that push metrics on a fixed step interval (such as InfluxDB, Wavefront, Datadog, and others listed as xref:./implementations.adoc#client-pushes[client-push registries]), long task timer statistics reflect only the tasks that are *actively running* at the moment the metrics are published. If a task starts and finishes within a single step interval, it will not appear in any published data point — the timer will report zero active tasks, zero total duration, and zero max duration for that interval.
+
+This is a common source of confusion: if your step interval is 1 minute (the default) and a task runs for 30 seconds, you will see only zeros in your monitoring system.
+
+[IMPORTANT]
+====
+Use `LongTaskTimer` only for tasks whose duration is expected to be *longer than the reporting step interval*. For tasks that complete within one step interval, use a regular `Timer` instead — it records duration when the task finishes and will always be captured in the next push.
+====
+
 Consider a background process to refresh metadata from a data store. For example, https://github.com/Netflix/edda[Edda] caches AWS resources, such as instances, volumes, auto-scaling groups, and others. Normally all data can be refreshed in a few minutes. If the AWS services have problems, it can take much longer. A long task timer can be used to track the active time for refreshing the metadata.
 
 For example, in a Spring application, it is common for such long running processes to be implemented with `@Scheduled`. Micrometer provides a special `@Timed` annotation for instrumenting these processes with a long task timer:
