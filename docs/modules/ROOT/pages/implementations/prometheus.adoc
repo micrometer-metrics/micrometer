@@ -139,6 +139,86 @@ PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, new Prome
 
 Micrometer passes these properties to the Exporters and the Exemplar Sampler of the Prometheus client, so you can use the https://prometheus.github.io/client_java/config/config/#exporter-properties[exporter], and the https://prometheus.github.io/client_java/config/config/#exemplar-properties[exemplar] properties of the Prometheus Client.
 
+== Prometheus PushGateway
+
+Prometheus is primarily designed as a pull-based system, but the https://github.com/prometheus/pushgateway[Prometheus PushGateway] enables a push model for short-lived batch jobs or applications that cannot expose a scrape endpoint.
+The `PushGateway` is a feature of the Prometheus Java Client library — it is not built into Micrometer — so you need to add an extra dependency.
+
+=== New Client (`micrometer-registry-prometheus`)
+
+Add the pushgateway exporter dependency:
+
+.Maven
+[source,xml]
+----
+<dependency>
+    <groupId>io.prometheus</groupId>
+    <artifactId>prometheus-metrics-exporter-pushgateway</artifactId>
+</dependency>
+----
+
+.Gradle
+[source,groovy]
+----
+implementation 'io.prometheus:prometheus-metrics-exporter-pushgateway'
+----
+
+Then push your metrics by calling `push` or `pushAdd` on a `PushGateway` instance, passing in the underlying `PrometheusRegistry`:
+
+[source,java]
+----
+PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+
+PushGateway pushGateway = PushGateway.builder()
+    .address("localhost:9091") <1>
+    .job("my-batch-job") <2>
+    .registry(prometheusRegistry.getPrometheusRegistry()) <3>
+    .build();
+
+// push all metrics to the PushGateway
+pushGateway.push(); <4>
+----
+<1> The host and port of the Prometheus PushGateway.
+<2> The job label that groups the pushed metrics in the PushGateway.
+<3> Pass the underlying `PrometheusRegistry` from the `PrometheusMeterRegistry`.
+<4> Use `push()` to replace all metrics for the job, or `pushAdd()` to add/update metrics while preserving others.
+
+=== Legacy Client (`micrometer-registry-prometheus-simpleclient`)
+
+Add the legacy pushgateway dependency:
+
+.Maven
+[source,xml]
+----
+<dependency>
+    <groupId>io.prometheus</groupId>
+    <artifactId>simpleclient_pushgateway</artifactId>
+</dependency>
+----
+
+.Gradle
+[source,groovy]
+----
+implementation 'io.prometheus:simpleclient_pushgateway'
+----
+
+Then push metrics using the `PushGateway` class from the legacy client:
+
+[source,java]
+----
+PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+
+PushGateway pushGateway = new PushGateway("localhost:9091"); <1>
+
+// push all metrics to the PushGateway
+pushGateway.push(prometheusRegistry.getPrometheusRegistry(), "my-batch-job"); <2>
+----
+<1> The host and port of the Prometheus PushGateway.
+<2> The second argument is the job label. Use `pushAdd` to add/update metrics rather than replacing all of them.
+
+NOTE: In a Spring Boot application, the `PrometheusPushGatewayManager` in `spring-boot-actuator` manages the PushGateway lifecycle automatically (scheduled pushes and shutdown).
+See the https://docs.spring.io/spring-boot/reference/actuator/metrics.html#actuator.metrics.export.prometheus[Spring Boot Actuator documentation] for details.
+
 == Graphing
 
 This section serves as a quick start to rendering useful representations in Prometheus for metrics originating in Micrometer.
