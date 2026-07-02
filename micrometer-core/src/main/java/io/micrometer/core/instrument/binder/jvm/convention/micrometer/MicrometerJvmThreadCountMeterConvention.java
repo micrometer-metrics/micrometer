@@ -13,21 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jvm.convention;
+package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadCountMeterConvention;
+
+import java.util.Locale;
 
 /**
- * Get {@link MeterConvention} for thread related metrics.
+ * Historical convention used in Micrometer-provided JVM thread count metrics.
  *
  * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
  * @since 1.16.0
- * @deprecated use {@link JvmThreadCountMeterConvention} with
- * {@link io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics.Builder} instead
  */
-@Deprecated
-public interface JvmThreadMeterConventions {
+public class MicrometerJvmThreadCountMeterConvention implements JvmThreadCountMeterConvention {
 
-    MeterConvention<Thread.State> threadCountConvention();
+    @Override
+    public String getName() {
+        return "jvm.threads.states";
+    }
+
+    @Override
+    public Tags getTags(Thread.State state) {
+        return Tags.of("state", state.name().toLowerCase(Locale.ROOT).replace('_', '-'));
+    }
 
 }
