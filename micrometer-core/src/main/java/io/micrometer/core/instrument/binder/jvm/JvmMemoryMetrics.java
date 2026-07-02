@@ -120,6 +120,20 @@ public class JvmMemoryMetrics implements MeterBinder {
                 .description("The maximum amount of memory in bytes that can be used for memory management")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
+
+            JvmMemoryMeterConventions.JvmMemoryUsedAfterLastGcConvention memoryUsedAfterLastGcConvention = conventions
+                .getMemoryUsedAfterLastGcConvention();
+            if (memoryPoolBean.getCollectionUsage() != null) {
+                Gauge.builder(memoryUsedAfterLastGcConvention.getName(), memoryPoolBean, pool -> {
+                    MemoryUsage collectionUsage = pool.getCollectionUsage();
+                    return collectionUsage != null ? collectionUsage.getUsed() : Double.NaN;
+                })
+                    .tags(memoryUsedAfterLastGcConvention.getTags(memoryPoolBean))
+                    .description(
+                            "Measure of memory used, as measured after the most recent garbage collection event on this pool.")
+                    .baseUnit(BaseUnits.BYTES)
+                    .register(registry);
+            }
         }
     }
 
