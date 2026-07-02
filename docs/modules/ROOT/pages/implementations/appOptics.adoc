@@ -4,6 +4,8 @@
 
 AppOptics is a dimensional time-series SaaS with built-in dashboarding.
 
+NOTE: AppOptics is *dimensional*, uses *client-side* xref:../concepts/rate-aggregation.adoc[rate aggregation] (Micrometer pre-aggregates before pushing), and uses a *client-push* model. See xref:../concepts/implementations.adoc[Supported Monitoring Systems] for a comparison across registries.
+
 include::_install.adoc[]
 
 == Configuring
