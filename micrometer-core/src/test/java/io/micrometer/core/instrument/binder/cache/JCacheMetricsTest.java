@@ -21,12 +21,16 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.testsupport.system.CapturedOutput;
+import io.micrometer.core.testsupport.system.OutputCaptureExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import javax.cache.configuration.CompleteConfiguration;
 import javax.management.*;
 import java.net.URI;
 import java.util.Random;
@@ -40,6 +44,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Oleksii Bondar
  */
+@ExtendWith(OutputCaptureExtension.class)
 class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @SuppressWarnings("unchecked")
@@ -174,6 +179,35 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         metrics.bindTo(meterRegistry);
 
         assertThat(meterRegistry.get("cache.removals").tags(expectedTag).meter()).isNotNull().isInstanceOf(Gauge.class);
+    }
+
+    @Test
+    @Issue("#5066")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    void doNotReportMetricsWhenStatisticsAreDisabled(CapturedOutput output) throws Exception {
+        Cache<String, String> disabledCache = mock(Cache.class);
+        CacheManager disabledCacheManager = mock(CacheManager.class);
+        when(disabledCache.getCacheManager()).thenReturn(disabledCacheManager);
+        when(disabledCache.getName()).thenReturn("disabledCache");
+        when(disabledCacheManager.getURI()).thenReturn(new URI("http://localhost"));
+
+        CompleteConfiguration config = mock(CompleteConfiguration.class);
+        when(config.isStatisticsEnabled()).thenReturn(false);
+        when(disabledCache.getConfiguration(CompleteConfiguration.class)).thenReturn(config);
+
+        JCacheMetrics<String, String, Cache<String, String>> disabledMetrics = new JCacheMetrics<>(disabledCache,
+                expectedTag);
+
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        disabledMetrics.bindTo(meterRegistry);
+
+        assertThat(output).contains(
+                "The cache 'disabledCache' is not recording statistics. No meters that require statistics will be registered.");
+        assertThat(meterRegistry.find("cache.gets").tag("result", "hit").functionCounter()).isNull();
+        assertThat(meterRegistry.find("cache.gets").tag("result", "miss").functionCounter()).isNull();
+        assertThat(meterRegistry.find("cache.puts").functionCounter()).isNull();
+        assertThat(meterRegistry.find("cache.evictions").functionCounter()).isNull();
+        assertThat(meterRegistry.find("cache.removals").meter()).isNull();
     }
 
     private static class CacheMBeanStub implements DynamicMBean {
