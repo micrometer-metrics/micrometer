@@ -48,13 +48,38 @@ class HazelcastIMapAdapter {
     private static final Class<?> CLASS_NEAR_CACHE_STATS = resolveOneOf("com.hazelcast.nearcache.NearCacheStats",
             "com.hazelcast.monitor.NearCacheStats");
 
+    // Internal Hazelcast classes used only to read MapConfig#isStatisticsEnabled. The
+    // package moved from com.hazelcast.spi (3.x) to com.hazelcast.spi.impl (4.x+). Any
+    // resolution failure falls back to assuming statistics are enabled.
+    private static final @Nullable Class<?> CLASS_ABSTRACT_DISTRIBUTED_OBJECT = resolveOneOfOrNull(
+            "com.hazelcast.spi.impl.AbstractDistributedObject", "com.hazelcast.spi.AbstractDistributedObject");
+
+    private static final @Nullable Class<?> CLASS_NODE_ENGINE = resolveOneOfOrNull("com.hazelcast.spi.impl.NodeEngine",
+            "com.hazelcast.spi.NodeEngine");
+
+    private static final @Nullable Class<?> CLASS_CONFIG = resolveClassOrNull("com.hazelcast.config.Config");
+
+    private static final @Nullable Class<?> CLASS_MAP_CONFIG = resolveClassOrNull("com.hazelcast.config.MapConfig");
+
     private static final MethodHandle GET_NAME;
 
     private static final MethodHandle GET_LOCAL_MAP_STATS;
 
+    private static final @Nullable MethodHandle GET_NODE_ENGINE;
+
+    private static final @Nullable MethodHandle NODE_ENGINE_GET_CONFIG;
+
+    private static final @Nullable MethodHandle CONFIG_GET_MAP_CONFIG;
+
+    private static final @Nullable MethodHandle MAP_CONFIG_IS_STATISTICS_ENABLED;
+
     static {
         GET_NAME = resolveMethod(CLASS_DISTRIBUTED_OBJECT, "getName", methodType(String.class));
         GET_LOCAL_MAP_STATS = resolveMethod(CLASS_I_MAP, "getLocalMapStats", methodType(CLASS_LOCAL_MAP));
+        GET_NODE_ENGINE = resolveMethodOrNull(CLASS_ABSTRACT_DISTRIBUTED_OBJECT, "getNodeEngine", CLASS_NODE_ENGINE);
+        NODE_ENGINE_GET_CONFIG = resolveMethodOrNull(CLASS_NODE_ENGINE, "getConfig", CLASS_CONFIG);
+        CONFIG_GET_MAP_CONFIG = resolveMethodOrNull(CLASS_CONFIG, "getMapConfig", CLASS_MAP_CONFIG, String.class);
+        MAP_CONFIG_IS_STATISTICS_ENABLED = resolveMethodOrNull(CLASS_MAP_CONFIG, "isStatisticsEnabled", boolean.class);
     }
 
     private final WeakReference<Object> cache;
@@ -80,6 +105,37 @@ class HazelcastIMapAdapter {
 
         Object result = invoke(GET_LOCAL_MAP_STATS, ref);
         return result == null ? null : new LocalMapStats(result);
+    }
+
+    // Captured once by HazelcastCacheMetrics at construction; runtime toggles
+    // via MapConfig#setStatisticsEnabled(...) are not tracked.
+    // Rebind the metrics if statistics are enabled later.
+    boolean isStatisticsEnabled(String name) {
+        Object ref = cache.get();
+        if (ref == null || GET_NODE_ENGINE == null || NODE_ENGINE_GET_CONFIG == null || CONFIG_GET_MAP_CONFIG == null
+                || MAP_CONFIG_IS_STATISTICS_ENABLED == null) {
+            return true;
+        }
+
+        try {
+            Object nodeEngine = GET_NODE_ENGINE.invoke(ref);
+            if (nodeEngine == null) {
+                return true;
+            }
+            Object config = NODE_ENGINE_GET_CONFIG.invoke(nodeEngine);
+            if (config == null) {
+                return true;
+            }
+            Object mapConfig = CONFIG_GET_MAP_CONFIG.invoke(config, name);
+            if (mapConfig == null) {
+                return true;
+            }
+            return (boolean) MAP_CONFIG_IS_STATISTICS_ENABLED.invoke(mapConfig);
+        }
+        catch (Throwable t) {
+            log.debug("Failed to detect Hazelcast statistics-enabled state, assuming enabled", t);
+            return true;
+        }
     }
 
     static class LocalMapStats {
@@ -308,6 +364,34 @@ class HazelcastIMapAdapter {
         }
         catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    private static @Nullable Class<?> resolveClassOrNull(String clazz) {
+        try {
+            return Class.forName(clazz);
+        }
+        catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
+
+    private static @Nullable Class<?> resolveOneOfOrNull(String class1, String class2) {
+        Class<?> resolved = resolveClassOrNull(class1);
+        return resolved != null ? resolved : resolveClassOrNull(class2);
+    }
+
+    private static @Nullable MethodHandle resolveMethodOrNull(@Nullable Class<?> clazz, String name,
+            @Nullable Class<?> returnType, Class<?>... parameterTypes) {
+        if (clazz == null || returnType == null) {
+            return null;
+        }
+        try {
+            return MethodHandles.publicLookup().findVirtual(clazz, name, methodType(returnType, parameterTypes));
+        }
+        catch (NoSuchMethodException | IllegalAccessException e) {
+            log.debug("Failed to resolve method: " + name, e);
+            return null;
         }
     }
 
