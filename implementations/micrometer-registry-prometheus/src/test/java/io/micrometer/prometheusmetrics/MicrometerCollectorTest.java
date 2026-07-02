@@ -21,9 +21,10 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.prometheus.metrics.model.registry.MetricType;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
-import io.prometheus.metrics.model.snapshots.MetricMetadata;
+import io.prometheus.metrics.model.snapshots.MetricFamilyDescriptor;
 import org.junit.jupiter.api.Test;
 
 import java.util.stream.Stream;
@@ -46,10 +47,11 @@ class MicrometerCollectorTest {
             CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
                     Labels.of("k", Integer.toString(i)), null, 0);
 
-            collector.add(id,
-                    (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                            family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                            new MetricMetadata(conventionName), sample)));
+            collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName, family -> {
+                CounterSnapshot.Builder builder = CounterSnapshot.builder().name(family.getConventionName());
+                family.dataPointSnapshots.forEach(builder::dataPoint);
+                return builder.build();
+            }, sample)));
         }
 
         // Threw StackOverflowException because of too many nested streams originally
@@ -69,13 +71,17 @@ class MicrometerCollectorTest {
         Meter.Id sample2Id = id.withTags(Tags.of("k", "v2", "k2", "v1"));
 
         collector.add(sampleId,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample)));
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName, family -> {
+                    CounterSnapshot.Builder builder = CounterSnapshot.builder().name(family.getConventionName());
+                    family.dataPointSnapshots.forEach(builder::dataPoint);
+                    return builder.build();
+                }, sample)));
         collector.add(sample2Id,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample2)));
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName, family -> {
+                    CounterSnapshot.Builder builder = CounterSnapshot.builder().name(family.getConventionName());
+                    family.dataPointSnapshots.forEach(builder::dataPoint);
+                    return builder.build();
+                }, sample2)));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
@@ -92,14 +98,16 @@ class MicrometerCollectorTest {
                 Labels.of(asList("k1", "k4"), asList("v1", "v4")), null, 0);
         Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k4", "v4"));
 
-        collector.add(id,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample)));
-        collector.add(id2,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample2)));
+        collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName, family -> {
+            CounterSnapshot.Builder builder = CounterSnapshot.builder().name(family.getConventionName());
+            family.dataPointSnapshots.forEach(builder::dataPoint);
+            return builder.build();
+        }, sample)));
+        collector.add(id2, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName, family -> {
+            CounterSnapshot.Builder builder = CounterSnapshot.builder().name(family.getConventionName());
+            family.dataPointSnapshots.forEach(builder::dataPoint);
+            return builder.build();
+        }, sample2)));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
@@ -116,14 +124,16 @@ class MicrometerCollectorTest {
                 Labels.of(asList("k1", "k2"), asList("v1", "v2")), null, 0);
         Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k2", "v2"));
 
-        collector.add(id,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample)));
-        collector.add(id2,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample2)));
+        collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName, family -> {
+            CounterSnapshot.Builder builder = CounterSnapshot.builder().name(family.getConventionName());
+            family.dataPointSnapshots.forEach(builder::dataPoint);
+            return builder.build();
+        }, sample)));
+        collector.add(id2, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName, family -> {
+            CounterSnapshot.Builder builder = CounterSnapshot.builder().name(family.getConventionName());
+            family.dataPointSnapshots.forEach(builder::dataPoint);
+            return builder.build();
+        }, sample2)));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
@@ -140,16 +150,39 @@ class MicrometerCollectorTest {
                 Labels.EMPTY, null, 0);
         Meter.Id id2 = id.replaceTags(Tags.empty());
 
-        collector.add(id,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample)));
-        collector.add(id2,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample2)));
+        collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName, family -> {
+            CounterSnapshot.Builder builder = CounterSnapshot.builder().name(family.getConventionName());
+            family.dataPointSnapshots.forEach(builder::dataPoint);
+            return builder.build();
+        }, sample)));
+        collector.add(id2, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName, family -> {
+            CounterSnapshot.Builder builder = CounterSnapshot.builder().name(family.getConventionName());
+            family.dataPointSnapshots.forEach(builder::dataPoint);
+            return builder.build();
+        }, sample2)));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
+    }
+
+    @Test
+    void registrationDescriptorUsesPrometheusFamilyName() {
+        Meter.Id id = Metrics.counter("my.counter").getId();
+        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
+
+        CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
+                Labels.of("k", "v"), null, 0);
+        collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>("my_counter", family -> {
+            CounterSnapshot.Builder builder = CounterSnapshot.builder().name("my_counter");
+            family.dataPointSnapshots.forEach(builder::dataPoint);
+            return builder.build();
+        }, sample)), new MicrometerCollector.RegisteredFamily(
+                MetricFamilyDescriptor.counter("my_counter").help("help").labelNames(asList("k")).build()));
+
+        assertThat(collector.getPrometheusNames()).containsExactly("my_counter");
+        assertThat(collector.getMetricType("my_counter")).isEqualTo(MetricType.COUNTER);
+        assertThat(collector.getLabelNames("my_counter")).containsExactly("k");
+        assertThat(collector.getMetadata("my_counter")).isNotNull();
+        assertThat(collector.getMetadata("my_counter").getName()).isEqualTo("my_counter");
     }
 
 }
