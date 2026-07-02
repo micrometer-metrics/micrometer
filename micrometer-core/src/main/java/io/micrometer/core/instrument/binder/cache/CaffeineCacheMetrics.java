@@ -80,8 +80,8 @@ public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache
      * @return The instrumented cache, unchanged. The original cache is not wrapped or
      * proxied in any way.
      */
-    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName,
-            String... tags) {
+    public static <K, V extends @Nullable Object, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache,
+            String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
@@ -99,8 +99,8 @@ public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache
      * proxied in any way.
      * @see CacheStats
      */
-    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName,
-            Iterable<Tag> tags) {
+    public static <K, V extends @Nullable Object, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache,
+            String cacheName, Iterable<Tag> tags) {
         new CaffeineCacheMetrics<>(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
@@ -119,8 +119,8 @@ public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache
      * @return The instrumented cache, unchanged. The original cache is not wrapped or
      * proxied in any way.
      */
-    public static <K, V, C extends AsyncCache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName,
-            String... tags) {
+    public static <K, V extends @Nullable Object, C extends AsyncCache<K, V>> C monitor(MeterRegistry registry, C cache,
+            String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
@@ -138,8 +138,8 @@ public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache
      * proxied in any way.
      * @see CacheStats
      */
-    public static <K, V, C extends AsyncCache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName,
-            Iterable<Tag> tags) {
+    public static <K, V extends @Nullable Object, C extends AsyncCache<K, V>> C monitor(MeterRegistry registry, C cache,
+            String cacheName, Iterable<Tag> tags) {
         monitor(registry, cache.synchronous(), cacheName, tags);
         return cache;
     }
