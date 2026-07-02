@@ -191,17 +191,19 @@ public final class RequiredSearch {
     }
 
     private <M extends Meter> M getOne(Class<M> clazz) {
-        return meterStream().filter(clazz::isInstance)
+        Collection<Meter> registryMeters = registry.getMeters();
+        return meterStream(registryMeters).filter(clazz::isInstance)
             .findAny()
             .map(clazz::cast)
-            .orElseThrow(() -> MeterNotFoundException.forSearch(this, clazz));
+            .orElseThrow(() -> MeterNotFoundException.forSearch(this, clazz, registryMeters));
     }
 
     private <M extends Meter> Collection<M> findAll(Class<M> clazz) {
-        List<M> meters = meterStream().filter(clazz::isInstance).map(clazz::cast).collect(toList());
+        Collection<Meter> registryMeters = registry.getMeters();
+        List<M> meters = meterStream(registryMeters).filter(clazz::isInstance).map(clazz::cast).collect(toList());
 
         if (meters.isEmpty()) {
-            throw MeterNotFoundException.forSearch(this, clazz);
+            throw MeterNotFoundException.forSearch(this, clazz, registryMeters);
         }
 
         return meters;
@@ -212,18 +214,18 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public Collection<Meter> meters() {
-        List<Meter> meters = meterStream().collect(Collectors.toList());
+        Collection<Meter> registryMeters = registry.getMeters();
+        List<Meter> meters = meterStream(registryMeters).collect(Collectors.toList());
 
         if (meters.isEmpty()) {
-            throw MeterNotFoundException.forSearch(this, Meter.class);
+            throw MeterNotFoundException.forSearch(this, Meter.class, registryMeters);
         }
 
         return meters;
     }
 
-    private Stream<Meter> meterStream() {
-        Stream<Meter> meterStream = registry.getMeters()
-            .stream()
+    private Stream<Meter> meterStream(Collection<Meter> meters) {
+        Stream<Meter> meterStream = meters.stream()
             .filter(m -> nameMatches == null || nameMatches.test(m.getId().getName()));
 
         if (!requiredTags.isEmpty() || !requiredTagKeys.isEmpty()) {
