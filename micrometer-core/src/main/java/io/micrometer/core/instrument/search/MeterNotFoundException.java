@@ -42,8 +42,9 @@ public class MeterNotFoundException extends RuntimeException {
                 + (tagDetail == null ? "" : "\n   " + tagDetail.stream().collect(joining("\n   "))));
     }
 
-    static MeterNotFoundException forSearch(RequiredSearch search, Class<? extends Meter> requiredType) {
-        return new FromRequiredSearch(search, requiredType).build();
+    static MeterNotFoundException forSearch(RequiredSearch search, Class<? extends Meter> requiredType,
+            Collection<Meter> meters) {
+        return new FromRequiredSearch(search, requiredType, meters).build();
     }
 
     private static class FromRequiredSearch {
@@ -52,20 +53,22 @@ public class MeterNotFoundException extends RuntimeException {
 
         private final Class<? extends Meter> requiredMeterType;
 
-        private FromRequiredSearch(RequiredSearch search, Class<? extends Meter> requiredMeterType) {
+        private final Collection<Meter> meters;
+
+        private FromRequiredSearch(RequiredSearch search, Class<? extends Meter> requiredMeterType,
+                Collection<Meter> meters) {
             this.search = search;
             this.requiredMeterType = requiredMeterType;
+            this.meters = meters;
         }
 
         private @Nullable String nameDetail() {
             if (search.nameMatches == null)
                 return null;
 
-            Collection<String> matchingName = Search.in(search.registry)
-                .name(search.nameMatches)
-                .meters()
-                .stream()
+            Collection<String> matchingName = meters.stream()
                 .map(m -> m.getId().getName())
+                .filter(search.nameMatches)
                 .distinct()
                 .sorted()
                 .collect(toList());
@@ -94,11 +97,9 @@ public class MeterNotFoundException extends RuntimeException {
             List<String> details = new ArrayList<>();
 
             for (String requiredKey : search.requiredTagKeys) {
-                Collection<String> matchingRequiredKey = Search.in(search.registry)
-                    .name(search.nameMatches)
-                    .tagKeys(requiredKey)
-                    .meters()
-                    .stream()
+                Collection<String> matchingRequiredKey = meters.stream()
+                    .filter(m -> search.nameMatches == null || search.nameMatches.test(m.getId().getName()))
+                    .filter(m -> hasTagKey(m, requiredKey))
                     .filter(requiredMeterType::isInstance)
                     .map(m -> m.getId().getName())
                     .distinct()
@@ -121,11 +122,9 @@ public class MeterNotFoundException extends RuntimeException {
             }
 
             for (Tag requiredTag : search.requiredTags) {
-                Collection<String> matchingRequiredTag = Search.in(search.registry)
-                    .name(search.nameMatches)
-                    .tag(requiredTag.getKey(), requiredTag.getValue())
-                    .meters()
-                    .stream()
+                Collection<String> matchingRequiredTag = meters.stream()
+                    .filter(m -> search.nameMatches == null || search.nameMatches.test(m.getId().getName()))
+                    .filter(m -> m.getId().getTags().contains(requiredTag))
                     .filter(requiredMeterType::isInstance)
                     .map(m -> m.getId().getName())
                     .distinct()
@@ -135,11 +134,9 @@ public class MeterNotFoundException extends RuntimeException {
                 String requiredTagDetail = "a tag '" + requiredTag.getKey() + "' with value '" + requiredTag.getValue()
                         + "'.";
                 if (matchingRequiredTag.isEmpty()) {
-                    Collection<String> nonMatchingValues = Search.in(search.registry)
-                        .name(search.nameMatches)
-                        .tagKeys(requiredTag.getKey())
-                        .meters()
-                        .stream()
+                    Collection<String> nonMatchingValues = meters.stream()
+                        .filter(m -> search.nameMatches == null || search.nameMatches.test(m.getId().getName()))
+                        .filter(m -> hasTagKey(m, requiredTag.getKey()))
                         .filter(requiredMeterType::isInstance)
                         .map(m -> m.getId().getTag(requiredTag.getKey()))
                         .distinct()
@@ -172,6 +169,10 @@ public class MeterNotFoundException extends RuntimeException {
             return details;
         }
 
+        private boolean hasTagKey(Meter meter, String key) {
+            return meter.getId().getTag(key) != null;
+        }
+
         /**
          * This makes the (I think fairly safe) assumption that there aren't meters of two
          * or more types that vary only by tag such that none of the types match the
@@ -183,7 +184,9 @@ public class MeterNotFoundException extends RuntimeException {
                 return null;
 
             if (search.nameMatches != null) {
-                Collection<Meter> matchesName = Search.in(search.registry).name(search.nameMatches).meters();
+                Collection<Meter> matchesName = meters.stream()
+                    .filter(m -> search.nameMatches.test(m.getId().getName()))
+                    .collect(toList());
 
                 if (!matchesName.isEmpty()) {
                     Collection<String> nonMatchingTypes = matchesName.stream()
@@ -204,7 +207,7 @@ public class MeterNotFoundException extends RuntimeException {
                 }
             }
 
-            long count = Search.in(search.registry).meters().stream().filter(requiredMeterType::isInstance).count();
+            long count = meters.stream().filter(requiredMeterType::isInstance).count();
 
             if (count == 0) {
                 return NOT_OK + " No meters with type " + meterTypeName(requiredMeterType) + " were found.";
