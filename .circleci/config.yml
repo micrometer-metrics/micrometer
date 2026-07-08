@@ -67,15 +67,14 @@ commands:
             echo "=== Gradle cache size (after restore) ==="
             du -sh ~/.gradle 2>/dev/null || echo "N/A"
       - run:
-          name: downloadDependencies
-          command: ./gradlew downloadDependencies --console=plain
+          name: run gradle command
+          command: ./gradlew << parameters.command >>
       - save_cache:
           key: gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
           paths:
-            - ~/.gradle
-      - run:
-          name: run gradle command
-          command: ./gradlew << parameters.command >>
+            - ~/.gradle/caches/modules-2
+            - ~/.gradle/wrapper
+          when: always
       - run:
           name: collect test reports
           when: always

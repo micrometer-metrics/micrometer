@@ -366,13 +366,6 @@ subprojects {
         kotlinSourcesJar.enabled = false
     }
 
-    tasks.register('downloadDependencies') {
-        outputs.upToDateWhen { false }
-        doLast {
-            project.configurations.findAll { it.canBeResolved }*.files
-        }
-    }
-
     // Do not publish some modules
     if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'micrometer-osgi-test-slf4j2', 'concurrency-tests', 'micrometer-test-aspectj-ctw', 'micrometer-test-aspectj-ltw'].find { project.name.contains(it) }) {
         apply plugin: 'com.netflix.nebula.maven-publish'
