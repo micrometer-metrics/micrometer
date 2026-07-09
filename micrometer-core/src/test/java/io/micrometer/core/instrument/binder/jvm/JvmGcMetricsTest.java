@@ -84,12 +84,14 @@ class JvmGcMetricsTest {
     @Test
     void gcMetricsAvailableAfterGc() {
         binder.bindTo(registry);
-        System.gc();
         // GC notifications are posted and processed asynchronously. We must assert all
         // metrics inside the await block to avoid race conditions where some metrics are
         // not yet updated when the await block exits early (e.g. if a different GC
         // notification triggers it).
+        // We also trigger System.gc() inside the await block because generational GCs
+        // require multiple cycles to promote objects to the long-lived pool.
         await().atMost(5, TimeUnit.SECONDS).alias("NotificationListener takes time after GC").untilAsserted(() -> {
+            System.gc();
             assertThat(registry.get("jvm.gc.live.data.size").gauge().value()).isPositive();
             assertThat(registry.get("jvm.gc.memory.allocated").counter().count()).isPositive();
             assertThat(registry.get("jvm.gc.max.data.size").gauge().value()).isPositive();
