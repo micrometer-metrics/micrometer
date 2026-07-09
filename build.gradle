@@ -482,10 +482,7 @@ subprojects {
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal', 'io.micrometer.registry.otlp.internal']
 
                     fieldExcludes = []
-                    methodExcludes = [
-                        'io.micrometer.core.instrument.binder.okhttp3.OkHttpContext#getState()',
-                        'io.micrometer.core.instrument.binder.okhttp3.OkHttpContext#setState(io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationInterceptor$CallState)'
-                    ]
+                    methodExcludes = []
 
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
