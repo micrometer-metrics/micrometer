@@ -456,11 +456,11 @@ subprojects {
                     }
 
                     src "${rootUrl}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
-                    dest layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar")
+                    dest rootProject.layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar")
                 }
 
                 tasks.register("japicmp", me.champeau.gradle.japicmp.JapicmpTask) {
-                    oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
+                    oldClasspath.from(rootProject.layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
                     newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
                     onlyBinaryIncompatibleModified = true
                     failOnModification = true

@@ -70,6 +70,7 @@ commands:
           paths:
             - ~/.gradle/caches/modules-2
             - ~/.gradle/wrapper
+            - ~/micrometer/build/baselineLibs
           when: always
       - run:
           name: collect test reports
