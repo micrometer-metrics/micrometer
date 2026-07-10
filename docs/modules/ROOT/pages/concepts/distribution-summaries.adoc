@@ -1,0 +1,84 @@
+[[distribution-summaries]]
+= Distribution Summaries
+
+A distribution summary tracks the distribution of events. It is structurally similar to a timer but records values that do not represent a unit of time. For example, you could use a distribution summary to measure the payload sizes of requests hitting a server.
+
+The following example creates a distribution summary:
+
+[source, java]
+----
+DistributionSummary summary = registry.summary("response.size");
+----
+
+The interface contains a fluent builder for distribution summaries:
+
+[source, java]
+----
+DistributionSummary summary = DistributionSummary
+    .builder("response.size")
+    .description("a description of what this summary does") // optional
+    .baseUnit("bytes") // optional <1>
+    .tags("region", "test") // optional
+    .scale(100) // optional <2>
+    .register(registry);
+----
+
+<1> Add base units for maximum portability. Base units are part of the naming convention for some monitoring systems. Leaving it off and violating the naming convention has no adverse effect if you forget.
+<2> Optionally, you can provide a scaling factor by which each recorded sample is multiplied as it is recorded.
+
+NOTE: The maximum (which is named `max`) for basic `DistributionSummary` implementations, such as `CumulativeDistributionSummary` and `StepDistributionSummary`, is a time window maximum (`TimeWindowMax`).
+It means that its value is the maximum value during a time window.
+If no new values are recorded for the time window length, the maximum is reset to 0 as a new time window starts.
+The time window size until values are fully expired is the `expiry` multiplied by the `bufferLength` in `DistributionStatisticConfig`.
+`expiry` defaults to the step size of the meter registry unless it's explicitly set to a different value, and `bufferLength` defaults to `3`.
+A time window max is used to capture the maximum latency in a subsequent interval after heavy resource pressure triggers the latency and prevents metrics from being published.
+Percentiles are also time window percentiles (`TimeWindowPercentileHistogram`).
+
+== Scaling and Histograms
+
+Micrometer's preselected percentile histogram buckets are all integers from 1 to `Long.MAX_VALUE`. Currently, `minimumExpectedValue` and `maximumExpectedValue` serve to control the cardinality of the bucket set. If we try to detect that your min/max yields a small range and scale the preselected bucket domain to your summary's range, we do not have another lever to control bucket cardinality.
+
+Instead, if your summary's domain is more constrained, scale your summary's range by a fixed factor. The use case we have heard so far is for summaries of ratios whose domain is [0,1]. Given that scenario, we can use the following code to create values from 0 to 100:
+
+[source,java]
+----
+DistributionSummary.builder("my.ratio").scale(100).register(registry)
+----
+
+This way, the ratio winds up in the range [0,100] and we can set `maximumExpectedValue` to 100. You can pair this with custom SLO boundaries if you care about particular ratios:
+
+[source,java]
+----
+DistributionSummary.builder("my.ratio")
+   .scale(100)
+   .serviceLevelObjectives(70, 80, 90)
+   .register(registry)
+----
+
+
+== Memory Footprint Estimation
+
+The total memory footprint of a distribution summary can vary dramatically, depending on which options you choose. The following table of memory consumption is based on the use of various features. These figures assume no tags and a ring buffer length of 3. Adding tags adds somewhat to the total, as does increasing the buffer length. Total storage can also vary somewhat depending on the registry implementation.
+
+* R = Ring buffer length. We assume the default of 3 in all examples. R is set with `DistributionSummary.Builder#distributionStatisticBufferLength`.
+* B = Total histogram buckets. It can be SLO boundaries or percentile histogram buckets. By default, summaries have NO minimum and maximum expected value, so we ship all 276 predetermined histogram buckets. You should always clamp distribution summaries with a `minimumExpectedValue` and `maximumExpectedValue` when you intend to ship percentile histograms.
+* M = Time-decaying max. 104 bytes.
+* Fb = Fixed boundary histogram. 8b * B * R.
+* Pp = Percentile precision. By default, it is 1. It is generally in the range of [0, 3]. Pp is set with `DistributionSummary.Builder#percentilePrecision`.
+* Hdr(Pp) = High dynamic range histogram.
+  - When Pp = 0: 1.9kb * R + 0.8kb
+  - When Pp = 1: 3.8kb * R + 1.1kb
+  - When Pp = 2: 18.2kb * R + 4.7kb
+  - When Pp = 3: 66kb * R + 33kb
+
+
+[width="80%",options="header"]
+|=========================================================
+|Client-side percentiles |Histogram and/or SLOs |Formula | Example
+
+|No  |No  |M| ~0.1kb
+|No  |Yes |M + Fb|For percentile histogram clamped to 66 buckets, ~6kb
+|Yes |Yes |M + Hdr(Pp)|For the addition of a 0.95 percentile with defaults otherwise, ~12.6kb
+|=========================================================
+
+NOTE: For Prometheus, R is _always_ equal to 1, regardless of how you attempt to configure it through `DistributionSummary.Builder`. This special case exists for Prometheus because it expects cumulative histogram data that never rolls over.

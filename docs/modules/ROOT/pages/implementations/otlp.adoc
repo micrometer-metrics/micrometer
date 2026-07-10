@@ -1,0 +1,206 @@
+= Micrometer OTLP
+:sectnums:
+:system: otlp
+
+OpenTelemetry is a CNCF incubating project for providing standards for telemetry data. OpenTelemetry protocol (OTLP) is a vendor-neutral protocol that you can use to send data to various backends that support it. You can read the corresponding docs on how the metrics are ingested and can be visualized in the respective vendor docs.
+
+include::_install.adoc[]
+
+== Configuring
+The following example configures an OTLP registry:
+
+[source,java]
+----
+OtlpConfig otlpConfig = new OtlpConfig() {
+            @Override
+            public String get(final String key) {
+                return null;
+            }
+};
+
+MeterRegistry registry = new OtlpMeterRegistry(otlpConfig, Clock.SYSTEM);
+----
+
+`OtlpConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source (for example, a simple `Map` can work), you can override the default configuration through properties. For example, Micrometer's Spring Boot support binds properties prefixed with `management.otlp.metrics.export` directly to the `OtlpConfig`:
+
+[source, yaml]
+----
+management:
+  otlp:
+    metrics:
+      export:
+        # Supported configs
+        url: "https://otlp.example.com:4318/v1/metrics"
+        batchSize: 15000
+        aggregationTemporality: "cumulative"
+        compressionMode: "gzip"
+        headers:
+          header1: value1
+        step: 30s
+        resourceAttributes:
+          key1: value1
+----
+
+1. `url` - The address to which metrics are published. Environment variables `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` and `OTEL_EXPORTER_OTLP_ENDPOINT` are also supported in the default implementation. If a value is not provided, it defaults to `http://localhost:4318/v1/metrics`
+2. `batchSize` - number of ``Meter``s to include in a single payload sent to the backend. The default is 10,000.
+3. `aggregationTemporality` - https://opentelemetry.io/docs/specs/otel/metrics/data-model/#temporality[Aggregation temporality, window=_blank] determines how the additive quantities are expressed, in relation to time. The environment variable `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is supported by the default implementation. The supported values are `cumulative` or `delta`. Defaults to `cumulative`.
+4. `compressionMode` - Compression mode for metrics payload. The environment variables `OTEL_EXPORTER_OTLP_METRICS_COMPRESSION` and `OTEL_EXPORTER_OTLP_COMPRESSION` are supported by the default implementation. If both are set, `OTEL_EXPORTER_OTLP_METRICS_COMPRESSION` takes precedence. The supported values are `gzip` or `none`. Defaults to `none`.
+5. `headers` - Additional headers to send with exported metrics. This can be used for authorization headers. By default, headers are loaded from the config. If that is not set, they can be taken from the environment variables `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_METRICS_HEADERS`. If a header is set in both the environmental variables, the header in the latter overrides the former.
+6. `step` - the interval at which metrics will be published. The environment variable `OTEL_METRIC_EXPORT_INTERVAL` is supported by the default implementation. If a value is not provided, defaults to 1 minute.
+7. `resourceAttributes` - https://opentelemetry.io/docs/specs/otel/resource/semantic_conventions/#service[Resource attributes, window=_blank] are used for all metrics published. By default, Micrometer adds the following resource attributes:
+
+[%autowidth]
+|===
+|Key | Default value
+
+|telemetry.sdk.name
+|io.micrometer
+
+|telemetry.sdk.language
+|java
+
+|telemetry.sdk.version
+|<micrometer-core-version> (e.g.: 1.11.0)
+
+|service.name
+|unknown_service
+|===
+
+If this config is empty, resource attributes are loaded from the `OTEL_RESOURCE_ATTRIBUTES` environmental variable. You can override `service.name` by setting the `OTEL_SERVICE_NAME` environmental variable, and this takes precedence over other configs.
+
+== Customize metrics sender
+
+The `OtlpMeterRegistry` has an `OtlpMetricsSender` abstraction for sending batches of metrics in OTLP protobuf format.
+
+By default, metrics from the OTLP registry are sent via HTTP to the URL specified by `OtlpConfig#url` using an `HttpUrlConnectionSender`.
+You may use a different `HttpSender` implementation by creating and configuring an instance of `OtlpHttpMetricsSender` such as in the following example using the `OkHttpSender` instead of the default `HttpUrlConnectionSender`:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/OtlpMeterRegistryCustomizationTest.java[tags=customizeHttpSender, indent=0]
+-----
+
+You can also provide a custom implementation of `OtlpMetricsSender` that does not use `HttpSender` at all. `OtlpConfig#url` will be used as the address when the sender is called in the `OtlpMeterRegistry` `publish` method.
+For instance, if you made a gRPC implementation, you could configure it in the following way.
+Micrometer does not currently provide a gRPC implementation of `OtlpMetricsSender`.
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/OtlpMeterRegistryCustomizationTest.java[tags=customGrpcSender, indent=0]
+-----
+
+== Supported metrics
+https://opentelemetry.io/docs/specs/otel/metrics/data-model/#metric-points[Metric points, window=_blank] define the different data points that are supported in OTLP. Micrometer supports exporting the below data points in OTLP format,
+
+1. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#sums[Sums, window=_blank]
+2. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#gauge[Gauge, window=_blank]
+3. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#histogram[Histogram, window=_blank]
+4. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponentialhistogram[Exponential Histogram, window=_blank]
+5. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#summary-legacy[Summary, window=_blank]
+
+The following table maps OTLP data points and the Micrometer meters:
+
+[%autowidth]
+|===
+|OTLP data point | Micrometer meter type
+
+|Sums
+|Counter, FunctionCounter
+
+|Gauge
+|Gauge, TimeGauge, MultiGauge
+
+|Histogram
+|Timer, DistributionSummary, LongTaskTimer, FunctionTimer (only sum and count are set)
+
+|Exponential Histogram^*^
+|Timer, DistributionSummary
+
+|Summary
+|Timer, DistributionSummary, LongTaskTimer
+|===
+__* - Histogram or Exponential Histogram is determined based on the configuration of the `OtlpMeterRegistry`. See below section for more info.__
+
+*Note*:
+
+1. `max` on the Histogram data point is supported only in delta aggregation temporality. This is because the values represented by cumulative min and max stabilize as more events are recorded and are less useful when recorded over application's lifecycle.
+2. Currently, Micrometer only exports metadata for type `Meter` to OTLP.
+
+== Histograms and Percentiles
+Micrometer `Timer` and `DistributionSummary` support configuring xref:../concepts/histogram-quantiles.adoc[client-side percentiles and percentile histograms]. The OTLP specification terms the Summary data point (client-side percentiles) as legacy and not recommended for new applications. The Summary data point also cannot have min/max associated with it. Due to these reasons, Micrometer prefers exporting Timers and DistributionSummary as a Histogram data point. By default, a Timer/DistributionSummary without any additional percentile/histogram config is exported as a Histogram data point. However, by configuring the timer to generate only client-side percentiles, by using `publishPercentiles`, you can change this to a Summary data point that exports pre-calculated percentiles. When both `publishPercentiles` and (`publishPercentileHistogram` or `serviceLevelObjectives`) are configured, the Histogram data point is preferred and pre-calculated percentiles are *not* generated. The following table describes which data point is used with different configurations:
+
+[%autowidth]
+|===
+|Configuration | OTLP data point
+
+| publishPercentiles
+| Summary
+
+| publishPercentileHistogram
+| Histogram/Exponential Histogram ^*^
+
+| publishPercentiles and publishPercentileHistogram
+| Histogram/Exponential Histogram ^*^
+
+| serviceLevelObjectives
+| Histogram
+
+| publishPercentiles and serviceLevelObjectives
+| Histogram
+|===
+__* The configuration `histogramFlavorPerMeter` and `histogramFlavor` determine whether the OTLP DataPoint is a Histogram/Exponential Histogram.__
+
+`OtlpMeterRegistry` supports 2 types of Histogram implementations (1.Explicit Bucket Histogram (or simply called Histogram), 2. Exponential Histogram) when `publishPercentileHistogram` is configured.
+The type is determined by `histogramFlavorPerMeter` and `histogramFlavor` in `OtlpConfig` used by the registry.
+When the implementation is the exponential histogram, additional configuration applies:
+
+1. `maxScale` used to cap the maximum https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-scale[scale, window=_blank] used by the Exponential Histogram (defaults to 20).
+2. `maxBuckets` determines the maximum number of https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-buckets[buckets, window=_blank] to be used for exponential histograms (defaults to 160).
+3. `maxBucketsPerMeter` overrides `maxBuckets` for specific meter names, giving more fine-grained configurability.
+
+Since Exponential Histogram cannot have custom SLO's specified, an explicit bucket histogram is used whenever `serviceLevelObjectives` are configured.
+
+===  Configuration with Spring Boot
+If you use Spring Boot, you can use the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.customizing.per-meter-properties[per-meter properties, window=_blank] to configure this behavior.
+
+If you want to generate a Histogram data point for a Timer with name `test.timer` and default buckets generated by Micrometer, use:
+
+[source,properties]
+----
+management.metrics.distribution.percentiles-histogram.test.timer=true
+----
+
+For buckets with customized SLO, use:
+
+[source,properties]
+----
+management.metrics.distribution.slo.test.timer=10.0,100.0,500.0,1000.0
+----
+
+Alternatively, if you want to generate Summary data point for a timer with name `test.timer` and 90th and 99th percentiles, you can use:
+
+[source,properties]
+----
+management.metrics.distribution.percentiles.test.timer=0.9,0.99
+----
+
+== Exemplars
+
+Exemplars are metadata that you can attach to the value of your metrics time series.
+They can reference data outside of your metrics.
+A common use case is cross-referencing tracing information (`traceId`, `spanId`) but any arbitrary key-value pairs can be attached.
+Exemplars are not tags/dimensions (attributes in OTLP terminology); they will not increase cardinality since they belong to the values of the time series. Using them allows you to correlate metrics with traces/spans (or other concepts).
+
+Micrometer supports exemplars for `Counter`, `Timer`, and `DistributionSummary`.
+
+To enable exemplars, you need to provide an `ExemplarContextProvider` to the `OtlpMeterRegistry` using its builder:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/OtlpMeterRegistryCustomizationTest.java[tags=customizeExemplarContextProvider, indent=0]
+-----
+
+The implementation of `ExemplarContextProvider` is responsible for providing an `OtlpExemplarContext` which contains the necessary information (traceId, spanId, and arbitrary key-value pairs) to be attached to the exemplar.
+If the exemplar information is not available (there is no current Span or the Span is not sampled) or the implementor does not want this particular Span to be used as an exemplar, the `ExemplarContextProvider` should return `null`.
+
+NOTE: The `traceId` and `spanId` passed to `OtlpExemplarContext` must be case-insensitive hex-encoded strings.

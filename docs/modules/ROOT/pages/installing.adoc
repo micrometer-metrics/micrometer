@@ -1,0 +1,74 @@
+[[installing]]
+= Installing
+:docinfo1:
+
+Micrometer contains a core library with the instrumentation SPI and an in-memory implementation that does not export data anywhere, a series of modules with implementations for various monitoring systems, and a test module.
+
+To use Micrometer, add the dependency for your monitoring system. It is recommended to use the BOM provided by Micrometer, you can configure it as follows (you only need to declare it once in your project).
+
+NOTE: If you use a framework, it might have dependency management that defines Micrometer versions or imports the Micrometer BOM. You can defer to the framework's dependency management instead of declaring the Micrometer BOM directly in that case.
+
+== Gradle
+
+The following example configures the Micrometer BOM in Gradle:
+
+[source,groovy,subs=+attributes]
+----
+implementation platform('io.micrometer:micrometer-bom:{micrometer-version}')
+----
+
+After the BOM is configured, the following example adds Prometheus in Gradle:
+
+[source,groovy]
+----
+implementation 'io.micrometer:micrometer-registry-prometheus'
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+== Maven
+
+The following example configures the Micrometer BOM in Maven:
+
+[source,xml,subs=+attributes]
+----
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-bom</artifactId>
+            <version>{micrometer-version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+----
+
+After the BOM is configured, the following example adds Prometheus in Maven:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-registry-prometheus</artifactId>
+</dependency>
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+== Multiple Monitoring Systems
+
+Through Micrometer's composite meter registry (described in greater detail in xref:./concepts/registry.adoc#_composite_registries["Concepts"]), you can configure more than one registry implementation if you intend to publish metrics to more than one monitoring system.
+
+If you have not decided on a monitoring system yet and want only to try out the instrumentation SPI, you can add a dependency on `micrometer-core` instead and configure the `SimpleMeterRegistry`.
+
+== Snapshots
+
+Every successful https://app.circleci.com/pipelines/github/micrometer-metrics/micrometer[build] of Micrometer's `main` and maintenance branches (for example, `1.7.x`) results in the publication of a new snapshot version. You can use the latest snapshot by adding the Maven repository `https://repo.spring.io/snapshot` to your build and using the corresponding snapshot version -- for example, `1.8.0-SNAPSHOT`.
+
+== Milestones
+
+Milestone releases are made available for early testing purposes and are not intended for production use.
+Milestone releases are published to Maven Central.
+Milestones are marked as "`pre-releases`" on GitHub, and the version has a suffix, such as `-M1` or `-RC1` (milestone 1 or release candidate 1, respectively).

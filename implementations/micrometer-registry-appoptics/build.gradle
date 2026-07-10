@@ -1,0 +1,8 @@
+dependencies {
+    api project(':micrometer-core')
+
+    implementation libs.slf4jApi
+
+    testImplementation project(':micrometer-test')
+    testImplementation libs.mockitoCore5
+}

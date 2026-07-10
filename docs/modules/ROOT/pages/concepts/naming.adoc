@@ -1,0 +1,93 @@
+[[naming-meters]]
+= Naming Meters
+
+Micrometer employs a naming convention that separates lowercase words with a `.` (dot) character. Different monitoring systems have different recommendations regarding naming conventions, and some naming conventions may be incompatible between one system and another. Each Micrometer implementation for a monitoring system comes with a naming convention that transforms lowercase dot notation names to the monitoring system's recommended naming convention. Additionally, this naming convention implementation removes special characters that are disallowed by the monitoring system from the metric names and tags. You can override the default naming convention for a registry by implementing `NamingConvention` and setting it on the registry:
+
+====
+[source,java]
+----
+registry.config().namingConvention(myCustomNamingConvention);
+----
+====
+
+With naming conventions in place, the following timer registered in Micrometer looks good natively in a wide variety of monitoring systems:
+
+====
+[source,java]
+----
+registry.timer("http.server.requests");
+----
+====
+
+. Prometheus - `http_server_requests_duration_seconds`
+. Atlas - `httpServerRequests`
+. Graphite - `http.server.requests`
+. InfluxDB - `http_server_requests`
+
+By adhering to Micrometer's lowercase dot notation convention, you guarantee the maximum degree of portability for your metric names across monitoring systems.
+
+== Tag Naming
+
+TIP: We recommend that you follow the same lowercase dot notation described for meter names when naming tags. Using this consistent naming convention for tags allows for better translation into the respective monitoring system's idiomatic naming schemes.
+
+Suppose we are trying to measure the number of http requests and the number of database calls.
+
+*Recommended Approach*
+
+====
+[source,java]
+----
+registry.counter("database.calls", "db", "users")
+registry.counter("http.requests", "uri", "/api/users")
+----
+====
+
+This variant provides enough context so that, if only the name is selected, the value can be reasoned about and is at least potentially meaningful. For example if we select `database.calls`, we can see the total number of calls to all databases. Then we can group by or select by `db` to drill down further or perform comparative analysis on the contribution of calls to each database.
+
+*Bad Approach*
+
+====
+[source,java]
+----
+registry.counter("calls",
+    "class", "database",
+    "db", "users");
+
+registry.counter("calls",
+    "class", "http",
+    "uri", "/api/users");
+----
+====
+
+In this approach, if we select `calls`, we get a value that is an aggregate of the number of calls to the database and to our API endpoint. This time series is not useful without further dimensional drill-down.
+
+== Common Tags
+
+You can define common tags at the registry level and add them to every metric reported to the monitoring system. This is generally used for dimensional drill-down on the operating environment, such as host, instance, region, stack, and others. The following lines set the same tag in two equivalent ways:
+
+====
+[source,java]
+----
+registry.config().commonTags("stack", "prod", "region", "us-east-1");
+registry.config().commonTags(Arrays.asList(Tag.of("stack", "prod"), Tag.of("region", "us-east-1"))); // equivalently
+----
+====
+
+Further calls to `commonTags` append additional common tags.
+
+[IMPORTANT]
+====
+Common tags generally have to be added to the registry _before_ any (possibly autoconfigured) meter binders. Depending on your environment, there are different ways to achieve this.
+
+If you use Spring Boot, you have two options:
+
+* Add your common tags with https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.customizing.common-tags[configuration properties]
+* If you need more flexibility (for example, you have to add common tags to a registry defined in a shared library), register a `MeterRegistryCustomizer` callback interface as a bean to add your common tags. See the
+https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.getting-started[Spring Boot Reference Documentation] for more information.
+====
+
+== Tag Values
+
+Tag values must be non-null.
+
+WARNING: Beware of the potential for tag values coming from user-supplied sources to blow up the cardinality of a metric. You should always carefully normalize and add bounds to user-supplied input. Sometimes, the cause is sneaky. Consider the URI tag for recording HTTP requests on service endpoints. If we do not constrain 404's to a value like NOT_FOUND, the dimensionality of the metric would grow with each resource that cannot be found.

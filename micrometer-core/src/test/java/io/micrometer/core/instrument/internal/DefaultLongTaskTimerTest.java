@@ -1,0 +1,184 @@
+/*
+ * Copyright 2024 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.core.instrument.internal;
+
+import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import io.micrometer.core.instrument.internal.DefaultLongTaskTimer.SampleImpl;
+import io.micrometer.core.instrument.internal.DefaultLongTaskTimer.SampleImplCounted;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class DefaultLongTaskTimerTest {
+
+    private MockClock clock;
+
+    private MeterRegistry registry;
+
+    @BeforeEach
+    void setUp() {
+        clock = new MockClock();
+        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
+    }
+
+    @Test
+    void timestampCollisionShouldBeOk() {
+        LongTaskTimer ltt = LongTaskTimer.builder("my.timer").register(registry);
+        LongTaskTimer.Sample sample1 = ltt.start();
+        LongTaskTimer.Sample sample2 = ltt.start();
+        assertThat(sample1).isInstanceOf(SampleImpl.class).isNotInstanceOf(SampleImplCounted.class);
+        assertThat(sample2).isInstanceOf(SampleImplCounted.class).isNotSameAs(sample1);
+
+        SampleImpl sampleImpl1 = (SampleImpl) sample1;
+        SampleImpl sampleImpl2 = (SampleImpl) sample2;
+        clock.addSeconds(1);
+        assertThat(sample1.duration(TimeUnit.SECONDS)).isEqualTo(1);
+        assertThat(sample2.duration(TimeUnit.SECONDS)).isEqualTo(1);
+
+        LongTaskTimer.Sample sample3 = ltt.start();
+        LongTaskTimer.Sample sample4 = ltt.start();
+        assertThat(sample3).isInstanceOf(SampleImpl.class).isNotInstanceOf(SampleImplCounted.class);
+        assertThat(sample4).isInstanceOf(SampleImplCounted.class);
+
+        SampleImpl sampleImpl3 = (SampleImpl) sample3;
+        SampleImpl sampleImpl4 = (SampleImpl) sample4;
+        assertThat(ltt.activeTasks()).isEqualTo(4);
+        assertThat(sampleImpl4).isEqualByComparingTo(sampleImpl4)
+            .isGreaterThan(sampleImpl3)
+            .isGreaterThan(sampleImpl2)
+            .isGreaterThan(sampleImpl1);
+        assertThat(sampleImpl3).isEqualByComparingTo(sampleImpl3)
+            .isLessThan(sampleImpl4)
+            .isGreaterThan(sampleImpl2)
+            .isGreaterThan(sampleImpl1);
+        assertThat(sampleImpl2).isEqualByComparingTo(sampleImpl2)
+            .isLessThan(sampleImpl4)
+            .isLessThan(sampleImpl3)
+            .isGreaterThan(sampleImpl1);
+        assertThat(sampleImpl1).isEqualByComparingTo(sampleImpl1)
+            .isLessThan(sampleImpl4)
+            .isLessThan(sampleImpl3)
+            .isLessThan(sampleImpl2);
+
+        assertThat(sample2.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(1));
+        assertThat(ltt.activeTasks()).isEqualTo(3);
+        assertThat(sample3.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(0));
+        assertThat(ltt.activeTasks()).isEqualTo(2);
+        assertThat(sample4.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(0));
+        assertThat(ltt.activeTasks()).isEqualTo(1);
+        assertThat(sample1.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(1));
+        assertThat(ltt.activeTasks()).isEqualTo(0);
+    }
+
+    @Test
+    void counterShouldSurviveOverflow() {
+        LongTaskTimer ltt = LongTaskTimer.builder("my.timer").register(registry);
+        assertThat(ltt).isInstanceOf(DefaultLongTaskTimer.class);
+        assertInternalCounterIsZero(ltt.start());
+
+        ((DefaultLongTaskTimer) ltt).setCounter(Integer.MAX_VALUE - 2);
+        assertInternalCounterValue(ltt.start(), Integer.MAX_VALUE - 1);
+        assertInternalCounterValue(ltt.start(), Integer.MAX_VALUE);
+        assertInternalCounterValue(ltt.start(), Integer.MIN_VALUE);
+        assertInternalCounterValue(ltt.start(), Integer.MIN_VALUE + 1);
+    }
+
+    @Test
+    void counterShouldJumpZero() {
+        LongTaskTimer ltt = LongTaskTimer.builder("my.timer").register(registry);
+        assertThat(ltt).isInstanceOf(DefaultLongTaskTimer.class);
+        assertInternalCounterIsZero(ltt.start());
+
+        ((DefaultLongTaskTimer) ltt).setCounter(-2);
+        assertInternalCounterValue(ltt.start(), -1);
+        assertInternalCounterValue(ltt.start(), 1);
+    }
+
+    @Test
+    void histogramWithMoreBucketsThanActiveTasks() {
+        MockClock clock = new MockClock();
+        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock) {
+            @Override
+            protected LongTaskTimer newLongTaskTimer(Meter.Id id,
+                    DistributionStatisticConfig distributionStatisticConfig) {
+                // supportsAggregablePercentiles true for using pre-defined histogram
+                // buckets
+                return new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, true);
+            }
+        };
+        LongTaskTimer ltt = LongTaskTimer.builder("my.ltt").publishPercentileHistogram().register(registry);
+        ltt.start();
+        clock.add(15, TimeUnit.MINUTES);
+        ltt.start();
+        clock.add(5, TimeUnit.MINUTES);
+        // one task at 20 minutes, one task at 5 minutes
+        CountAtBucket[] countAtBuckets = ltt.takeSnapshot().histogramCounts();
+        int index = 0;
+        while (countAtBuckets[index].bucket(TimeUnit.NANOSECONDS) < Duration.ofMinutes(5).toNanos()) {
+            assertThat(countAtBuckets[index++].count()).isZero();
+        }
+        while (countAtBuckets[index].bucket(TimeUnit.NANOSECONDS) < Duration.ofMinutes(20).toNanos()) {
+            assertThat(countAtBuckets[index++].count()).isOne();
+        }
+        while (index < countAtBuckets.length) {
+            assertThat(countAtBuckets[index++].count()).isEqualTo(2);
+        }
+    }
+
+    @Test
+    @Issue("#3877")
+    void snapshotWithMorePercentilesThanValuesContainsAllConfiguredPercentilesInSortedOrder() {
+        // N=1, percentiles [0.1, 0.25, 0.5, 0.75, 0.9]
+        // The above-line condition is p*2>1, so {0.75, 0.9} go directly to max and
+        // {0.1, 0.25, 0.5} enter the interpolation loop.
+        // Prior to #7507, we process one percentile per value, which would be wrong here.
+        // We would process 0.1 with the first and only duration and leave both 0.25 and
+        // 0.5 uncomputed.
+        final LongTaskTimer ltt2 = LongTaskTimer.builder("my.ltt.2")
+            .publishPercentiles(0.1, 0.25, 0.5, 0.75, 0.9)
+            .register(registry);
+        ltt2.start();
+        clock.add(Duration.ofSeconds(5));
+        final ValueAtPercentile[] snap2 = ltt2.takeSnapshot().percentileValues();
+        // Prior to #7507, this would be [0.1, 0.75, 0.9] only
+        assertThat(snap2).extracting(ValueAtPercentile::percentile).containsExactly(0.1, 0.25, 0.5, 0.75, 0.9);
+        assertThat(snap2).extracting(v -> v.value(TimeUnit.SECONDS)).containsOnly(5.0);
+    }
+
+    private void assertInternalCounterIsZero(LongTaskTimer.Sample sample) {
+        assertThat(sample).isNotInstanceOf(SampleImplCounted.class)
+            .isInstanceOfSatisfying(SampleImpl.class, si -> assertThat(si.counter()).isZero());
+    }
+
+    private void assertInternalCounterValue(LongTaskTimer.Sample sample, int expected) {
+        assertThat(sample).isInstanceOfSatisfying(SampleImplCounted.class,
+                sic -> assertThat(sic.counter()).isEqualTo(expected));
+    }
+
+}

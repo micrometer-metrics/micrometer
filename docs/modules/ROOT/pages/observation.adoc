@@ -1,0 +1,8 @@
+[[micrometer-observation-overview]]
+= Micrometer Observation
+
+Micrometer Observation is part of the https://github.com/micrometer-metrics/micrometer[Micrometer] project and contains the Observation API. The main idea behind it is that you
+
+****
+_"Instrument code once, and get multiple benefits out of it."_
+****

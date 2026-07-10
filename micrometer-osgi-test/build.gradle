@@ -1,0 +1,67 @@
+import aQute.bnd.gradle.Bundle
+import aQute.bnd.gradle.Resolve
+import aQute.bnd.gradle.TestOSGi
+
+// BND requires Java 17
+if (javaLanguageVersion.asInt() < 17) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
+dependencies {
+    testImplementation libs.assertj
+    testImplementation libs.osgiJunit5
+    testImplementation libs.slf4jApi
+
+    testImplementation project(':micrometer-core')
+
+    testImplementation project(':micrometer-registry-jmx')
+    // osgi test fails when the new prometheus client is used
+    //testImplementation project(':micrometer-registry-prometheus')
+    testImplementation project(':micrometer-registry-prometheus-simpleclient')
+
+    testImplementation libs.felixFramework
+
+    // JUnit needs to be an 'implementation' dependency instead of 'testImplementation' otherwise
+    // tests are not discovered and executed (so the tests never fail), see: https://github.com/micrometer-metrics/micrometer/issues/7060
+    implementation platform(libs.junitBom)
+    implementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
+
+    testRuntimeOnly libs.felixScr
+    testRuntimeOnly libs.slfj4Simple
+}
+
+def testingBundle = tasks.register('testingBundle', Bundle) {
+    archiveClassifier = 'tests'
+    from sourceSets.test.output
+    bundle {
+        bnd """\
+            Bundle-SymbolicName: \${task.archiveBaseName}-\${task.archiveClassifier}
+            Test-Cases: \${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+            """.stripIndent()
+    }
+}
+
+def resolveTask = tasks.register("resolve", Resolve) {
+    dependsOn jar, testingBundle
+    project.ext.osgiRunee="JavaSE-${javaLanguageVersion.asInt()}"
+    bundles = files(sourceSets.test.runtimeClasspath, configurations.archives.artifacts.files)
+    bndrun = file("test.bndrun")
+    outputBndrun = layout.buildDirectory.file("resolved-test.bndrun")
+}
+
+tasks.register("testOSGi", TestOSGi) {
+    group = "verification"
+    description = "Run OSGi tests"
+    bundles = files(sourceSets.test.runtimeClasspath, configurations.archives.artifacts.files)
+    bndrun = resolveTask.flatMap { it.outputBndrun }
+}
+
+tasks.test.configure {
+    actions.clear()
+    dependsOn testOSGi
+}
+
+artifacts {
+    archives testingBundle
+}

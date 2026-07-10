@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+}
+
+dependencies {
+    implementation platform(libs.reactorBom)
+    implementation(platform(libs.prometheusSimpleClientBom))
+
+    implementation project(':micrometer-core')
+    implementation project(':micrometer-observation')
+    implementation(libs.colt)
+    implementation("ch.qos.logback:logback-classic:$logback12Version")
+    implementation(libs.slf4jApi)
+
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'otlp'].each { sys ->
+        implementation project(":micrometer-registry-$sys")
+    }
+
+    implementation libs.prometheusSimpleClientPushgateway
+    implementation 'io.projectreactor.netty:reactor-netty-http'
+    implementation libs.kafkaClients
+    implementation(libs.kafkaJunit)
+    implementation libs.grpcServices
+    implementation libs.grpcInprocess
+
+}
+
+configurations.all {
+    // see: https://github.com/micrometer-metrics/micrometer/issues/3954
+    exclude group: 'com.google.guava', module: 'listenablefuture'
+    exclude group: 'io.grpc', module: 'grpc-netty-shaded'
+}

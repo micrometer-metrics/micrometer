@@ -1,0 +1,16 @@
+description = 'Test compatibility kit for extensions of Micrometer Observation'
+
+dependencies {
+    api project(':micrometer-observation')
+
+    api libs.assertj
+    implementation platform(libs.junitBom)
+    implementation libs.junitJupiter
+
+    // hard-code mockito 4 version here due to dependabot limitation with multiple versions of same dependency
+    // mockito 4 because we want to maintain compatibility with Java 8
+    implementation('org.mockito:mockito-core:4.11.0')
+
+    testImplementation libs.awaitility
+    testImplementation libs.archunitJunit5
+}

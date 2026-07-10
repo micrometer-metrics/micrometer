@@ -1,0 +1,555 @@
+buildscript {
+    ext.gradleJvmVersion = JavaLanguageVersion.of(JavaVersion.current().getMajorVersion())
+    ext.javaLanguageVersion = project.hasProperty('toolchainVersion') && project.property('toolchainVersion') != '' ? JavaLanguageVersion.of(project.property('toolchainVersion') as int) : gradleJvmVersion
+    ext.javaTargetVersion = JavaVersion.VERSION_1_8
+
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    dependencies {
+        classpath libs.plugin.errorprone
+        classpath libs.plugin.license
+        classpath libs.plugin.nebulaRelease
+        classpath libs.plugin.nebulaPublishing
+        classpath libs.plugin.nebulaProject
+        classpath libs.plugin.nebulaInfo
+        classpath libs.plugin.noHttp
+        classpath libs.plugin.nexusPublish
+        classpath libs.plugin.javaformat
+        classpath libs.plugin.japicmp
+        classpath libs.plugin.downloadTask
+        classpath libs.plugin.spotless
+        classpath libs.plugin.bnd
+
+        constraints {
+            classpath(libs.asmForPlugins) {
+                because 'Supports modern JDKs'
+            }
+        }
+    }
+
+    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+}
+
+plugins {
+    alias(libs.plugins.kotlin) apply false
+    alias(libs.plugins.shadow) apply false
+}
+
+// Hacks because of Antora's clone/checkout/worktrees behavior
+// Antora uses shallow-clone and worktrees to check out branches/tags.
+if (project.hasProperty('antora')) {
+    'git fetch --unshallow --all --tags'.execute().text // Antora shallow-clones so there is no history (we need commit history to find the last tag in the tree)
+    String ref = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+    if (ref == 'HEAD') { // if Antora checks out a tag instead of a branch
+        String tag = 'git tag --points-at HEAD'.execute().text.trim() // jgit is not able to figure out tags in Antora's worktree
+        if (tag) {
+            println "Found release tag: $tag, using it as release.version"
+            ext['release.version'] = tag.substring(1)
+        }
+    }
+}
+
+// TODO: remove this hack, see: https://github.com/nebula-plugins/nebula-release-plugin/issues/213
+def releaseStage = findProperty('release.stage')
+apply plugin: 'com.netflix.nebula.info'
+apply plugin: 'com.netflix.nebula.project'
+apply plugin: 'com.netflix.nebula.release'
+release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
+
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
+
+allprojects {
+    group = 'io.micrometer'
+    ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
+
+    afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
+}
+
+subprojects {
+    apply plugin: 'net.ltgt.errorprone'
+    apply plugin: 'signing'
+    apply plugin: 'io.spring.javaformat'
+    apply plugin: 'com.diffplug.spotless'
+
+    if (project.name != 'micrometer-bom') {
+        tasks.withType(JavaCompile).configureEach {
+            if (javaLanguageVersion.asInt() == 21) {
+                // Helps NullAway with type annotations on JDK 21
+                // See https://github.com/uber/NullAway/wiki/JSpecify-Support#supported-jdk-versions
+                options.compilerArgs.add("-XDaddTypeAnnotationsToSymbol=true")
+            }
+            if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
+                options.errorprone.disable(
+                    "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
+                )
+            }
+            options.errorprone {
+                disableWarningsInGeneratedCode = true
+                excludedPaths = ".*/generated/.*"
+
+                disable(
+                    "StringConcatToTextBlock" // Requires JDK 15+
+                )
+
+                error(
+                    "AlmostJavadoc",
+                    "ArrayAsKeyOfSetOrMap",
+                    "AttemptedNegativeZero",
+                    "BadImport",
+                    "CatchAndPrintStackTrace",
+                    "ClassCanBeStatic",
+                    "ClassInitializationDeadlock",
+                    "ClassName",
+                    "CollectionUndefinedEquality",
+                    "DefaultCharset",
+                    "DoNotCallSuggester",
+                    "EnumOrdinal",
+                    "EqualsGetClass",
+                    "FallThrough",
+                    "Finally",
+                    "InlineFormatString",
+                    "LongDoubleConversion",
+                    "MissingOverride",
+                    "MixedMutabilityReturnType",
+                    "ModifyCollectionInEnhancedForLoop",
+                    "MutablePublicArray",
+                    "NarrowCalculation",
+                    "NullAway",
+                    "OperatorPrecedence",
+                    "StringCaseLocaleUsage",
+                    "StringSplitter",
+                    "UnnecessaryAsync",
+                    "UnnecessaryParentheses",
+                    "UnusedMethod",
+                    "URLEqualsHashCode"
+                )
+
+                option("NullAway:OnlyNullMarked", "true")
+                option("NullAway:CustomContractAnnotations", "io.micrometer.common.lang.internal.Contract,org.assertj.core.internal.annotation.Contract")
+                option("NullAway:CheckContracts", "true")
+                option("NullAway:HandleTestAssertionLibraries", "true")
+                if (javaLanguageVersion.canCompileOrRun(21)) {
+                    // see https://bugs.openjdk.org/browse/JDK-8346471
+                    // see https://github.com/uber/NullAway/wiki/JSpecify-Support
+                    option("NullAway:JSpecifyMode", "true")
+                }
+                if (!javaLanguageVersion.canCompileOrRun(21)) {
+                    // Error Prone 2.43.0 requires JDK 21+
+                    enabled = false
+                }
+                if (System.env.CI != null) {
+                    disableAllWarnings = true
+                }
+            }
+        }
+        if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks') || project.name.contains('osgi-test')) {
+            apply plugin: 'java'
+        } else {
+            apply plugin: 'java-library'
+            dependencies {
+                api(libs.jspecify)
+
+                testImplementation platform(libs.junitBom)
+                testImplementation libs.junitJupiter
+                testRuntimeOnly libs.junitPlatformLauncher
+            }
+        }
+        apply plugin: 'com.github.hierynomus.license'
+        apply plugin: 'checkstyle'
+        apply plugin: 'io.spring.nohttp'
+
+        java {
+            // It is more idiomatic to define different features for different sets of optional
+            // dependencies, e.g., 'dropwizard' and 'reactor'. If this library published Gradle
+            // metadata, Gradle users would be able to use these feature names in their dependency
+            // declarations instead of understanding the actual required optional dependencies.
+            // But we don't publish Gradle metadata yet and this may be overkill so just have a
+            // single feature for now to correspond to any optional dependency.
+            registerFeature('optional') {
+                usingSourceSet(sourceSets.main)
+            }
+
+            toolchain {
+                languageVersion = javaLanguageVersion
+            }
+            sourceCompatibility = javaTargetVersion
+            targetCompatibility = javaTargetVersion
+        }
+
+        // Dependencies for all projects that are not transitive to consumers of our modules
+        dependencies {
+            checkstyle libs.spring.javaformatCheckstyle
+            if (javaLanguageVersion.canCompileOrRun(21)) {
+                errorprone(libs.errorprone)
+                errorprone(libs.nullAway)
+            }
+        }
+
+        tasks {
+            compileJava {
+                options.encoding = 'UTF-8'
+                options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+
+                sourceCompatibility = javaTargetVersion
+                targetCompatibility = javaTargetVersion
+
+                // ensure Java 8 baseline is enforced for main source
+                options.release = 8
+
+                doLast {
+                    task -> logger.info("Compiling with " + task.javaCompiler.get().executablePath)
+                }
+            }
+            compileTestJava {
+                options.encoding = 'UTF-8'
+                options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+
+                sourceCompatibility = JavaVersion.VERSION_11
+                targetCompatibility = JavaVersion.VERSION_11
+            }
+
+
+            javadoc {
+                if (project.name.contains('samples') || project.name.contains("-test-aspectj")) {
+                    enabled = false
+                } else {
+                    configure(options) {
+                        tags(
+                                'apiNote:a:API Note:',
+                                'implSpec:a:Implementation Requirements:',
+                                'implNote:a:Implementation Note:'
+                        )
+                        options.addBooleanOption('Xdoclint:all,-missing', true)
+                    }
+                }
+            }
+        }
+
+        normalization {
+            runtimeClasspath {
+                metaInf {
+                    [
+                            'Bnd-LastModified',
+                            'Build-Date',
+                            'Build-Date-UTC',
+                            'Built-By',
+                            'Built-OS',
+                            'Build-Host',
+                            'Build-Job',
+                            'Build-Number',
+                            'Build-Id',
+                            'Change',
+                            'Full-Change',
+                            'Branch',
+                            'Module-Origin',
+                            'Created-By',
+                            'Build-Java-Version',
+                            'Build-Timezone',
+                            'Build-Url'
+                    ].each {
+                        ignoreAttribute it
+                        ignoreProperty it
+                    }
+                }
+            }
+        }
+
+        //noinspection GroovyAssignabilityCheck
+        test {
+            // set heap size for the test JVM(s)
+            maxHeapSize = "1500m"
+
+            useJUnitPlatform {
+                excludeTags 'docker'
+            }
+        }
+
+        tasks.register("dockerTest", Test) {
+            // set heap size for the test JVM(s)
+            maxHeapSize = "1500m"
+
+            useJUnitPlatform {
+                includeTags 'docker'
+            }
+        }
+
+        tasks.withType(Test).configureEach {
+            // https://docs.gradle.org/current/userguide/upgrading_major_version_9.html#test_tasks_may_no_longer_execute_expected_tests
+            testClassesDirs = testing.suites.test.sources.output.classesDirs
+            classpath = testing.suites.test.sources.runtimeClasspath
+            testLogging.exceptionFormat = 'full'
+            develocity.testRetry {
+                maxFailures = 5
+                maxRetries = 3
+            }
+        }
+
+        license {
+            header = rootProject.file('gradle/licenseHeader.txt')
+            strictCheck = true
+            mapping {
+                java = 'SLASHSTAR_STYLE'
+            }
+            sourceSets = project.sourceSets
+
+            ext.year = Calendar.getInstance().get(Calendar.YEAR)
+            skipExistingHeaders = true
+            exclude '**/*.json' // comments not supported
+        }
+
+        spotless {
+            kotlin {
+                ktlint().editorConfigOverride(['ktlint_standard_no-wildcard-imports': 'disabled'])
+            }
+        }
+
+        // Publish resolved versions.
+        plugins.withId('maven-publish') {
+            publishing {
+                publications {
+                    nebula(MavenPublication) {
+                        versionMapping {
+                            allVariants {
+                                fromResolutionResult()
+                            }
+                        }
+
+                        // We publish resolved versions so don't need to publish our dependencyManagement
+                        // too. This is different from many Maven projects, where published artifacts often
+                        // don't include resolved versions and have a parent POM including dependencyManagement.
+                        pom.withXml {
+                            def dependencyManagement = asNode().get('dependencyManagement')
+                            if (dependencyManagement) {
+                                asNode().remove(dependencyManagement)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    plugins.withId('maven-publish') {
+        publishing {
+            publications {
+                nebula(MavenPublication) {
+                    // Nebula converts dynamic versions to static ones so it's ok.
+                    suppressAllPomMetadataWarnings()
+                }
+            }
+            repositories {
+                maven {
+                    name = 'Snapshot'
+                    url = 'https://repo.spring.io/snapshot'
+                    credentials {
+                        username = findProperty('SNAPSHOT_REPO_USER')
+                        password = findProperty('SNAPSHOT_REPO_PASSWORD')
+                    }
+                }
+                if (project.hasProperty("deploymentRepository")) {
+                    maven {
+                        name = 'Deployment'
+                        url = project.property("deploymentRepository")
+                    }
+                }
+            }
+        }
+
+        signing {
+            required = System.env.CIRCLE_STAGE == 'deploy'
+            useInMemoryPgpKeys(findProperty('SIGNING_KEY'), findProperty('SIGNING_PASSWORD'))
+            sign publishing.publications.nebula
+        }
+
+        // Nebula doesn't interface with Gradle's module format so just disable it for now.
+        tasks.withType(GenerateModuleMetadata) {
+            enabled = false
+        }
+    }
+
+    plugins.withId('org.jetbrains.kotlin.jvm') {
+        // We disable the kotlinSourcesJar task since it conflicts with the sourcesJar task of the Java plugin
+        // See: https://github.com/micrometer-metrics/micrometer/issues/5151
+        // See: https://youtrack.jetbrains.com/issue/KT-54207/Kotlin-has-two-sources-tasks-kotlinSourcesJar-and-sourcesJar-that-archives-sources-to-the-same-artifact
+        kotlinSourcesJar.enabled = false
+    }
+
+    // Do not publish some modules
+    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'micrometer-osgi-test-slf4j2', 'concurrency-tests', 'micrometer-test-aspectj-ctw', 'micrometer-test-aspectj-ltw'].find { project.name.contains(it) }) {
+        apply plugin: 'com.netflix.nebula.maven-publish'
+        apply plugin: 'com.netflix.nebula.maven-manifest'
+        apply plugin: 'com.netflix.nebula.maven-developer'
+        apply plugin: 'com.netflix.nebula.javadoc-jar'
+        apply plugin: 'com.netflix.nebula.source-jar'
+        apply plugin: 'com.netflix.nebula.maven-apache-license'
+        apply plugin: 'com.netflix.nebula.publish-verification'
+        apply plugin: 'com.netflix.nebula.contacts'
+        apply plugin: 'com.netflix.nebula.info'
+        apply plugin: 'com.netflix.nebula.project'
+
+        if (project.name != 'micrometer-bom') {
+            apply plugin: 'biz.aQute.bnd.builder'
+
+            jar {
+                manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
+                metaInf {
+                    from "$rootDir/LICENSE"
+                    from "$rootDir/NOTICE"
+                }
+
+                bundle {
+                    // workaround for multi-version JARs
+                    //  see https://github.com/bndtools/bnd/issues/2227
+                    bnd '''\
+                        -fixupmessages: '^Classes found in the wrong directory: .*'
+                        -exportcontents: io.micrometer.*
+                        '''.stripIndent()
+                }
+            }
+
+            tasks.register("testModules", Exec) {
+                dependsOn jar
+                String executablePath = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath
+                commandLine "$executablePath", '-p', "$jar.archiveFile", '--list-modules'
+                standardOutput = new ByteArrayOutputStream()
+                ignoreExitValue = true
+
+                doLast {
+                    if (executionResult.get().getExitValue() != 0) {
+                        throw new GradleException("Command finished with non-zero exit value ${executionResult.get().getExitValue()}:\n$standardOutput")
+                    }
+                }
+            }
+
+            check.dependsOn("testModules")
+
+            if (!(project.name in [])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
+                apply plugin: 'me.champeau.gradle.japicmp'
+                apply plugin: 'de.undercouch.download'
+
+                tasks.register("downloadBaseline", Download) {
+                    onlyIf {
+                        if (project.gradle.startParameter.isOffline()) {
+                            println 'Offline: skipping downloading of baseline and JAPICMP'
+                            return false
+                        } else if (compatibleVersion == 'SKIP') {
+                            println 'SKIP: Instructed to skip the baseline comparison'
+                            return false
+                        } else {
+                            println "Will download and perform baseline comparison with ${compatibleVersion}"
+                            return true
+                        }
+                    }
+
+                    onlyIfNewer true
+                    compress true
+                    String rootUrl
+                    if (compatibleVersion.contains('-M') || compatibleVersion.contains('-RC')) {
+                        rootUrl = 'https://repo.spring.io/milestone/'
+                    } else if (compatibleVersion.contains('-SNAPSHOT') ) {
+                        rootUrl = 'https://repo.spring.io/snapshot/'
+                    } else {
+                        rootUrl = repositories.mavenCentral().url
+                    }
+
+                    src "${rootUrl}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
+                    dest layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar")
+                }
+
+                tasks.register("japicmp", me.champeau.gradle.japicmp.JapicmpTask) {
+                    oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
+                    newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
+                    onlyBinaryIncompatibleModified = true
+                    failOnModification = true
+                    failOnSourceIncompatibility = true
+                    txtOutputFile = project.layout.buildDirectory.file("reports/japi.txt")
+                    ignoreMissingClasses = true
+                    includeSynthetic = true
+
+                    classExcludes = []
+                    compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
+
+                    packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal', 'io.micrometer.registry.otlp.internal']
+
+                    fieldExcludes = []
+                    methodExcludes = []
+
+                    onlyIf { compatibleVersion != 'SKIP' }
+                }
+
+                tasks.japicmp.dependsOn(downloadBaseline)
+                tasks.japicmp.dependsOn(jar)
+                tasks.check.dependsOn(japicmp)
+            }
+        }
+
+        contacts {
+            'tludwig@vmware.com' {
+                moniker 'Tommy Ludwig'
+                github 'shakuzen'
+            }
+            'jivanov@vmware.com' {
+                moniker 'Jonatan Ivanov'
+                github 'jonatan-ivanov'
+            }
+        }
+    }
+
+    description = 'Application monitoring instrumentation facade'
+
+    repositories {
+        mavenCentral()
+        if (System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_URL") != null) {
+            repositories {
+                maven {
+                    name = "Release Train"
+                    url = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_URL")
+                    credentials {
+                        username = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_USERNAME")
+                        password = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_PASSWORD")
+                    }
+                }
+            }
+        }
+    }
+
+    def check = tasks.findByName('check')
+    if (check) project.rootProject.tasks.releaseCheck.dependsOn check
+}
+
+nexusPublishing {
+    repositories {
+        mavenCentral {
+            nexusUrl.set(uri('https://ossrh-staging-api.central.sonatype.com/service/local/'))
+            snapshotRepositoryUrl.set(uri('https://repo.spring.io/snapshot/')) // not used but necessary for the plugin
+            username = findProperty('MAVEN_CENTRAL_USER')
+            password = findProperty('MAVEN_CENTRAL_PASSWORD')
+        }
+    }
+}
+
+ext.assertDependencyVersionPrefix = { def dependencySupplier, def expectedVersionPrefix ->
+    def dependency = dependencySupplier.get()
+    assert dependency.version.startsWith(expectedVersionPrefix)
+}
+
+tasks.register('verifyDependencyVersions') {
+    doLast {
+        assertDependencyVersionPrefix(libs.jooq, '3.14.')
+        assert logback12Version.startsWith('1.2.')
+        assertDependencyVersionPrefix(libs.caffeine, '2.9.')
+    }
+}
+
+tasks.register('check') {
+    dependsOn verifyDependencyVersions
+}
+
+tasks.register('build') {
+    dependsOn check
+}
+
+defaultTasks 'build'

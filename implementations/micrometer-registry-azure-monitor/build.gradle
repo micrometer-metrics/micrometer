@@ -1,0 +1,10 @@
+dependencies {
+    api project(':micrometer-core')
+
+    api libs.applicationInsights
+    implementation libs.slf4jApi
+
+    testImplementation project(':micrometer-test')
+    // required by jdk 9+
+    testRuntimeOnly libs.jaxbApi
+}

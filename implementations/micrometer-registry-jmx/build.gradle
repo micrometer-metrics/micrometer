@@ -1,0 +1,8 @@
+dependencies {
+    api project(':micrometer-core')
+
+    api libs.dropwizardMetricsJmx
+
+    testImplementation project(':micrometer-test')
+    testImplementation "ch.qos.logback:logback-classic:$logback12Version"
+}

@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+    alias(libs.plugins.aspectj)
+}
+
+description = 'AspectJ compile-time weaving test for Micrometer aspects'
+
+if (!javaLanguageVersion.canCompileOrRun(17)) {
+    repositories {
+        maven { url 'https://repo.spring.io/snapshot' }
+    }
+}
+
+dependencies {
+    if (javaLanguageVersion.canCompileOrRun(17)) {
+        aspect project(':micrometer-core')
+        implementation libs.aspectjrt
+    }
+    else {
+        // Use the latest Micrometer SNAPSHOT (built with Java 17+)
+        // and the latest AspectJ that supports Java versions before 17
+        aspect 'io.micrometer:micrometer-core:latest.integration'
+        implementation 'org.aspectj:aspectjrt:1.9.20.1'
+    }
+
+    testImplementation libs.assertj
+}
+
+test {
+    useJUnitPlatform()
+}

@@ -1,0 +1,167 @@
+= Micrometer Influx
+:sectnums:
+:system: influx
+
+The InfluxData suite of tools supports real-time stream processing and storage of time-series data. It supports downsampling, automatically expiring and deleting unwanted data, as well as backup and restore.
+
+The InfluxMeterRegistry supports the 1.x InfluxDB API as well as the v2 API.
+
+== Installation and Configuration
+
+Micrometer supports shipping metrics to InfluxDB directly or through Telegraf through the StatsD registry.
+
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+
+=== Direct to InfluxDB
+
+==== Gradle
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,groovy]
+----
+implementation 'io.micrometer:micrometer-registry-influx'
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+==== Maven
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-registry-influx</artifactId>
+</dependency>
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+Metrics are rate-aggregated and pushed to InfluxDB on a periodic interval. Rate aggregation performed by the registry yields datasets that are quite similar to those produced by Telegraf. The following example configures a meter registry for InfluxDB:
+
+.InfluxDB 1.x configuration example
+[source, java]
+----
+InfluxConfig config = new InfluxConfig() {
+    @Override
+    public Duration step() {
+        return Duration.ofSeconds(10);
+    }
+
+    @Override
+    public String db() {
+        return "mydb";
+    }
+
+    @Override
+    public String get(String k) {
+        return null; // accept the rest of the defaults
+    }
+};
+MeterRegistry registry = new InfluxMeterRegistry(config, Clock.SYSTEM);
+----
+
+To ship metrics to InfluxDB 2.x, make sure to configure the `org` and `bucket` to which to write the metrics, as well as the authentication `token`:
+
+.InfluxDB v2 configuration example
+[source, java]
+----
+InfluxConfig config = new InfluxConfig() {
+
+    @Override
+    public String org() {
+        return "myorg";
+    }
+
+    @Override
+    public String bucket() {
+        return "app-metrics";
+    }
+
+    @Override
+    public String token() {
+        return "auth_token_here"; // FIXME: This should be securely bound rather than hard-coded, of course.
+    }
+
+    @Override
+    public String get(String k) {
+        return null; // accept the rest of the defaults
+    }
+};
+MeterRegistry registry = new InfluxMeterRegistry(config, Clock.SYSTEM);
+----
+
+`InfluxConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.influx` directly to the `InfluxConfig`:
+
+[source, yaml]
+----
+management.metrics.export.influx:
+    api-version: v2 # API version of InfluxDB to use. Defaults to 'v1' unless an org is configured. If an org is configured, defaults to 'v2'.
+    auto-create-db: true # Whether to create the InfluxDB database if it does not exist before attempting to publish metrics to it. InfluxDB v1 only. (Default: true)
+    batch-size: 10000 # Number of measurements per request to use for this backend. If more measurements are found, then multiple requests will be made. (Default: 10000)
+    bucket: mybucket # Bucket for metrics. Use either the bucket name or ID. Defaults to the value of the db property if not set. InfluxDB v2 only.
+    compressed: true # Whether to enable GZIP compression of metrics batches published to InfluxDB. (Default: true)
+    connect-timeout: 1s # Connection timeout for requests to this backend. (Default: 1s)
+    consistency: one # Write consistency for each point. (Default: one)
+    db: mydb # Database to send metrics to. InfluxDB v1 only. (Default: mydb)
+    enabled: true # Whether exporting of metrics to this backend is enabled. (Default: true)
+    num-threads: 2 # Number of threads to use with the metrics publishing scheduler. (Default: 2)
+    org: myorg # Org to write metrics to. InfluxDB v2 only.
+    password: mysecret # Login password of the InfluxDB server. InfluxDB v1 only.
+    read-timeout: 10s # Read timeout for requests to this backend. (Default: 10s)
+    retention-policy: my_rp # Retention policy to use (InfluxDB writes to the DEFAULT retention policy if one is not specified). InfluxDB v1 only.
+    step: 1m # Step size (i.e. reporting frequency) to use. (Default: 1m)
+    token: AUTH_TOKEN_HERE # Authentication token to use with calls to the InfluxDB backend. For InfluxDB v1, the Bearer scheme is used. For v2, the Token scheme is used.
+    uri: http://localhost:8086 # URI of the InfluxDB server. (Default: http://localhost:8086)
+    user-name: myusername # Login user of the InfluxDB server. InfluxDB v1 only.
+----
+
+=== Through Telegraf
+
+Telegraf is a StatsD agent that expects a modified flavor of the StatsD line protocol.
+
+==== Gradle
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,groovy]
+----
+implementation 'io.micrometer:micrometer-registry-statsd'
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+==== Maven
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-registry-statsd</artifactId>
+</dependency>
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+Metrics are shipped immediately over UDP to Telegraf by using Telegraf's flavor of the StatsD line protocol:
+
+[source,java]
+----
+StatsdConfig config = new StatsdConfig() {
+    @Override
+    public String get(String k) {
+        return null;
+    }
+
+    @Override
+    public StatsdFlavor flavor() {
+        return StatsdFlavor.Telegraf;
+    }
+};
+
+MeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+----

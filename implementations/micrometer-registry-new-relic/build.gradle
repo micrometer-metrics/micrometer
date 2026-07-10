@@ -1,0 +1,14 @@
+dependencies {
+    api project(':micrometer-core')
+
+    implementation libs.slf4jApi
+    optionalApi libs.newrelicApi
+
+    testImplementation project(':micrometer-test')
+    testImplementation libs.mockitoCore5
+}
+
+jar {
+    // gh-3412 override our default name because 'new' is a reserved word
+    manifest.attributes.put('Automatic-Module-Name', 'micrometer.registry.newrelic')
+}

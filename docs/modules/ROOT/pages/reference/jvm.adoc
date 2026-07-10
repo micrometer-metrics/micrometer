@@ -1,0 +1,136 @@
+[[overview]]
+= JVM Metrics
+
+Micrometer provides several binders for monitoring the JVM:
+
+[source, java]
+----
+new ClassLoaderMetrics().bindTo(registry); <1>
+new JvmMemoryMetrics().bindTo(registry); <2>
+new JvmGcMetrics().bindTo(registry); <3>
+new ProcessorMetrics().bindTo(registry); <4>
+new JvmThreadMetrics().bindTo(registry); <5>
+new JvmThreadDeadlockMetrics().bindTo(registry); <6>
+----
+<1> Gauges loaded and unloaded classes.
+<2> Gauges buffer and memory pool utilization.
+<3> Gauges max and live data size, promotion and allocation rates, and the number of times the GC pauses (or concurrent phase time in the case of CMS). If you are running Java 26 or later, it also tracks the accumulated CPU time for GC related activity.
+<4> Gauges current CPU total and load average.
+<5> Gauges thread peak, the number of daemon threads, and live threads.
+<6> Gauges the number of threads that are deadlocked.
+
+Micrometer also provides a meter binder for `ExecutorService`. You can instrument your `ExecutorService`, as follows:
+
+[source, java]
+----
+new ExecutorServiceMetrics(executorService, executorServiceName, tags).bindTo(registry); <1>
+// or (there are many overloads of the monitor method)
+Executor monitoredExecutor = ExecutorServiceMetrics.monitor(registry, executor, executorName, tags) <2>
+----
+<1> Provides basic meters for executor activity (see below).
+<2> Provides the same meters and timers for tasks (see below).
+
+Metrics created from the binder vary based on the type of `ExecutorService`.
+
+For `ThreadPoolExecutor`, the following metrics are provided:
+
+* `executor` (`Timer`): Records the duration of task execution.
+* `executor.idle` (`Timer`): Records the duration tasks spend in the queue before execution.
+* `executor.completed` (`FunctionCounter`): The approximate total number of tasks that have completed execution.
+* `executor.active` (`Gauge`): The approximate number of threads that are actively executing tasks.
+* `executor.queued` (`Gauge`): The approximate number of tasks that are queued for execution.
+* `executor.queue.remaining` (`Gauge`): The number of additional elements that this queue can ideally accept without blocking.
+* `executor.pool.size` (`Gauge`): The current number of threads in the pool.
+* `executor.pool.core` (`Gauge`): The core number of threads for the pool.
+* `executor.pool.max` (`Gauge`): The maximum allowed number of threads in the pool.
+
+For `ForkJoinPool`, the following metrics are provided:
+
+* `executor` (`Timer`): Records the duration of task execution.
+* `executor.idle` (`Timer`): Records the duration tasks spend in the queue before execution.
+* `executor.active` (`Gauge`): An estimate of the number of threads that are currently stealing or running tasks.
+* `executor.queued` (`Gauge`): The approximate number of tasks that are queued for execution.
+* `executor.steals` (`FunctionCounter`): Estimate of the total number of tasks stolen from one thread's work queue by
+another. The reported value underestimates the actual total number of steals when the pool is not quiescent.
+* `executor.running` (`Gauge`): An estimate of the number of worker threads that are not blocked but are waiting to join tasks or for other managed synchronization threads.
+* `executor.parallelism` (`Gauge`): The targeted parallelism level of this pool.
+* `executor.pool.size` (`Gauge`): The current number of threads in the pool.
+* `executor.delayed` (`Gauge`): An estimate of the number of delayed (including periodic) tasks scheduled but not yet ready for execution. Available on Java 25+.
+
+To use the following `ExecutorService` instances, `--add-opens java.base/java.util.concurrent=ALL-UNNAMED` is required:
+
+* `Executors.newSingleThreadScheduledExecutor()`
+* `Executors.newSingleThreadExecutor()`
+* `Executors.newThreadPerTaskExecutor()`
+* `Executors.newVirtualThreadPerTaskExecutor()`
+
+[[meter-conventions]]
+== Meter Conventions
+
+See also the general xref:../concepts/meter-convention.adoc[Meter Conventions] documentation.
+
+The following `MeterBinder` implementations have a constructor to customize the convention used for some or all of the meters they produce.
+This can be used as an alternative to customizing the Meter names and tags with a `MeterFilter`.
+
+* `ClassLoaderMetrics`
+* `JvmMemoryMetrics`
+* `JvmThreadMetrics`
+* `ProcessorMetrics`
+
+=== OpenTelemetry Semantic Conventions
+
+We provide `MeterConvention` implementations of the applicable https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/[OpenTelemetry semantic conventions for JVM metrics] that have been marked stable as of the version 1.37.0.
+These can be passed to the constructors of the above binders to change the convention from the default.
+Use the following classes:
+
+* `OpenTelemetryJvmClassLoadingMeterConventions`
+* `OpenTelemetryJvmMemoryMeterConventions`
+* `OpenTelemetryJvmThreadMeterConventions`
+* `OpenTelemetryJvmCpuMeterConventions`
+
+== Java 21 Metrics
+
+=== Virtual Threads
+
+Micrometer provides metrics for https://openjdk.org/jeps/444[virtual threads] released in Java 21. In order to utilize it, you need to add the `io.micrometer:micrometer-java21` dependency to your classpath to use the binder:
+
+[source, java]
+----
+new VirtualThreadMetrics().bindTo(registry);
+----
+
+The binder measures the duration (and counts the number of events) of virtual threads being pinned; it also counts the number of events when starting or unparking a virtual thread failed.
+
+If you are running your application with Java 24 or later on a JVM that has `jdk.management.VirtualThreadSchedulerMXBean` provided as a platform MXBean, the following additional virtual thread metrics will be provided.
+
+
+|===
+|Meter name | Type | Tag(s) | Description
+
+|`jvm.threads.virtual.parallelism`
+|Gauge
+|
+|Virtual thread scheduler's target parallelism
+
+|`jvm.threads.virtual.pool.size`
+|Gauge
+|
+|Current number of platform threads that the scheduler has started but have not terminated; -1 if not known.
+
+|`jvm.threads.virtual.live`
+|Gauge
+|`scheduling.status` = `mounted`
+|Approximate current number of virtual threads that are unfinished and mounted to a platform thread by the scheduler
+
+|`jvm.threads.virtual.live`
+|Gauge
+|`scheduling.status` = `queued`
+|Approximate current number of virtual threads that are unfinished and queued waiting to be scheduled
+|===
+
+Note that aggregating the values of `jvm.threads.virtual.live` across the different tags gives the total number of virtual threads started but not ended.
+
+[[lifecycle]]
+== Lifecycle
+
+NOTE: `JvmGcMetrics` and `JvmHeapPressureMetrics` implement `AutoCloseable`. When used outside a lifecycle-aware container, call `close()` on application shutdown so the binder can clean up the resources it registered or started, such as listeners, schedulers, or meters.

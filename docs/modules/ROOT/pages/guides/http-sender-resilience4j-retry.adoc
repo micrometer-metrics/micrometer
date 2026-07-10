@@ -1,0 +1,39 @@
+= HttpSender with Resilience4j Retry
+
+`HttpSender` is an interface for HTTP clients that are used in meter registries for HTTP-based metrics publication. There
+are two implementations:
+
+* `HttpUrlConnectionSender`: `HttpURLConnection`-based `HttpSender`
+* `OkHttpSender`: OkHttp-based `HttpSender`
+
+Micrometer does not include support for retry, but you can decorate it with Resilience4j retry, as follows:
+
+[source,java]
+----
+	@Bean
+	public DatadogMeterRegistry datadogMeterRegistry(DatadogConfig datadogConfig, Clock clock) {
+		return DatadogMeterRegistry.builder(datadogConfig)
+				.clock(clock)
+				.httpClient(new RetryHttpClient())
+				.build();
+	}
+
+	private static class RetryHttpClient extends HttpUrlConnectionSender {
+
+		private final RetryConfig retryConfig = RetryConfig.custom()
+				.maxAttempts(2)
+				.waitDuration(Duration.ofSeconds(5))
+				.build();
+
+		private final Retry retry = Retry.of("datadog-metrics", this.retryConfig);
+
+		@Override
+		public Response send(Request request) {
+			CheckedFunction0<Response> retryableSupplier = Retry.decorateCheckedSupplier(
+					this.retry,
+					() -> super.send(request));
+			return Try.of(retryableSupplier).get();
+		}
+
+	}
+----

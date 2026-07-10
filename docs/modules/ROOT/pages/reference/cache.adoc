@@ -1,0 +1,138 @@
+[[overview]]
+= Micrometer Cache Instrumentations
+
+Micrometer supports binding metrics to a variety of popular caching libraries. Each implementation supports basic features, such as cache hits versus misses, from which you can derive basic information about the cache hit ratio over a period of time. Micrometer uses a function-tracking counter to monitor such things as hits and misses, giving you a notion not only of hits and misses over the total life of the cache (the basic metric exposed from Guava's `CacheStats`, for example) but hits and misses inside a given interval.
+
+[[cache-example]]
+== Example
+
+To demonstrate the features of cache monitoring, we start with a simple program that uses `reactor-netty` to read the entirety of Mary Shelley's _Frankenstein_ and put each word in the cache if it has not yet been seen:
+
+====
+[source,java]
+----
+// read all of Frankenstein
+HttpClient.create("www.gutenberg.org")
+    .get("/cache/epub/84/pg84.txt")
+    .flatMapMany(res -> res.addHandler(wordDecoder()).receive().asString())
+    .delayElements(Duration.ofMillis(10)) // one word per 10 ms
+    .filter(word -> !word.isEmpty())
+    .doOnNext(word -> {
+        if (cache.getIfPresent(word) == null)
+            cache.put(word, 1);
+    })
+    .blockLast();
+----
+====
+
+The following image shows the hits versus misses on a cache that has been tuned to hold a maximum of 10,000 entries:
+
+.Hits vs. misses, viewed in Prometheus
+image::reference/cache/prometheus-guava-cache.png[Hits vs. misses,width=800]
+
+```
+rate(book_guava_requests_total[10s])
+```
+
+By dividing the hits by the sum of all `get` operations (regardless of whether or not each one was a hit or a miss), we can arrive at a notion of the upper bound for the hit ratio for reading _Frankenstein_ with only 10,000 words:
+
+.Hit ratio, viewed by Prometheus
+image::reference/cache/prometheus-guava-cache-ratio.png[Hit ratio,width=800]
+
+```
+sum(rate(book_guava_requests_total{result="hit"}[1m])) / sum(rate(book_guava_requests_total[1m]))
+```
+
+In a real-world scenario, we tune caches according to how we evaluate the tradeoff between storage and load efficiency. You could create an alert based on some upper bound for the rate at which misses occur or on a lower bound for the hit ratio. Setting an upper bound on the miss ratio is better than a lower bound on the hit ratio. For both ratios, an absence of any activity drops the value to 0.
+The following image shows the miss ratio when it exceeds 10%:
+
+.Alerting when the miss ratio exceeds 10%
+image::reference/cache/grafana-guava-miss-ratio.png[Miss ratio (alerted),width=800]
+
+== Cache implementations
+
+Micrometer can instrument various cache implementations:
+
+* <<cache-caffeine, Caffeine>>
+* <<cache-ehcache, Ehcache>>
+* <<cache-guava, Guava>>
+* <<cache-hazelcast, Hazelcast>>
+* <<cache-jcache, JCache>>
+
+[[cache-caffeine]]
+=== Caffeine
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/CaffeineCacheMetricsTest.java[tags=setup, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/CaffeineCacheMetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/CaffeineCacheMetricsTest.java[tags=monitor, indent=0]
+-----
+
+[[cache-ehcache]]
+=== Ehcache 2
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/EhCache2MetricsTest.java[tags=setup, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/EhCache2MetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/EhCache2MetricsTest.java[tags=monitor, indent=0]
+-----
+
+[[cache-guava]]
+=== Guava
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/GuavaCacheMetricsTest.java[tags=setup, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/GuavaCacheMetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/GuavaCacheMetricsTest.java[tags=monitor, indent=0]
+-----
+
+[[cache-hazelcast]]
+=== Hazelcast
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/HazelcastCacheMetricsTest.java[tags=setup, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/HazelcastCacheMetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/HazelcastCacheMetricsTest.java[tags=monitor, indent=0]
+-----
+
+[[cache-jcache]]
+=== JCache
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/JCacheMetricsTest.java[tags=setup, indent=0]
+
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/JCacheMetricsTest.java[tags=setup_2, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/JCacheMetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/JCacheMetricsTest.java[tags=monitor, indent=0]
+-----
+

@@ -1,0 +1,41 @@
+= Micrometer Azure Monitor
+:sectnums:
+:system: azure-monitor
+
+Azure Monitor is a dimensional time-series SaaS with built-in dashboarding.
+
+include::_install.adoc[]
+
+== Configuring
+
+The following example configures a Micrometer Azure Monitor:
+
+[source,java]
+----
+AzureMonitorConfig azureMonitorConfig = new AzureMonitorConfig() {
+    @Override
+    public String instrumentationKey() {
+        return MY_KEY;
+    }
+
+    @Override
+    public String get(String key) {
+        return null;
+    }
+};
+MeterRegistry registry = new AzureMonitorMeterRegistry(azureMonitorConfig, Clock.SYSTEM);
+----
+
+`AzureMonitorConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.azure-monitor` directly to the `AzureMonitorConfig`:
+
+[source,yml]
+----
+management.metrics.export.azure-monitor:
+    instrumentation-key: YOURKEY
+
+    # You will probably want disable Azure Monitor publishing in a local development profile.
+    enabled: true
+
+    # The interval at which metrics are sent to Azure Monitor. The default is 1 minute.
+    step: 1m
+----

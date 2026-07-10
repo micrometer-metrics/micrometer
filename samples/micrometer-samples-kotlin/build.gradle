@@ -1,0 +1,35 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
+apply plugin: libs.plugins.kotlin.get().pluginId
+
+kotlin {
+    compilerOptions {
+        jvmTarget =  JvmTarget.JVM_1_8
+        apiVersion = KotlinVersion.KOTLIN_2_0
+        languageVersion = KotlinVersion.KOTLIN_2_0
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile.class).configureEach {
+    jvmTargetValidationMode = org.jetbrains.kotlin.gradle.dsl.jvm.JvmTargetValidationMode.WARNING
+}
+
+dependencies {
+    // libraries that have Kotlin dependencies
+    implementation project(":micrometer-core")
+    implementation libs.kotlinxCoroutines
+    // test with the lowest version of Kotlin supported because we compile with highest version supported
+    // force the stdlib version
+    implementation enforcedPlatform('org.jetbrains.kotlin:kotlin-bom:2.0.21')
+    implementation libs.okhttp
+
+    testRuntimeOnly libs.contextPropagation
+
+    testImplementation project(":micrometer-test")
+
+    testImplementation platform(libs.junitBom)
+    testRuntimeOnly platform(libs.junitBom)
+    testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
+}

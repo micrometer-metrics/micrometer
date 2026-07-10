@@ -1,0 +1,56 @@
+description = 'Test compatibility kit for extensions of Micrometer'
+
+// activemq-artemis requires Java 17 from 2.39.0
+compileTestJava {
+    if (!javaLanguageVersion.canCompileOrRun(17)) {
+        exclude 'io/micrometer/core/instrument/binder/jms/JmsInstrumentationTests.java'
+    }
+}
+
+dependencies {
+    api project(':micrometer-core')
+    api project(':micrometer-observation')
+    api project(':micrometer-observation-test')
+
+    api libs.assertj
+
+    implementation platform(libs.junitBom)
+    implementation(libs.junitJupiter)
+    implementation('org.junit.jupiter:junit-jupiter-engine')
+
+    api libs.wiremockJunit5
+    api libs.wiremock
+
+    implementation libs.awaitility
+
+    testImplementation project(':micrometer-observation-test')
+    testImplementation project(':micrometer-jakarta9')
+    testImplementation project(':micrometer-java11')
+
+    testImplementation libs.archunitJunit5
+
+    testImplementation libs.jsr107
+
+    // We have tests for the many features that are optional dependencies, so add
+    // them here just like a user would need to.
+    testImplementation libs.guava
+    testImplementation libs.caffeine
+    testImplementation libs.ehcache2
+    testImplementation libs.javax.cacheApi
+    testImplementation libs.jakarta.jmsApi
+    // hard-coded to last hazelcast version to support Java 11
+    testImplementation("com.hazelcast:hazelcast:5.3.8")
+    testImplementation libs.okhttp
+    testImplementation libs.httpcomponents.client
+    testImplementation libs.httpcomponents.async
+    testImplementation libs.httpcomponents.client5
+    testImplementation libs.activemqArtemisJunit5
+    testImplementation libs.activemqArtemisJakartaClient
+    testImplementation "org.eclipse.jetty:jetty-client:$jetty9Version"
+    testImplementation "org.eclipse.jetty:jetty-server:$jetty9Version"
+    testImplementation "org.eclipse.jetty:jetty-servlet:$jetty9Version"
+    testImplementation libs.jersey2Server
+    testImplementation libs.jersey2TestFrameworkJdkHttp
+    // necessary for Jersey test framework
+    testRuntimeOnly libs.jersey2Hk2
+}

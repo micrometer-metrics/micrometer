@@ -1,0 +1,49 @@
+[[meter-provider]]
+= Meter Provider
+
+It's a common use-case to attach tags dynamically to a `Meter`. Let's say we execute a job and we want to use a `Timer` to instrument it:
+
+[source, java]
+----
+Timer.Sample sample = Timer.start(registry);
+
+Result result = job.execute();
+
+Timer timer = Timer.builder("job.execution")
+    .tag("job.name", "job")
+    .tag("status", result.status())
+    .register(registry);
+sample.stop(timer);
+----
+
+This lets us dynamically determine the `status` tag from the end state of the operation we are timing. There are two drawbacks of doing this:
+
+1. Every time the above is executed, a new `Timer.Builder` instance is created. This increases the amount of data that the GC needs to collect.
+2. The code above is somewhat boilerplate, it does not let you define the common properties of a Timer and attach what is dynamically changing but everything is always present.
+
+NOTE: In some cases you can use `registry.timer("job.execution", "job.name", "my-job", "status", result.status())` instead of using `Timer.Builder` which can save you some extra objects but this is not always possible.
+
+You can resolve both of these issues by using a `MeterProvider`. It's a convenience interface to create new meters from tags using a common "template".
+
+NOTE: Not every `Meter` can do this, `MeterProvider` can be used with `Counter`, `Timer`, `LongTaskTimer`, and `DistributionSummary`.
+
+Here's what you can do instead of the above:
+
+[source, java]
+----
+private MeterProvider<Timer> timerProvider = Timer.builder("job.execution")
+    .tag("job.name", "my-job")
+    .withRegistry(registry); <1>
+
+// ...
+
+Timer.Sample sample = Timer.start(registry);
+
+Result result = job.execute();
+
+sample.stop(timerProvider.withTags("status", result.status())); <2>
+----
+<1> Definition of the `MeterProvider` for `Timer` with all the "static" fields necessary. Please note the `withRegistry` method call.
+<2> Definition of the dynamic tags. Note that only those tags are defined here that are dynamic and everything else is defined where the `MeterProvider` is created. The `withTags` method returns a `Timer` that is created using the tags defined in `withTags` plus everything else that is defined by the `MeterProvider`.
+
+This and the previous example produce the same output, the only difference is the amount of boilerplate in your code and the amount of builder objects created in the heap.

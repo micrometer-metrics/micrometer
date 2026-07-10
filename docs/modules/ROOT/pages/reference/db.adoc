@@ -1,0 +1,64 @@
+[[overview]]
+= Database Instrumentation
+
+Micrometer can instrument various libraries that interact with databases:
+
+* <<db-datasource-observation, DataSource Observation Instrumentation>>
+* <<db-datasource, DataSource Metrics Instrumentation>>
+* <<db-jooq, jOOQ Instrumentation>>
+* <<db-postgres, PostgreSQL Instrumentation>>
+
+[[db-datasource-observation]]
+== DataSource Observation Instrumentation
+
+Through the https://github.com/jdbc-observations/datasource-micrometer[Datasource Micrometer] project you can instrument your `DataSource` to start producing xref:../observation.adoc[Observations] while interacting with the database. That means that depending on your Observation Handler setup you can plug in producing of metrics or distributed tracing.
+
+You can read more about Datasource Micrometer https://jdbc-observations.github.io/datasource-micrometer/docs/current/docs/html/[reference documentation] here.
+
+[[db-datasource]]
+== DataSource Metrics Instrumentation
+
+[source,java,subs=+attributes]
+-----
+// Binding instrumentation through static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/DatabaseTableMetricsTest.java[tags=monitor, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/DatabaseTableMetricsTest.java[tags=statement, indent=0]
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/DatabaseTableMetricsTest.java[tags=result, indent=0]
+-----
+
+[[db-jooq]]
+== jOOQ Instrumentation
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/MetricsDSLContextTest.java[tags=setup, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/MetricsDSLContextTest.java[tags=result, indent=0]
+-----
+
+[IMPORTANT]
+====
+*Compatibility note for jOOQ versions.*
+
+Some newly added jOOQ overloads (for example, `DefaultDSLContext#fetchValue(SelectField)`) may internally delegate to `select(...)`. When using builder-level instrumentation with `MetricsDSLContext`, such delegation can lead to **double instrumentation** and **tag loss** on the `jooq.query` timer.
+
+**Recommendations**
+
+- Use only the APIs **overridden by `MetricsDSLContext`** for building/executing queries (i.e., prefer methods explicitly overridden by `MetricsDSLContext`) so each query is timed exactly once with consistent tags. And, avoid relying on newer jOOQ overloads that may delegate to `select(...)`.
+====
+
+[[db-postgres]]
+== PostgreSQL Instrumentation
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/AbstractPostgreSQLDatabaseMetricsIntegrationTest.java[tags=setup, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/AbstractPostgreSQLDatabaseMetricsIntegrationTest.java[tags=result, indent=0]
+-----

@@ -1,0 +1,18 @@
+description = 'Micrometer instrumentation for Jetty 11. This module is deprecated in favor of the micrometer-jetty12 module.'
+
+dependencies {
+    api project(":micrometer-core")
+    api "org.eclipse.jetty:jetty-server:$jetty11Version"
+
+    testImplementation libs.assertj
+}
+
+java {
+    targetCompatibility = 11
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    options.release = 11
+}

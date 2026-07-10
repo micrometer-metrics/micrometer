@@ -1,0 +1,31 @@
+dependencies {
+    api project(':micrometer-core')
+
+    api platform(libs.googleCloudLibrariesBom)
+
+    api(libs.googleCloudMonitoring) {
+        // see gh-4010
+        exclude group: 'com.google.guava', module: 'listenablefuture'
+    }
+    api libs.googleOauth2Http
+    implementation libs.slf4jApi
+    compileOnly "ch.qos.logback:logback-classic:$logback12Version"
+    testRuntimeOnly "ch.qos.logback:logback-classic:$logback12Version"
+    testImplementation libs.mockitoCore5
+    // needed for extending TimeWindowPercentileHistogram in StackdriverHistogramUtil
+    compileOnly libs.hdrhistogram
+
+    testImplementation project(':micrometer-test')
+}
+
+test {
+    useJUnitPlatform {
+        excludeTags 'gcp-it'
+    }
+}
+
+tasks.register("stackdriverTest", Test) {
+    useJUnitPlatform {
+        includeTags 'gcp-it'
+    }
+}

@@ -1,0 +1,12 @@
+root = true
+
+[*]
+insert_final_newline = true
+
+[*.java]
+indent_style = space
+indent_size = 4
+continuation_indent_size = 4
+ij_java_imports_layout = *,|,javax.**,java.**,|,$*
+ij_java_class_count_to_use_import_on_demand = 5
+ij_java_names_count_to_use_import_on_demand = 3

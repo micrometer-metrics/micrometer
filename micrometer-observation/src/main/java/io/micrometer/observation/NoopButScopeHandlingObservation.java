@@ -1,0 +1,97 @@
+/*
+ * Copyright 2025 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.observation;
+
+import io.micrometer.common.KeyValue;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * No-op implementation of {@link Observation} except scope opening so that we can disable
+ * the instrumentation for certain Observations but keep context-propagation working.
+ *
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
+ */
+final class NoopButScopeHandlingObservation implements Observation {
+
+    static final NoopButScopeHandlingObservation INSTANCE = new NoopButScopeHandlingObservation();
+
+    @Override
+    public Observation contextualName(@Nullable String contextualName) {
+        return this;
+    }
+
+    @Override
+    public Observation parentObservation(@Nullable Observation parentObservation) {
+        return this;
+    }
+
+    @Override
+    public Observation lowCardinalityKeyValue(KeyValue keyValue) {
+        return this;
+    }
+
+    @Override
+    public Observation lowCardinalityKeyValue(String key, String value) {
+        return this;
+    }
+
+    @Override
+    public Observation highCardinalityKeyValue(KeyValue keyValue) {
+        return this;
+    }
+
+    @Override
+    public Observation highCardinalityKeyValue(String key, String value) {
+        return this;
+    }
+
+    @Override
+    public Observation observationConvention(ObservationConvention<?> observationConvention) {
+        return this;
+    }
+
+    @Override
+    public Observation error(Throwable error) {
+        return this;
+    }
+
+    @Override
+    public Observation event(Event event) {
+        return this;
+    }
+
+    @Override
+    public Observation start() {
+        return this;
+    }
+
+    @Override
+    public Context getContext() {
+        return NoopContext.INSTANCE;
+    }
+
+    @Override
+    public void stop() {
+    }
+
+    @Override
+    public Scope openScope() {
+        return new SimpleObservation.SimpleScope(ObservationRegistry.NOOP, this);
+    }
+
+}

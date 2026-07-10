@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+		"-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+		"https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+	<suppress checks="IllegalImport" files="io[\\/]micrometer[\\/]core[\\/]instrument[\\/]binder[\\/]logging[\\/].+" />
+	<suppress checks="IllegalImport" files="io[\\/]micrometer[\\/]core[\\/]util[\\/]internal[\\/]logging[\\/].+" />
+	<suppress checks="IllegalImport" files="io[\\/]micrometer[\\/]common[\\/]util[\\/]internal[\\/]logging[\\/].+" />
+	<suppress checks="IllegalImport" files="samples[\\/].+" />
+	<suppress checks="IllegalImport" files="test[\\/]java[\\/]io[\\/]micrometer[\\/]core[\\/]instrument[\\/]binder[\\/]jersey[\\/]server.+" />
+	<suppress checks="IllegalImport" files="test[\\/]java[\\/]io[\\/]micrometer[\\/]jersey.+" />
+	<suppress checks="IllegalImport" files="test[\\/]java[\\/]io[\\/]micrometer[\\/]core[\\/]instrument.+Tests.java" />
+	<suppress checks="IllegalImport" files="docs[\\/].+" />
+
+	<suppress checks="JavadocPackageCheck" files="benchmarks[\\/].+" />
+	<suppress checks="JavadocPackageCheck" files="concurrency-tests[\\/].+" />
+	<suppress checks="JavadocPackageCheck" files="samples[\\/].+" />
+	<suppress checks="JavadocPackageCheck" files="[\\/]src[\\/]test[\\/].*" />
+
+	<suppress id="SLF4JIllegalImportCheck" files="implementations[\\/].+" />
+	<suppress id="SLF4JIllegalImportCheck" files="benchmarks[\\/].+" />
+	<suppress id="SLF4JIllegalImportCheck" files="micrometer-osgi-test" />
+	<suppress id="SLF4JIllegalImportCheck" files="MeterRegistryLoggingTest" />
+
+	<suppress id="sysout" files="ClearCustomMetricDescriptors.java"/>
+	<suppress id="sysout" files="HttpSender.java"/>
+	<suppress id="sysout" files="benchmarks[\\/].+" />
+	<suppress id="sysout" files="[\\/]samples[\\/].*"/>
+	<suppress id="sysout" files="[\\/]src[\\/]test[\\/].*"/>
+</suppressions>

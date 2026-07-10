@@ -1,0 +1,11 @@
+dependencies {
+    api project(':micrometer-core')
+
+    api libs.gmetric4j
+    implementation libs.slf4jApi
+
+    // Deprecated constructor references this which is otherwise unused.
+    compileOnly libs.dropwizardMetricsCore
+
+    testImplementation project(':micrometer-test')
+}

@@ -1,0 +1,33 @@
+description = 'Module for Jakarta 9+ based instrumentations'
+
+jar {
+    bundle {
+        bnd '''\
+        Import-Package: \
+            jakarta.jms.*;resolution:=dynamic;version="${@}",\
+            jakarta.mail.*;resolution:=dynamic;version="${@}",\
+            io.micrometer.observation.*;resolution:=dynamic;version="${@}",\
+            *
+        '''.stripIndent()
+    }
+}
+
+dependencies {
+    api project(":micrometer-core")
+    api project(":micrometer-commons")
+    api project(":micrometer-observation")
+
+    optionalApi libs.jakarta.jmsApi
+    // Jakarta 9 version of the Mail API
+    optionalApi 'jakarta.mail:jakarta.mail-api:2.0.2'
+
+    testImplementation project(':micrometer-observation-test')
+    testImplementation(libs.archunitJunit5) {
+        // avoid transitively pulling in slf4j 2
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+    testImplementation libs.slf4jApi
+    testImplementation libs.mockitoCore5
+    testImplementation libs.assertj
+    testRuntimeOnly('com.sun.mail:jakarta.mail:2.0.2')
+}

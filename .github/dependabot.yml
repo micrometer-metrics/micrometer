@@ -1,0 +1,170 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "main"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: daily
+    target-branch: "1.16.x"
+    milestone: 296
+    ignore:
+      # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+      # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+      # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
+      - dependency-name: "com.netflix.hystrix:hystrix-core"
+      # AspectJ does not use semantic versioning, the third number in the version is not the patch version
+      # but it indicates the latest Java version that is supported (the 4th number is the patch version).
+      - dependency-name: "org.aspectj:aspectjweaver"
+        versions: ["[1.9.21,)"]
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 30
+  - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-jersey3"
+    schedule:
+      interval: daily
+    target-branch: "1.16.x"
+    milestone: 296
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    groups:
+      jersey:
+        patterns:
+          - "org.glassfish.jersey.*"
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-jooq"
+    schedule:
+      interval: daily
+    target-branch: "1.16.x"
+    milestone: 296
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: daily
+    target-branch: "1.17.x"
+    milestone: 317
+    ignore:
+      # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+      # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+      # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
+      - dependency-name: "com.netflix.hystrix:hystrix-core"
+      # AspectJ does not use semantic versioning, the third number in the version is not the patch version
+      # but it indicates the latest Java version that is supported (the 4th number is the patch version).
+      - dependency-name: "org.aspectj:aspectjweaver"
+        versions: [ "[1.9.21,)" ]
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 30
+  - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-jersey3"
+    schedule:
+      interval: daily
+    target-branch: "1.17.x"
+    milestone: 317
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    groups:
+      jersey:
+        patterns:
+          - "org.glassfish.jersey.*"
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-jooq"
+    schedule:
+      interval: daily
+    target-branch: "1.17.x"
+    milestone: 317
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-caffeine3"
+    schedule:
+      interval: daily
+    target-branch: "1.17.x"
+    milestone: 317
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: daily
+    target-branch: "main"
+    milestone: 337
+    ignore:
+      # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+      # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+      # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
+      - dependency-name: "com.netflix.hystrix:hystrix-core"
+      # upgrade minor and patch versions on main
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    open-pull-requests-limit: 50
+  - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-jersey3"
+    schedule:
+      interval: daily
+    target-branch: "main"
+    milestone: 337
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      jersey:
+        patterns:
+          - "org.glassfish.jersey.*"
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-jooq"
+    schedule:
+      interval: daily
+    target-branch: "main"
+    milestone: 337
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/samples/micrometer-samples-caffeine3"
+    schedule:
+      interval: daily
+    target-branch: "main"
+    milestone: 337
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    open-pull-requests-limit: 10

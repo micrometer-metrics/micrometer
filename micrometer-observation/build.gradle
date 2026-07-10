@@ -1,0 +1,62 @@
+plugins {
+    alias(libs.plugins.aspectj) apply false
+}
+
+if (javaLanguageVersion.canCompileOrRun(17)) {
+    apply plugin: 'io.freefair.aspectj.post-compile-weaving'
+}
+else {
+    // ignore ajc generated code from japicmp comparison for < Java 17 builds
+    project.tasks.japicmp {
+        fieldExcludes.addAll([
+            'io.micrometer.observation.aop.ObservedAspect#ajc$perSingletonInstance'
+        ])
+        methodExcludes.addAll([
+            'io.micrometer.observation.aop.ObservedAspect#ajc$inlineAccessFieldGet$io_micrometer_observation_aop_ObservedAspect$io_micrometer_observation_aop_ObservedAspect$shouldSkip(io.micrometer.observation.aop.ObservedAspect)',
+            'io.micrometer.observation.aop.ObservedAspect#ajc$inlineAccessMethod$io_micrometer_observation_aop_ObservedAspect$io_micrometer_observation_aop_ObservedAspect$getDeclaringClass(io.micrometer.observation.aop.ObservedAspect, org.aspectj.lang.ProceedingJoinPoint)',
+            'io.micrometer.observation.aop.ObservedAspect#ajc$inlineAccessMethod$io_micrometer_observation_aop_ObservedAspect$io_micrometer_observation_aop_ObservedAspect$getMethod(io.micrometer.observation.aop.ObservedAspect, org.aspectj.lang.ProceedingJoinPoint)',
+            'io.micrometer.observation.aop.ObservedAspect#ajc$inlineAccessMethod$io_micrometer_observation_aop_ObservedAspect$io_micrometer_observation_aop_ObservedAspect$observe(io.micrometer.observation.aop.ObservedAspect, org.aspectj.lang.ProceedingJoinPoint, java.lang.reflect.Method, io.micrometer.observation.annotation.Observed)',
+            'io.micrometer.observation.aop.ObservedAspect#aspectOf()',
+            'io.micrometer.observation.aop.ObservedAspect#hasAspect()'
+        ])
+    }
+}
+
+description = 'Module containing Observation related code'
+
+jar {
+    bundle {
+        bnd '''\
+        Import-Package: \
+            javax.servlet.*;resolution:=optional,\
+            io.micrometer.context.*;resolution:=optional,\
+            org.aspectj.*;resolution:=optional,\
+            *
+        '''.stripIndent()
+    }
+}
+
+dependencies {
+    api project(":micrometer-commons")
+
+    optionalApi libs.contextPropagation
+
+    // HttpServlet KeyValueProvider
+    optionalApi libs.javax.servletApi
+
+    // Aspects
+    optionalApi libs.aspectjrt
+
+    testRuntimeOnly "ch.qos.logback:logback-classic:$logback12Version"
+
+    testImplementation(libs.archunitJunit5) {
+        // avoid transitively pulling in slf4j 2
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+
+    testImplementation libs.mockitoCore5
+
+    testImplementation libs.assertj
+    testImplementation libs.awaitility
+    testImplementation libs.aspectjweaver
+}

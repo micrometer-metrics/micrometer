@@ -1,0 +1,48 @@
+[[overview]]
+= System Metrics
+
+Micrometer provides several binders for system monitoring:
+
+* <<system-disk, Disk Space Metrics>>
+* <<system-file, File Descriptor Metrics>>
+* <<system-processor, Processor Metrics>>
+* <<system-uptime, Uptime Metrics>>
+
+[[system-disk]]
+== System Disk Space Metrics
+
+[source,java,subs=+attributes]
+-----
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/system/DiskSpaceMetricsTest.java[tags=example, indent=0]
+-----
+
+[[system-file]]
+== System File Descriptor Metrics
+
+[source,java,subs=+attributes]
+-----
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/system/FileDescriptorMetricsTest.java[tags=example, indent=0]
+-----
+
+[[system-processor]]
+== System Processor Metrics
+
+[source,java,subs=+attributes]
+-----
+// Instrumentation setup
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/system/ProcessorMetricsTest.java[tags=setup, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/system/ProcessorMetricsTest.java[tags=example, indent=0]
+-----
+
+[[system-uptime]]
+== System Uptime Metrics
+
+[source,java,subs=+attributes]
+-----
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/system/UptimeMetricsTest.java[tags=example, indent=0]
+-----

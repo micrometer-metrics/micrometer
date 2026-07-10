@@ -1,0 +1,389 @@
+[[micrometer-observation-instrumentation]]
+= Instrumentation
+
+IMPORTANT: This section of the documentation is targeted to users who want to add instrumentation to their codebase.
+
+In this section, we see some common examples of reusing existing Micrometer and Micrometer Tracing handlers and context types to do instrumentation.
+
+IMPORTANT: Before you decide to instrument a project yourself, double-check whether that it has not already been instrumented!
+
+To better convey how you can do instrumentation, we need to distinguish two concepts:
+
+- Context propagation
+- Creation of Observations
+
+*Context propagation* - We propagate existing context through threads or network. We use the https://docs.micrometer.io/context-propagation/reference/[Micrometer Context Propagation] library to define the context and to propagate it through threads. We use dedicated `SenderContext` and `ReceiverContext` objects, together with Micrometer Tracing handlers, to create Observations that propagate context over the wire.
+
+*Creation of Observations* - We want to wrap an operation in an Observation to get measurements. We need to know if there previously has been a parent Observation to maintain the parent-child relationship of Observations.
+
+[[instrumentation_of_http_communication]]
+== Instrumentation of HTTP Communication
+
+In this section you can find how to instrument libraries that do HTTP communication.
+
+[[instrumentation_of_http_communication_client]]
+=== Instrumentation of HTTP Client Communication
+
+*Explanation of HTTP client side instrumentation*
+
+// https://arthursonzogni.com/Diagon/#Sequence
+// [1] RequestReplySenderContext -> [2] Carrier: Wrap
+// [3] ObservationRegistry -> [4] Observation: Create
+// [1] RequestReplySenderContext -> [4] Observation: Create
+// [5] ObservationConvention -> [4] Observation: Create
+// [4] Observation -> [6] ObservationHandler: onStart
+// [4] Observation -> [7] Code to Instrument: Wrap in Scope
+[source,subs=+attributes]
+-----
+┌─────────────────────────────┐┌───────────┐┌───────────────────────┐┌───────────────┐┌─────────────────────────┐┌──────────────────────┐┌──────────────────────┐
+│[1] RequestReplySenderContext││[2] Carrier││[3] ObservationRegistry││[4] Observation││[5] ObservationConvention││[6] ObservationHandler││[7] Code to Instrument│
+└──────────────┬──────────────┘└─────┬─────┘└───────────┬───────────┘└───────┬───────┘└────────────┬────────────┘└──────────┬───────────┘└──────────┬───────────┘
+               │                     │                  │                    │                     │                        │                       │
+               │        Wrap         │                  │                    │                     │                        │                       │
+               │────────────────────>│                  │                    │                     │                        │                       │
+               │                     │                  │                    │                     │                        │                       │
+               │                     │                  │       Create       │                     │                        │                       │
+               │                     │                  │───────────────────>│                     │                        │                       │
+               │                     │                  │                    │                     │                        │                       │
+               │                     │     Create       │                    │                     │                        │                       │
+               │────────────────────────────────────────────────────────────>│                     │                        │                       │
+               │                     │                  │                    │                     │                        │                       │
+               │                     │                  │                    │       Create        │                        │                       │
+               │                     │                  │                    │<────────────────────│                        │                       │
+               │                     │                  │                    │                     │                        │                       │
+               │                     │                  │                    │                   onStart                    │                       │
+               │                     │                  │                    │─────────────────────────────────────────────>│                       │
+               │                     │                  │                    │                     │                        │                       │
+               │                     │                  │                    │                     │      Wrap in Scope     │                       │
+               │                     │                  │                    │─────────────────────────────────────────────────────────────────────>│
+┌──────────────┴──────────────┐┌─────┴─────┐┌───────────┴───────────┐┌───────┴───────┐┌────────────┴────────────┐┌──────────┴───────────┐┌──────────┴───────────┐
+│[1] RequestReplySenderContext││[2] Carrier││[3] ObservationRegistry││[4] Observation││[5] ObservationConvention││[6] ObservationHandler││[7] Code to Instrument│
+└─────────────────────────────┘└───────────┘└───────────────────────┘└───────────────┘└─────────────────────────┘└──────────────────────┘└──────────────────────┘
+-----
+
+* In the <3> `ObservationRegistry` register a <6> handler that will propagate context (e.g. `PropagatingSenderTracingObservationHandler` from Micrometer Tracing)
+* Create a <1> `RequestReplySenderContext` that wraps a <2> carrier (e.g. `HttpRequest`)
+** In its constructor explain how to enrich the headers (e.g. `(key, value) -> httpRequest.header(key, value)`)
+** Set the <2> carrier on the <1> `RequestReplySenderContext`
+* Create an <4> `Observation`, optionally using the <5> `ObservationConvention` with the sender context
+** On <4> `Observation` start, propagation will happen (e.g. carrier will be enriched with proper headers) via an <6> `ObservationHandler`
+* Wrap the <7> code to instrument (e.g. sending of an HTTP request) in scope (e.g. through the `observe` or `scoped` method)
+
+[[instrumentation_of_http_communication_server]]
+=== Instrumentation of HTTP Server Communication
+
+*Explanation of HTTP server side instrumentation*
+
+// https://arthursonzogni.com/Diagon/#Sequence
+// [1] RequestReplyReceiverContext -> [2] Carrier: Wrap
+// [3] ObservationRegistry -> [4] Observation: Create
+// [1] RequestReplyReceiverContext -> [4] Observation: Create
+// [5] ObservationConvention -> [4] Observation: Create
+// [4] Observation -> [6] ObservationHandler: onStart
+// [4] Observation -> [7] Code to Instrument: Wrap in Scope
+[source,subs=+attributes]
+-----
+┌───────────────────────────────┐┌───────────┐┌───────────────────────┐┌───────────────┐┌─────────────────────────┐┌──────────────────────┐┌──────────────────────┐
+│[1] RequestReplyReceiverContext││[2] Carrier││[3] ObservationRegistry││[4] Observation││[5] ObservationConvention││[6] ObservationHandler││[7] Code to Instrument│
+└───────────────┬───────────────┘└─────┬─────┘└───────────┬───────────┘└───────┬───────┘└────────────┬────────────┘└──────────┬───────────┘└──────────┬───────────┘
+                │                      │                  │                    │                     │                        │                       │
+                │         Wrap         │                  │                    │                     │                        │                       │
+                │─────────────────────>│                  │                    │                     │                        │                       │
+                │                      │                  │                    │                     │                        │                       │
+                │                      │                  │       Create       │                     │                        │                       │
+                │                      │                  │───────────────────>│                     │                        │                       │
+                │                      │                  │                    │                     │                        │                       │
+                │                      │     Create       │                    │                     │                        │                       │
+                │─────────────────────────────────────────────────────────────>│                     │                        │                       │
+                │                      │                  │                    │                     │                        │                       │
+                │                      │                  │                    │       Create        │                        │                       │
+                │                      │                  │                    │<────────────────────│                        │                       │
+                │                      │                  │                    │                     │                        │                       │
+                │                      │                  │                    │                   onStart                    │                       │
+                │                      │                  │                    │─────────────────────────────────────────────>│                       │
+                │                      │                  │                    │                     │                        │                       │
+                │                      │                  │                    │                     │      Wrap in Scope     │                       │
+                │                      │                  │                    │─────────────────────────────────────────────────────────────────────>│
+┌───────────────┴───────────────┐┌─────┴─────┐┌───────────┴───────────┐┌───────┴───────┐┌────────────┴────────────┐┌──────────┴───────────┐┌──────────┴───────────┐
+│[1] RequestReplyReceiverContext││[2] Carrier││[3] ObservationRegistry││[4] Observation││[5] ObservationConvention││[6] ObservationHandler││[7] Code to Instrument│
+└───────────────────────────────┘└───────────┘└───────────────────────┘└───────────────┘└─────────────────────────┘└──────────────────────┘└──────────────────────┘
+-----
+
+* In the `ObservationRegistry` register a handler that will propagate context (e.g. `PropagatingReceiverTracingObservationHandler` from Micrometer Tracing)
+* Create a <1> `RequestReplyReceiverContext` that wraps a <2> carrier (e.g. `HttpRequest`)
+** In its constructor explain how to retrieve the header values (e.g. `(carrier, key) -> carrier.header(key)`)
+** Set the <2> carrier on the <1> `RequestReplyReceiverContext`
+* Create an <4> `Observation`, optionally using the <5> `ObservationConvention` with the receiver context
+** On <4> `Observation` start, propagation will happen (e.g. carrier will be enriched with proper headers) via an <6> `ObservationHandler`
+* Wrap the <6> code to instrument (e.g. processing of an HTTP request) in scope (e.g. through the `observe` or `scoped` method)
+
+[[instrumentation_of_http_communication_example]]
+=== Instrumentation of HTTP Communication Example
+
+To instrument an HTTP-based communication, we need to use the `RequestReplySenderContext` and `RequestReplyReceiverContext` for the client and server side, respectively.
+
+As an example for the client side, we use a handler that instruments the HTTP request by adding a `foo:bar` header (if you have Micrometer Tracing on the classpath, you could reuse the `PropagatingSenderTracingObservationHandler` and `PropagatingReceiverTracingObservationHandler` to propagate tracing context over the wire). Let's consider an example of such a handler:
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=header_propagating_handler,indent=0]
+-----
+
+Consider the following HTTP client side instrumentation that reuses the handler:
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=http_client,indent=0]
+-----
+
+As an example for the server side, we use a handler that instruments the Observation by adding the `foo` low cardinality key with the value being the matched path from the HTTP request. Consider an example of such a handler:
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=header_receiving_handler,indent=0]
+-----
+
+Consider the following HTTP server side instrumentation that reuses the handler:
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=http_server,indent=0]
+-----
+
+[[instrumentation_of_messaging_communication]]
+== Instrumentation of Messaging Communication
+
+In this section you can find how to instrument libraries that do fire-and-forget like communication.
+
+[[instrumentation_of_messaging_communication_producer]]
+=== Instrumentation of Messaging Producer Side
+
+*Explanation of messaging producer side instrumentation*
+
+// https://arthursonzogni.com/Diagon/#Sequence
+// [1] SenderContext -> [2] Carrier: Wrap
+// [3] ObservationRegistry -> [4] Observation: Create
+// [1] SenderContext -> [4] Observation: Create
+// [5] ObservationConvention -> [4] Observation: Create
+// [4] Observation -> [6] ObservationHandler: onStart
+// [4] Observation -> [7] Code to Instrument: Wrap in Scope
+[source,subs=+attributes]
+-----
+┌─────────────────┐┌───────────┐┌───────────────────────┐┌───────────────┐┌─────────────────────────┐┌──────────────────────┐┌──────────────────────┐
+│[1] SenderContext││[2] Carrier││[3] ObservationRegistry││[4] Observation││[5] ObservationConvention││[6] ObservationHandler││[7] Code to Instrument│
+└────────┬────────┘└─────┬─────┘└───────────┬───────────┘└───────┬───────┘└────────────┬────────────┘└──────────┬───────────┘└──────────┬───────────┘
+         │               │                  │                    │                     │                        │                       │
+         │     Wrap      │                  │                    │                     │                        │                       │
+         │──────────────>│                  │                    │                     │                        │                       │
+         │               │                  │                    │                     │                        │                       │
+         │               │                  │       Create       │                     │                        │                       │
+         │               │                  │───────────────────>│                     │                        │                       │
+         │               │                  │                    │                     │                        │                       │
+         │               │        Create    │                    │                     │                        │                       │
+         │──────────────────────────────────────────────────────>│                     │                        │                       │
+         │               │                  │                    │                     │                        │                       │
+         │               │                  │                    │       Create        │                        │                       │
+         │               │                  │                    │<────────────────────│                        │                       │
+         │               │                  │                    │                     │                        │                       │
+         │               │                  │                    │                   onStart                    │                       │
+         │               │                  │                    │─────────────────────────────────────────────>│                       │
+         │               │                  │                    │                     │                        │                       │
+         │               │                  │                    │                     │      Wrap in Scope     │                       │
+         │               │                  │                    │─────────────────────────────────────────────────────────────────────>│
+┌────────┴────────┐┌─────┴─────┐┌───────────┴───────────┐┌───────┴───────┐┌────────────┴────────────┐┌──────────┴───────────┐┌──────────┴───────────┐
+│[1] SenderContext││[2] Carrier││[3] ObservationRegistry││[4] Observation││[5] ObservationConvention││[6] ObservationHandler││[7] Code to Instrument│
+└─────────────────┘└───────────┘└───────────────────────┘└───────────────┘└─────────────────────────┘└──────────────────────┘└──────────────────────┘
+-----
+
+* In the <3> `ObservationRegistry` register a <6> handler that will propagate context (e.g. `PropagatingSenderTracingObservationHandler` from Micrometer Tracing)
+* Create a <1> `SenderContext` that wraps a <2> carrier (e.g. `AmqpMessage`)
+** In its constructor explain how to enrich the headers (e.g. `(key, value) -> amqpMessage.header(key, value)`)
+** Set the <2> carrier on the <1> `SenderContext`
+* Create an <4> `Observation`, optionally using the <5> `ObservationConvention` with the sender context
+** On <4> `Observation` start, propagation will happen (e.g. carrier will be enriched with proper headers) via an <6> `ObservationHandler`
+* Wrap the <7> code to instrument (e.g. sending of an AMQP message) in scope (e.g. through the `observe` or `scoped` method)
+
+[[instrumentation_of_messaging_communication_consumer]]
+=== Instrumentation of Messaging Consumer Side Communication
+
+*Explanation of messaging consumer side instrumentation*
+
+// https://arthursonzogni.com/Diagon/#Sequence
+// [1] ReceiverContext -> [2] Carrier: Wrap
+// [3] ObservationRegistry -> [4] Observation: Create
+// [1] ReceiverContext -> [4] Observation: Create
+// [5] ObservationConvention -> [4] Observation: Create
+// [4] Observation -> [6] ObservationHandler: onStart
+// [4] Observation -> [7] Code to Instrument: Wrap in Scope
+[source,subs=+attributes]
+-----
+┌───────────────────┐┌───────────┐┌───────────────────────┐┌───────────────┐┌─────────────────────────┐┌──────────────────────┐┌──────────────────────┐
+│[1] ReceiverContext││[2] Carrier││[3] ObservationRegistry││[4] Observation││[5] ObservationConvention││[6] ObservationHandler││[7] Code to Instrument│
+└─────────┬─────────┘└─────┬─────┘└───────────┬───────────┘└───────┬───────┘└────────────┬────────────┘└──────────┬───────────┘└──────────┬───────────┘
+          │                │                  │                    │                     │                        │                       │
+          │      Wrap      │                  │                    │                     │                        │                       │
+          │───────────────>│                  │                    │                     │                        │                       │
+          │                │                  │                    │                     │                        │                       │
+          │                │                  │       Create       │                     │                        │                       │
+          │                │                  │───────────────────>│                     │                        │                       │
+          │                │                  │                    │                     │                        │                       │
+          │                │        Create    │                    │                     │                        │                       │
+          │───────────────────────────────────────────────────────>│                     │                        │                       │
+          │                │                  │                    │                     │                        │                       │
+          │                │                  │                    │       Create        │                        │                       │
+          │                │                  │                    │<────────────────────│                        │                       │
+          │                │                  │                    │                     │                        │                       │
+          │                │                  │                    │                   onStart                    │                       │
+          │                │                  │                    │─────────────────────────────────────────────>│                       │
+          │                │                  │                    │                     │                        │                       │
+          │                │                  │                    │                     │      Wrap in Scope     │                       │
+          │                │                  │                    │─────────────────────────────────────────────────────────────────────>│
+┌─────────┴─────────┐┌─────┴─────┐┌───────────┴───────────┐┌───────┴───────┐┌────────────┴────────────┐┌──────────┴───────────┐┌──────────┴───────────┐
+│[1] ReceiverContext││[2] Carrier││[3] ObservationRegistry││[4] Observation││[5] ObservationConvention││[6] ObservationHandler││[7] Code to Instrument│
+└───────────────────┘└───────────┘└───────────────────────┘└───────────────┘└─────────────────────────┘└──────────────────────┘└──────────────────────┘
+-----
+
+* In the <3> `ObservationRegistry` register a <6> handler that will propagate context (e.g. `PropagatingReceiverTracingObservationHandler` from Micrometer Tracing)
+* Create a <1> `ReceiverContext` that wraps a <2> carrier (e.g. `AmqpMessage`)
+** In its constructor explain how to retrieve the header values (e.g. `(carrier, key) -> carrier.header(key)`)
+** Set the <2> carrier on the <1> `ReceiverContext`
+* Create an <4> `Observation`, optionally using the <6> `ObservationConvention` with the receiver context
+** On <4> `Observation` start, propagation will happen (e.g. carrier will be enriched with proper headers) via an <6> `ObservationHandler`
+* Wrap the <7> code to instrument (e.g. processing of an AMQP message) in scope (e.g. through the `observe` or `scoped` method)
+** For some libraries (e.g. RabbitMQ) you might not have a handle on user's code, and you may require the user to allow starting a consumer side Observation and opening its scope by the framework (putting values in thread local) with the requirement of manually both closing the scope and stopping the Observation later by the user in their code!
+
+[[instrumentation_of_messaging_communication_example]]
+=== Instrumentation of Messaging Communication Example
+
+To instrument messaging-based communication we need to use the `SenderContext` and `ReceiverContext` for the producer and consumer side respectively.
+
+In this section we will create a simple instrumentation for Apache Kafka.
+
+As an example for the producer side we will use a handler that instruments the message by adding a `foo:bar` header (if you have Micrometer Tracing on the classpath you could reuse the `PropagatingSenderTracingObservationHandler` and `PropagatingReceiverTracingObservationHandler` to propagate tracing context over the wire). Consider the following example of the `KafkaSenderContext`:
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=kafka_sender_context,indent=0]
+-----
+
+Consider the following example of the aforementioned handler:
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=header_propagating_handler,indent=0]
+-----
+
+Consider the following code that is the `ProducerInterceptor` for Kafka:
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ProducerInterceptorConfig.java[tags=producer_interceptor_config,indent=0]
+-----
+
+Consider the following code of the producer side instrumentation that reuses the handler:
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=registry_setup,indent=0]
+
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=producer_setup,indent=0]
+
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=producer_side,indent=0]
+-----
+
+As an example for the consumer side, we use a handler that instruments the Observation by adding the `foo` low cardinality key with the value being the matched path from the message. Consider the following example of the `KafkaReceiverContext`:
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=kafka_receiver_context,indent=0]
+-----
+
+Consider the following example of the aforementioned handler.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=header_receiving_handler,indent=0]
+-----
+
+Consider the following code that is the `ConsumerInterceptor` for Kafka:
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ConsumerInterceptorConfig.java[tags=consumer_interceptor_config,indent=0]
+-----
+
+Consider the following code of the consumer side instrumentation that reuses the handler:
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=registry_setup,indent=0]
+
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=consumer_side,indent=0]
+-----
+
+Let's look at the assertions after having sent and received a message. We should have 2 observations, 1 on the consumer and 1 on the producer side, each with proper key values as shown in the handlers.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=test_assertions,indent=0]
+-----
+
+
+[[instrumentation_of_thread_switching_components]]
+== Instrumentation of Thread Switching Components
+
+We might want to create an Observation around a `Runnable` or `Callable` that we're submitting through an `Executor`. For that to work, we need to know if there was an Observation in the parent thread that the new thread should continue or for which a child Observation should be created.
+
+Consider the following example:
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=executor,indent=0]
+
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=thread_switching,indent=0]
+-----
+
+[[instrumentation_of_reactive_libraries]]
+== Instrumentation of Reactive Libraries
+
+In this section, we discuss how to wrap Reactive libraries in Observations and how to use Reactor Context to safely propagate Observations between threads.
+
+[[instrumentation_of_reactive_libraries_after_reactor_3_5_3]]
+=== For Reactor 3.5.3 and After
+
+In the Reactor 3.5.3 release (through this https://github.com/reactor/reactor-core/pull/3335[PR]), an option to turn on automated context propagation was added. To use this, ensure that you use the following projects at minimum in the following versions:
+
+- Reactor https://github.com/reactor/reactor-core/releases/tag/v3.5.3[3.5.3]
+- Micrometer Context-Propagation https://github.com/micrometer-metrics/context-propagation/releases/tag/v1.0.3[1.0.3]
+- Micrometer https://github.com/micrometer-metrics/micrometer/releases/tag/v1.10.8[1.10.8]
+- Micrometer Tracing https://github.com/micrometer-metrics/tracing/releases/tag/v1.0.7[1.0.7]
+
+To use the feature, call the new Reactor's Hook method (for example, in your `public static void main` method), like this:
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=reactor_hook,indent=0]
+-----
+
+This automatically wraps Reactor's internal mechanisms to propagate context between operators, threads, and so on. Usage of `tap` and `handle` or the Context Propagation API is not required.
+
+Consider the following example:
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=reactor_with_hook,indent=0]
+-----
+
+If the performance of this approach is not satisfactory, check whether disabling the hook and explicitly using `handle` or `tap` operators improves the performance.
+
+[[instrumentation_of_reactive_libraries_before_reactor_3_5_3]]
+=== Before Reactor 3.5.3
+
+The preferred way of propagating elements through the Flux by using Reactor is not through `ThreadLocal` instances but through Reactor Context. Reactor, however, gives you two operators: `tap()` and `handle()`. With these two operators, if the https://docs.micrometer.io/context-propagation/reference/[Micrometer Context Propagation] library is on the classpath, it sets the thread local values for you.
+
+Consider the following example:
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=reactor,indent=0]
+-----

@@ -1,0 +1,18 @@
+= Micrometer JMX
+:sectnums:
+:system: jmx
+
+Micrometer provides a hierarchical mapping to JMX, primarily as a cheap and portable way to view metrics locally. Where JMX exporting is found in production, the same metrics are generally exported to another, more purpose-fit monitoring system.
+
+include::_install.adoc[]
+
+Micrometer also sometimes scrapes data from JMX beans for use in reporting metrics. This registry implementation is not needed for these uses. Rather, this module is strictly used to _export_ data to JMX.
+
+include::hierarchical-name-mapping.adoc[]
+
+== Counters
+
+JMX counters measure mean throughput and one-, five-, and fifteen-minute exponentially-weighted moving average throughputs.
+
+.The JMX rendered values of the random walk counter.
+image::implementations/jmx-counter.png[JMX-rendered counter]

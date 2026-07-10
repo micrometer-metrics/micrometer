@@ -1,0 +1,55 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id 'com.gradle.develocity' version '4.5.0'
+    id 'io.spring.develocity.conventions' version '0.0.25'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'micrometer'
+
+enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+
+develocity {
+    server = 'https://ge.micrometer.io'
+}
+
+buildCache {
+    remote(develocity.buildCache) {
+        server = 'https://ge.micrometer.io'
+    }
+}
+
+include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
+
+['core', 'hazelcast', 'jakarta10', 'javalin', 'jersey3', 'jooq', 'kotlin', 'spring-framework6','caffeine3'].each { sample ->
+    include "micrometer-samples-$sample"
+    project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
+}
+
+include 'micrometer-test', 'micrometer-observation-test', 'micrometer-test-aspectj-ltw', 'micrometer-test-aspectj-ctw'
+
+['atlas', 'prometheus', 'prometheus-simpleclient', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'otlp', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
+    include "micrometer-registry-$sys"
+    project(":micrometer-registry-$sys").projectDir = new File(rootProject.projectDir, "implementations/micrometer-registry-$sys")
+}
+
+['core'].each { benchmark ->
+    include "micrometer-benchmarks-$benchmark"
+    project(":micrometer-benchmarks-$benchmark").projectDir = new File(rootProject.projectDir, "benchmarks/benchmarks-$benchmark")
+}
+
+include 'concurrency-tests'
+include 'micrometer-bom'
+include 'micrometer-jakarta9'
+include 'micrometer-java11'
+include 'micrometer-java21'
+include 'micrometer-jetty11'
+include 'micrometer-jetty12'
+include 'micrometer-osgi-test'
+include 'micrometer-osgi-test-slf4j2'
+include 'docs'

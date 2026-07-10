@@ -1,0 +1,7 @@
+dependencies {
+    api project(':micrometer-core')
+
+    api libs.spectatorAtlas
+
+    testImplementation project(':micrometer-test')
+}

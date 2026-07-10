@@ -1,0 +1,11 @@
+[[meters]]
+= Meters
+
+A `Meter` is the interface for collecting a set of measurements (which we individually call metrics) about your application.
+
+Micrometer supports a set of `Meter` primitives, including `Timer`, `Counter`, `Gauge`, `DistributionSummary`, `LongTaskTimer`, `FunctionCounter`, `FunctionTimer`, and `TimeGauge`. Different meter types result in a different number of time series metrics. For example, while there is a single metric that represents a `Gauge`, a `Timer` measures both the count of timed events and the total time of all timed events.
+
+TIP: Recording a measurement for a `Meter` is expected to be a relatively cheap operation and should not throw any exception.
+If the xref:./registry.adoc[registry] supports publishing metrics to a monitoring system, this is done in a separate thread and should not affect recording metrics.
+
+A meter is uniquely identified by its name and dimensions. We use the terms, "`dimensions`" and "`tags,`" interchangeably, and the Micrometer interface is `Tag` simply because it is shorter. As a general rule, it should be possible to use the name as a pivot. Dimensions let a particular named metric be sliced to drill down and reason about the data. This means that, if only the name is selected, you can drill down by using other dimensions and reason about the value being shown.

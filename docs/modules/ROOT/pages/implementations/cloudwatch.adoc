@@ -1,0 +1,44 @@
+= Micrometer CloudWatch
+Tommy Ludwig <tludwig@vmware.com>
+:sectnums:
+:system: cloudwatch2
+
+https://aws.amazon.com/cloudwatch/[Amazon CloudWatch] is a dimensional time-series SaaS on Amazon's cloud.
+
+include::_install.adoc[]
+
+== Configuring
+
+The following example configures Micrometer CloudWatch:
+
+[source,java]
+----
+CloudWatchConfig cloudWatchConfig = new CloudWatchConfig() {
+    @Override
+    public String get(String s) {
+        return null;
+    }
+
+    @Override
+    public String namespace() {
+        return "mynamespace";
+    }
+};
+MeterRegistry meterRegistry = new CloudWatchMeterRegistry(cloudWatchConfig, Clock.SYSTEM, CloudWatchAsyncClient.create());
+----
+
+You can provide your own `CloudWatchAsyncClient` to the constructor of the registry.
+
+`CloudWatchConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, https://docs.awspring.io/spring-cloud-aws/docs/3.1.0/reference/html/index.html#cloudwatch-metrics[Micrometer support in Spring Cloud AWS] binds properties prefixed with `management.metrics.export.cloudwatch` directly to the `CloudWatchConfig`:
+
+[source,yml]
+----
+management.metrics.export.cloudwatch:
+    namespace: YOURNAMESPACE
+
+    # You will probably want to disable publishing in a local development profile.
+    enabled: true
+
+    # The interval at which metrics are sent to CloudWatch. The default is 1 minute.
+    step: 1m
+----

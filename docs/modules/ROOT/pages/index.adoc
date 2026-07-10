@@ -1,0 +1,25 @@
+:noheader:
+[[micrometer-documentation]]
+= Micrometer Documentation
+
+== Vendor-neutral application observability facade
+
+Micrometer provides a simple facade over the instrumentation clients for the most popular observability systems, allowing you to instrument your JVM-based application code without vendor lock-in.
+Think SLF4J, but for observability.
+
+=== Dimensional Metrics
+
+Micrometer provides vendor-neutral interfaces for timers, gauges, counters, distribution summaries, and long task timers with a dimensional data model that, when paired with a dimensional monitoring system, allows for efficient access to a particular named metric with the ability to drill down across its dimensions.
+
+=== Pre-configured Bindings
+
+Out-of-the-box instrumentation of caches, the class loader, garbage collection, processor utilization, thread pools, and more tailored to actionable insight.
+
+=== Integrated into Spring
+
+Micrometer is the instrumentation library powering the delivery of application observability from https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready-metrics[Spring Boot applications].
+
+=== Support for popular observability systems
+
+As an instrumentation facade, Micrometer allows you to instrument your code with dimensional metrics with a vendor-neutral interface and decide on the observability system as a last step. Instrumenting your core library code with Micrometer allows the libraries to be included in applications that ship data to different backends.
+Contains built-in support for AppOptics, Azure Monitor, Netflix Atlas, CloudWatch, Datadog, Dynatrace, Elastic, Ganglia, Graphite, Humio, Influx/Telegraf, JMX, KairosDB, New Relic, OpenTelemetry Protocol (OTLP), Prometheus, SignalFx, Google Stackdriver, StatsD, and Wavefront.

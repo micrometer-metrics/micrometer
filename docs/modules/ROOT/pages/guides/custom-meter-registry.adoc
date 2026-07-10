@@ -1,0 +1,72 @@
+= Custom Meter Registry
+
+Micrometer includes support for popular meter registries, so you should check those first.
+For an existing meter registry, if you think that your requirements are generally useful, consider creating an issue or PR against the Micrometer issue tracker.
+For a non-existent meter registry, if it is widely-used, consider creating an issue or PR for it.
+
+If you need to create your own custom meter registry, you can create it by extending one of the base classes for meter registries: `MeterRegistry`, `PushMeterRegistry`, or `StepMeterRegistry`.
+
+The most common way is to extend `StepMeterRegistry`.
+You can create your own custom `StepMeterRegistry`.
+
+First, define your own meter registry configuration by extending `StepRegistryConfig`, as follows:
+
+[source,java]
+----
+public interface CustomRegistryConfig extends StepRegistryConfig {
+
+	CustomRegistryConfig DEFAULT = k -> null;
+
+	@Override
+	default String prefix() {
+		return "custom";
+	}
+
+}
+----
+
+Second, define your own meter registry by extending `StepMeterRegistry`, as follows:
+
+[source,java]
+----
+public class CustomMeterRegistry extends StepMeterRegistry {
+
+	public CustomMeterRegistry(CustomRegistryConfig config, Clock clock) {
+		super(config, clock);
+
+		start(new NamedThreadFactory("custom-metrics-publisher"));
+	}
+
+	@Override
+	protected void publish() {
+		getMeters().stream().forEach(meter -> System.out.println("Publishing " + meter.getId()));
+	}
+
+	@Override
+	protected TimeUnit getBaseTimeUnit() {
+		return TimeUnit.MILLISECONDS;
+	}
+
+}
+----
+
+Finally, create the meter registry configuration and the meter registry.
+If you use Spring Boot, you can do so as follows:
+
+[source,java]
+----
+@Configuration
+public class MetricsConfig {
+
+	@Bean
+	public CustomRegistryConfig customRegistryConfig() {
+		return CustomRegistryConfig.DEFAULT;
+	}
+
+	@Bean
+	public CustomMeterRegistry customMeterRegistry(CustomRegistryConfig customRegistryConfig, Clock clock) {
+		return new CustomMeterRegistry(customRegistryConfig, clock);
+	}
+
+}
+----

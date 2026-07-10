@@ -1,0 +1,330 @@
+/*
+ * Copyright 2022 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.observation;
+
+import io.micrometer.common.KeyValue;
+
+import io.micrometer.common.util.StringUtils;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
+import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+
+/**
+ * Default implementation of {@link Observation}.
+ *
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
+ * @author Yanming Zhou
+ * @since 1.10.0
+ */
+class SimpleObservation implements Observation {
+
+    private static final WarnThenDebugLogger getEnclosingScopeLogger = new WarnThenDebugLogger(SimpleObservation.class);
+
+    final ObservationRegistry registry;
+
+    private final Context context;
+
+    @SuppressWarnings("rawtypes")
+    private @Nullable ObservationConvention convention;
+
+    @SuppressWarnings("rawtypes")
+    private final Deque<ObservationHandler> handlers;
+
+    private final Collection<ObservationFilter> filters;
+
+    SimpleObservation(String name, ObservationRegistry registry, Context context) {
+        this.registry = registry;
+        this.context = context;
+        this.context.setName(name);
+        this.convention = getConventionFromConfig(registry, context);
+        this.handlers = getHandlersFromConfig(registry, context);
+        this.filters = registry.observationConfig().getObservationFilters();
+    }
+
+    SimpleObservation(ObservationConvention<? extends Context> convention, ObservationRegistry registry,
+            Context context) {
+        this.registry = registry;
+        this.context = context;
+        // name is set later in start()
+        this.handlers = getHandlersFromConfig(registry, context);
+        this.filters = registry.observationConfig().getObservationFilters();
+        if (convention.supportsContext(context)) {
+            this.convention = convention;
+        }
+        else {
+            throw new IllegalStateException(
+                    "Convention [" + convention + "] doesn't support context [" + context + "]");
+        }
+    }
+
+    private static @Nullable ObservationConvention getConventionFromConfig(ObservationRegistry registry,
+            Context context) {
+        for (ObservationConvention<?> convention : registry.observationConfig().getObservationConventions()) {
+            if (convention.supportsContext(context)) {
+                return convention;
+            }
+        }
+        return null;
+    }
+
+    private static Deque<ObservationHandler> getHandlersFromConfig(ObservationRegistry registry, Context context) {
+        Collection<ObservationHandler<?>> handlers = registry.observationConfig().getObservationHandlers();
+        Deque<ObservationHandler> deque = new ArrayDeque<>(handlers.size());
+        for (ObservationHandler handler : handlers) {
+            if (handler.supportsContext(context)) {
+                deque.add(handler);
+            }
+        }
+        return deque;
+    }
+
+    @Override
+    public Observation contextualName(@Nullable String contextualName) {
+        this.context.setContextualName(contextualName);
+        return this;
+    }
+
+    @Override
+    public Observation parentObservation(@Nullable Observation parentObservation) {
+        this.context.setParentObservation(parentObservation);
+        return this;
+    }
+
+    @Override
+    public Observation lowCardinalityKeyValue(KeyValue keyValue) {
+        this.context.addLowCardinalityKeyValue(keyValue);
+        return this;
+    }
+
+    @Override
+    public Observation highCardinalityKeyValue(KeyValue keyValue) {
+        this.context.addHighCardinalityKeyValue(keyValue);
+        return this;
+    }
+
+    @Override
+    public Observation observationConvention(ObservationConvention<?> convention) {
+        if (convention.supportsContext(context)) {
+            this.convention = convention;
+        }
+        return this;
+    }
+
+    @Override
+    public Observation error(Throwable error) {
+        this.context.setError(error);
+        notifyOnError();
+        return this;
+    }
+
+    @Override
+    public Observation event(Event event) {
+        notifyOnEvent(event);
+        return this;
+    }
+
+    @Override
+    public Observation start() {
+        if (this.convention != null) {
+            this.context.addLowCardinalityKeyValues(convention.getLowCardinalityKeyValues(context));
+            this.context.addHighCardinalityKeyValues(convention.getHighCardinalityKeyValues(context));
+
+            String newName = convention.getName();
+            if (StringUtils.isNotBlank(newName)) {
+                this.context.setName(newName);
+            }
+        }
+
+        notifyOnObservationStarted();
+        return this;
+    }
+
+    @Override
+    public Context getContext() {
+        return this.context;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Override
+    public void stop() {
+        if (this.convention != null) {
+            this.context.addLowCardinalityKeyValues(convention.getLowCardinalityKeyValues(context));
+            this.context.addHighCardinalityKeyValues(convention.getHighCardinalityKeyValues(context));
+
+            String newContextualName = convention.getContextualName(context);
+            if (StringUtils.isNotBlank(newContextualName)) {
+                this.context.setContextualName(newContextualName);
+            }
+        }
+
+        Context modifiedContext = this.context;
+        for (ObservationFilter filter : this.filters) {
+            modifiedContext = filter.map(modifiedContext);
+        }
+
+        notifyOnObservationStopped(modifiedContext);
+    }
+
+    @Override
+    public Scope openScope() {
+        Scope scope = new SimpleScope(this.registry, this);
+        notifyOnScopeOpened();
+        return scope;
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    @Deprecated
+    public @Nullable Scope getEnclosingScope() {
+        getEnclosingScopeLogger.log(
+                "getEnclosingScope() is deprecated, will always return a no-op scope, and will be removed in a future release. Please do not use it.");
+        return Scope.NOOP;
+    }
+
+    @Override
+    public String toString() {
+        return "{" + "name=" + this.context.getName() + "(" + this.context.getContextualName() + ")" + ", error="
+                + this.context.getError() + ", context=" + this.context + '}';
+    }
+
+    @SuppressWarnings("unchecked")
+    void notifyOnObservationStarted() {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onStart(this.context);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void notifyOnError() {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onError(this.context);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void notifyOnEvent(Event event) {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onEvent(event, this.context);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void notifyOnScopeOpened() {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onScopeOpened(this.context);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void notifyOnScopeClosed() {
+        // We're closing from end till the beginning - e.g. we opened scope with handlers
+        // with ids 1,2,3 and we need to close the scope in order 3,2,1
+        Iterator<ObservationHandler> iterator = this.handlers.descendingIterator();
+        while (iterator.hasNext()) {
+            ObservationHandler handler = iterator.next();
+            handler.onScopeClosed(this.context);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void notifyOnObservationStopped(Context context) {
+        // We're closing from end till the beginning - e.g. we started with handlers with
+        // ids 1,2,3 and we need to call close on 3,2,1
+        this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(context));
+    }
+
+    @Override
+    public ObservationRegistry getObservationRegistry() {
+        return this.registry;
+    }
+
+    static class SimpleScope implements Scope {
+
+        private static final InternalLogger log = InternalLoggerFactory.getInstance(SimpleScope.class);
+
+        private static final WarnThenDebugLogger resetLogger = new WarnThenDebugLogger(SimpleScope.class);
+
+        private static final WarnThenDebugLogger makeCurrentLogger = new WarnThenDebugLogger(SimpleScope.class);
+
+        final ObservationRegistry registry;
+
+        private final Observation currentObservation;
+
+        final @Nullable Scope previousObservationScope;
+
+        SimpleScope(ObservationRegistry registry, Observation current) {
+            this.registry = registry;
+            this.currentObservation = current;
+            this.previousObservationScope = registry.getCurrentObservationScope();
+            this.registry.setCurrentObservationScope(this);
+        }
+
+        @Override
+        public Observation getCurrentObservation() {
+            return this.currentObservation;
+        }
+
+        @Override
+        public void close() {
+            if (currentObservation instanceof SimpleObservation) {
+                SimpleObservation observation = (SimpleObservation) currentObservation;
+                observation.notifyOnScopeClosed();
+            }
+            else if (currentObservation != null && !currentObservation.isNoop()) {
+                log.debug("Custom observation type was used in combination with SimpleScope - that's unexpected");
+            }
+            else {
+                log.trace("NoOp observation used with SimpleScope");
+            }
+            this.registry.setCurrentObservationScope(previousObservationScope);
+        }
+
+        @Override
+        @Deprecated
+        public void reset() {
+            resetLogger.log(
+                    "reset() is deprecated, will do nothing, and will be removed in a future release. Please do not use it.");
+        }
+
+        @Override
+        @Deprecated
+        public void makeCurrent() {
+            makeCurrentLogger.log(
+                    "makeCurrent() is deprecated, will do nothing, and will be removed in a future release. Please do not use it.");
+        }
+
+        @Override
+        public @Nullable Scope getPreviousObservationScope() {
+            return this.previousObservationScope;
+        }
+
+        @Override
+        public String toString() {
+            return "SimpleScope(currentObservation=" + this.currentObservation + ", previousObservationScope="
+                    + this.previousObservationScope + ")";
+        }
+
+    }
+
+}

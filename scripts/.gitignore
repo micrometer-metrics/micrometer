@@ -1,0 +1,4 @@
+.atlas/
+.ganglia/
+.telegraf/
+sync-to-maven-central-dont-commit.sh

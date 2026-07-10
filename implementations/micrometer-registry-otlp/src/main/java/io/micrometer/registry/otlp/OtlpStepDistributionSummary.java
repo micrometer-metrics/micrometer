@@ -1,0 +1,135 @@
+/*
+ * Copyright 2023 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.registry.otlp;
+
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.distribution.Histogram;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
+
+class OtlpStepDistributionSummary extends AbstractDistributionSummary
+        implements OtlpHistogramSupport, OtlpExemplarsSupport {
+
+    private final LongAdder count = new LongAdder();
+
+    private final DoubleAdder total = new DoubleAdder();
+
+    private final OtlpStepTuple2<Long, Double> countTotal;
+
+    private final StepMax max;
+
+    private final @Nullable ExemplarSampler exemplarSampler;
+
+    /**
+     * Create a new {@code OtlpStepDistributionSummary}.
+     * @param id ID
+     * @param clock clock
+     * @param scale scale
+     * @param otlpConfig config for registry
+     */
+    OtlpStepDistributionSummary(Id id, Clock clock, double scale, Histogram histogram, OtlpConfig otlpConfig,
+            @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
+        super(id, scale, histogram);
+        this.countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0.0, count::sumThenReset,
+                total::sumThenReset);
+        this.max = new StepMax(clock, otlpConfig.step().toMillis());
+        if (histogram instanceof OtlpExemplarsSupport) {
+            this.exemplarSampler = null;
+        }
+        else {
+            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(false) : null;
+        }
+    }
+
+    @Override
+    protected void recordNonNegative(double amount) {
+        count.add(1L);
+        total.add(amount);
+        max.record(amount);
+        if (exemplarSampler != null) {
+            exemplarSampler.sampleMeasurement(amount);
+        }
+    }
+
+    @Override
+    public List<Exemplar> exemplars() {
+        if (exemplarSampler != null) {
+            return exemplarSampler.collectExemplars();
+        }
+        else if (histogram instanceof OtlpExemplarsSupport) {
+            return ((OtlpExemplarsSupport) histogram).exemplars();
+        }
+        else {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public long count() {
+        return countTotal.poll1();
+    }
+
+    @Override
+    public double totalAmount() {
+        return countTotal.poll2();
+    }
+
+    @Override
+    public double max() {
+        return max.poll();
+    }
+
+    @Override
+    public @Nullable ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
+        if (histogram instanceof Base2ExponentialHistogram) {
+            return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
+        }
+        return null;
+    }
+
+    @Override
+    public void closingExemplarsRollover() {
+        if (exemplarSampler != null) {
+            exemplarSampler.close();
+        }
+    }
+
+    /**
+     * This is an internal method not meant for general use.
+     * <p>
+     * Force a rollover of the values returned by a step meter and never roll over again
+     * after. See: {@code StepMeter} and {@code StepDistributionSummary}
+     */
+    void _closingRollover() {
+        countTotal._closingRollover();
+        max._closingRollover();
+        if (histogram instanceof OtlpStepBucketHistogram) { // can be noop
+            ((OtlpStepBucketHistogram) histogram)._closingRollover();
+        }
+        else if (histogram instanceof Base2ExponentialHistogram) {
+            histogram.close();
+            ((Base2ExponentialHistogram) histogram).closingExemplarsRollover();
+        }
+        this.closingExemplarsRollover();
+    }
+
+}

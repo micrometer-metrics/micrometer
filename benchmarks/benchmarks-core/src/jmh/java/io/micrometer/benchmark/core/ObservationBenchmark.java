@@ -1,0 +1,143 @@
+/*
+ * Copyright 2022 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.benchmark.core;
+
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
+import io.micrometer.observation.ObservationRegistry;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.GCProfiler;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
+
+import java.util.concurrent.TimeUnit;
+
+@Fork(1)
+@Warmup(iterations = 2)
+@Measurement(iterations = 2)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@Threads(4)
+@State(Scope.Benchmark)
+public class ObservationBenchmark {
+
+    private static final Exception error = new IllegalStateException("error");
+
+    ObservationRegistry observationRegistry = ObservationRegistry.create();
+
+    ObservationRegistry noopRegistry = ObservationRegistry.NOOP;
+
+    ObservationConvention<Observation.Context> convention;
+
+    @Setup
+    public void setup() {
+        this.observationRegistry.observationConfig().observationHandler(c -> false);
+        this.convention = new ObservationConvention<Observation.Context>() {
+
+            @Override
+            public String getName() {
+                return "http.server.requests";
+            }
+
+            @Override
+            public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
+                return KeyValues.of(KeyValue.of("exception", "none"), KeyValue.of("method", "GET"),
+                        KeyValue.of("outcome", "SUCCESS"), KeyValue.of("status", "200"),
+                        KeyValue.of("url", "/books/{bookId}"));
+            }
+
+            @Override
+            public boolean supportsContext(Observation.Context context) {
+                return true;
+            }
+        };
+    }
+
+    @Benchmark
+    public void baseline() {
+        // this method was intentionally left blank.
+    }
+
+    @Threads(1)
+    @Benchmark
+    public Observation observationWithoutThreadContention() {
+        Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
+            .lowCardinalityKeyValue("exception", "none")
+            .lowCardinalityKeyValue("method", "GET")
+            .lowCardinalityKeyValue("outcome", "SUCCESS")
+            .lowCardinalityKeyValue("status", "200")
+            .lowCardinalityKeyValue("url", "/books/{bookId}")
+            .start();
+        observation.stop();
+
+        return observation;
+    }
+
+    @Benchmark
+    public Observation observation() {
+        Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
+            .lowCardinalityKeyValue("exception", "none")
+            .lowCardinalityKeyValue("method", "GET")
+            .lowCardinalityKeyValue("outcome", "SUCCESS")
+            .lowCardinalityKeyValue("status", "200")
+            .lowCardinalityKeyValue("url", "/books/{bookId}")
+            .start();
+        observation.stop();
+
+        return observation;
+    }
+
+    @Threads(1)
+    @Benchmark
+    public Observation observationConventionWithoutThreadContention() {
+        Observation observation = Observation.start(convention, observationRegistry);
+        observation.stop();
+
+        return observation;
+    }
+
+    @Benchmark
+    public Observation observationConvention() {
+        Observation observation = Observation.start(convention, observationRegistry);
+        observation.stop();
+
+        return observation;
+    }
+
+    // This should not measure anything, JIT should figure out that the registry is noop
+    @Benchmark
+    public Observation noopObservation() {
+        Observation observation = Observation.createNotStarted("test.obs", noopRegistry)
+            .lowCardinalityKeyValue("abc", "123")
+            .start();
+        try (Observation.Scope ignored = observation.openScope()) {
+            observation.error(error);
+        }
+        observation.stop();
+
+        return observation;
+    }
+
+    public static void main(String[] args) throws RunnerException {
+        new Runner(new OptionsBuilder().include(ObservationBenchmark.class.getSimpleName())
+            .addProfiler(GCProfiler.class)
+            .build()).run();
+    }
+
+}

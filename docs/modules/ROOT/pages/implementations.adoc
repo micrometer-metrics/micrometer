@@ -1,0 +1,4 @@
+[[implementations-setup]]
+= Setup
+
+Instructions for how to configure Micrometer for use with different monitoring systems. As a facade over multiple monitoring systems, the point of Micrometer is to allow you to instrument your code in the same way and be able to visualize the results in your monitoring system of choice.

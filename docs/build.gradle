@@ -1,0 +1,127 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    dependencies {
+        classpath 'io.spring.gradle.antora:spring-antora-plugin:0.0.1'
+        classpath 'org.antora:gradle-antora-plugin:1.0.0'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'io.spring.antora.generate-antora-yml'
+apply plugin: 'org.antora'
+
+description = 'Micrometer Docs'
+
+// Spring 6 requires Java 17+
+// skip this module when building with jdk <17
+if (!javaLanguageVersion.canCompileOrRun(17)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = javaLanguageVersion
+    }
+}
+
+compileTestJava {
+    // need to override the config applied in the root build.gradle to all subprojects
+    // TODO can we not do this with Gradle's toolchains instead?
+    sourceCompatibility = javaLanguageVersion
+    targetCompatibility = javaLanguageVersion
+}
+
+dependencies {
+    implementation project(':micrometer-core')
+    implementation libs.contextPropagation
+    implementation "ch.qos.logback:logback-classic:$logback12Version"
+    implementation libs.slf4jApi
+
+    testImplementation project(':micrometer-test')
+    testImplementation project(':micrometer-observation-test')
+    testImplementation project(':micrometer-registry-otlp')
+    testImplementation libs.aspectjweaver
+    testImplementation libs.assertj
+    testImplementation libs.awaitility
+    // needed for OtlpMeterRegistryCustomizationTest
+    testRuntimeOnly libs.okhttp
+    testImplementation(libs.spring6.context)
+    testImplementation platform(libs.reactorBom)
+    testImplementation 'io.projectreactor:reactor-core'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation platform("io.netty:netty-bom:$nettyBomDocsVersion")
+    testImplementation 'io.netty:netty-transport'
+    testImplementation libs.httpcomponents.client5
+    testImplementation libs.javalin
+    // Kafka binder IT dependencies
+    testImplementation libs.kafkaClients
+    testImplementation libs.testcontainers
+    testImplementation libs.testcontainers.junitJupiter
+    testImplementation libs.testcontainers.kafka
+}
+
+antora {
+    version = '3.2.0-alpha.2'
+    playbook = 'antora-playbook.yml'
+    options = ['--clean', '--stacktrace']
+    environment = [
+        'ALGOLIA_API_KEY': 'cbcaa86034c1961b2c0c73bd0c274862',
+        'ALGOLIA_APP_ID': 'R3TXPRVDPR',
+        'ALGOLIA_INDEX_NAME': 'micrometer'
+    ]
+
+    dependencies = [
+            '@antora/atlas-extension'         : '1.0.0-alpha.1',
+            '@antora/collector-extension'     : '1.0.0-alpha.3',
+            '@asciidoctor/tabs'               : '1.0.0-beta.3',
+            '@springio/antora-extensions'     : '1.4.2',
+            '@springio/asciidoctor-extensions': '1.0.0-alpha.8',
+    ]
+}
+
+node {
+    version = '24.15.0' // Antora does not generate the site using node 24.16.0
+}
+
+tasks.named('generateAntoraYml') {
+    asciidocAttributes = project.provider {
+        return ['micrometer-version': project.version.toString()]
+    }
+}
+
+tasks.register('generateAntoraResources') {
+    dependsOn 'generateAntoraYml'
+}
+
+tasks.named('antora') {
+    dependsOn 'generateAntoraResources', 'test'
+    inputs.files('modules')
+}
+
+jar {
+    enabled = false
+}
+
+javadoc {
+    enabled = false
+}
+
+tasks.withType(AbstractPublishToMaven).configureEach {
+    enabled = false
+}
+
+downloadBaseline {
+    enabled = false
+}
+
+japicmp {
+    enabled = false
+}

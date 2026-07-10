@@ -1,0 +1,39 @@
+name: Test Release
+description: Tests the project for the release
+runs:
+  using: composite
+  steps:
+    - name: Test Setup
+      shell: bash
+      run: |
+        echo "RELEASE_VERSION=${GITHUB_REF_NAME/release\//}" >> "$GITHUB_ENV"
+    - name: Test Info
+      shell: bash
+      run: |
+        echo 'Ref type: ${{ github.ref_type }}'
+        echo 'Ref name: ${{ github.ref_name }}'
+        echo 'Ref: ${{ github.ref }}'
+        echo 'Commit: ${{ github.sha }}'
+        echo 'Version: ${{ env.RELEASE_VERSION }}'
+        ./gradlew --version
+    - name: Test
+      shell: bash
+      run: ./gradlew build -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
+    - name: Shenandoah Test
+      shell: bash
+      run: ./gradlew shenandoahTest -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
+    - name: ZGC Test
+      shell: bash
+      run: ./gradlew zgcTest -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
+    - name: Generational ZGC Test
+      shell: bash
+      run: ./gradlew zgcGenerationalTest -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
+    - name: Docker Test
+      shell: bash
+      run: ./gradlew dockerTest -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
+
+# TODO:
+#  - run build with all required java versions (11,17,24)
+#  - run generationalShenandoahTest on Java 24
+#  - run jcstress
+#  - run stackdriverTest

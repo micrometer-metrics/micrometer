@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+}
+
+// Latest open source jOOQ versions only support Java 21+
+// skip this module when building with jdk <21
+if (!javaLanguageVersion.canCompileOrRun(21)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
+dependencies {
+    implementation project(":micrometer-core")
+    implementation "org.jooq:jooq:3.21.6"
+
+    testImplementation platform(libs.junitBom)
+    testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
+    testImplementation libs.assertj
+    testImplementation libs.mockitoCore5
+
+    testRuntimeOnly libs.h2
+}
+
+java {
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    options.release = 21
+}

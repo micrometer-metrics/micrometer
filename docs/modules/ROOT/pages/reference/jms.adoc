@@ -1,0 +1,123 @@
+= JMS Instrumentation
+
+Micrometer provides JMS instrumentation.
+
+== Installing
+
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+
+=== Gradle
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,groovy]
+----
+implementation 'io.micrometer:micrometer-jakarta9'
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+=== Maven
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-jakarta9</artifactId>
+</dependency>
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+== Usage
+
+Here is how an existing JMS `Session` instance can be instrumented for observability:
+
+[source,java]
+----
+import io.micrometer.jakarta9.instrument.jms.JmsInstrumentation;
+
+Session original = ...
+ObservationRegistry registry = ...
+Session session = JmsInstrumentation.instrumentSession(original, registry);
+
+Topic topic = session.createTopic("micrometer.test.topic");
+MessageProducer producer = session.createProducer(topic);
+// this operation will create a "jms.message.publish" observation
+producer.send(session.createMessage("test message content"));
+
+MessageConsumer consumer = session.createConsumer(topic);
+// when a message is processed by the listener,
+// a "jms.message.process" observation is created
+consumer.setMessageListener(message -> consumeMessage(message));
+----
+
+== Observations
+
+This instrumentation will create 2 types of observations:
+
+* `"jms.message.publish"` when a JMS message is sent to the broker via `send`* method calls on `MessageProducer`.
+* `"jms.message.process"` when a JMS message is processed via `MessageConsumer.setMessageListener`.
+
+By default, both observations share the same set of possible `KeyValues`:
+
+.Low cardinality Keys
+[cols="a,a"]
+|===
+|Name | Description
+|`error` |Class name of the exception thrown during the messaging operation (or "none").
+|`exception` |Duplicates the `error` key.
+|`messaging.destination.temporary`|Whether the destination (queue or topic) is temporary.
+|`messaging.operation`|Name of the JMS operation being performed (values: `"publish"` or `"process"`).
+|===
+
+.High cardinality Keys
+[cols="a,a"]
+|===
+|Name | Description
+|`messaging.message.conversation_id` |The correlation ID of the JMS message.
+|`messaging.destination.name` |The name of the destination the current message was sent to.
+|`messaging.message.id` |Value used by the messaging system as an identifier for the message.
+|===
+
+
+=== `messaging.destination.name` as a low-cardinality key
+
+Initially the `messaging.destination.name` key was classified as a high-cardinality key because
+a `TemporaryQueue` can be a destination. But `TemporaryQueue` has a great number of possible values of
+names.
+
+However, many applications don't use `TemporaryQueue`s. In such cases it might be helpful to treat the key as
+low-cardinality key (e.g. to retrieve its values via Spring Boot Actuator).
+
+To achieve this you need to use the below `HighToLowCardinalityObservationFilter`
+
+[source,java]
+----
+final class HighToLowCardinalityObservationFilter implements ObservationFilter {
+    private final String key;
+
+    HighToLowCardinalityObservationFilter(String key) {
+        this.key = key;
+    }
+
+    @Override
+    public Observation.Context map(Observation.Context context) {
+        Optional.ofNullable(context.getHighCardinalityKeyValue(this.key))
+            .ifPresent(keyValue -> {
+                context.removeHighCardinalityKeyValue(keyValue.getKey());
+                context.addLowCardinalityKeyValue(keyValue);
+            });
+        return context;
+    }
+}
+----
+
+Registration of the filter:
+[source,java]
+----
+ObservationRegistry registry = observationRegistry();
+registry.observationConfig().observationFilter(new HighToLowCardinalityObservationFilter("jms.message.process.messaging.destination.name"));
+----

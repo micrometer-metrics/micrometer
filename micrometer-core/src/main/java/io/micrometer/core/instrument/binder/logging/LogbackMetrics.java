@@ -1,0 +1,235 @@
+/*
+ * Copyright 2017 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.core.instrument.binder.logging;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.LoggerContextListener;
+import ch.qos.logback.classic.turbo.TurboFilter;
+import ch.qos.logback.core.spi.FilterReply;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.LongAdder;
+
+import static java.util.Collections.emptyList;
+
+/**
+ * Metrics instrumentation of Logback log events. Counts the log events with a log level
+ * equal to or higher than the corresponding logger's effective log level. A filter added
+ * to an appender will not affect the metrics.
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * clean up the {@code LoggerContext} listener and turbo filters this binder registers.
+ *
+ * @author Jon Schneider
+ * @author Jonatan Ivanov
+ */
+public class LogbackMetrics implements MeterBinder, AutoCloseable {
+
+    private final Iterable<Tag> tags;
+
+    private final LoggerContext loggerContext;
+
+    private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new HashMap<>();
+
+    static {
+        // see gh-2868. Without this called statically, the same call in the constructor
+        // may return SubstituteLoggerFactory and fail to cast.
+        LoggerFactory.getILoggerFactory();
+    }
+
+    public LogbackMetrics() {
+        this(emptyList());
+    }
+
+    public LogbackMetrics(Iterable<Tag> tags) {
+        this(tags, (LoggerContext) LoggerFactory.getILoggerFactory());
+    }
+
+    public LogbackMetrics(Iterable<Tag> tags, LoggerContext context) {
+        this.tags = tags;
+        this.loggerContext = context;
+
+        loggerContext.addListener(new LoggerContextListener() {
+            @Override
+            public boolean isResetResistant() {
+                return true;
+            }
+
+            @Override
+            public void onReset(LoggerContext context) {
+                // re-add turbo filter because reset clears the turbo filter list
+                synchronized (metricsTurboFilters) {
+                    for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
+                        loggerContext.addTurboFilter(metricsTurboFilter);
+                    }
+                }
+            }
+
+            @Override
+            public void onStart(LoggerContext context) {
+                // no-op
+            }
+
+            @Override
+            public void onStop(LoggerContext context) {
+                // no-op
+            }
+
+            @Override
+            public void onLevelChange(Logger logger, Level level) {
+                // no-op
+            }
+        });
+    }
+
+    @Override
+    public void bindTo(MeterRegistry registry) {
+        MetricsTurboFilter filter = new MetricsTurboFilter(registry, tags);
+        synchronized (metricsTurboFilters) {
+            metricsTurboFilters.put(registry, filter);
+            loggerContext.addTurboFilter(filter);
+        }
+    }
+
+    /**
+     * This method was used by {@link Counter#increment()} implementations that may cause
+     * a logback logging event to occur. Attempting to instrument that implementation used
+     * to cause a {@link StackOverflowError}.
+     * @param r The runnable to execute, previously it also disabled recording metrics on
+     * logging statements that occur inside of this runnable but this is not needed
+     * anymore.
+     * @deprecated Should not be needed anymore since {@link LogbackMetrics} records
+     * logback events asynchronously and should not get into an infinite loop.
+     */
+    @Deprecated
+    public static void ignoreMetrics(Runnable r) {
+        r.run();
+    }
+
+    @Override
+    public void close() {
+        synchronized (metricsTurboFilters) {
+            for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
+                loggerContext.getTurboFilterList().remove(metricsTurboFilter);
+            }
+        }
+    }
+
+}
+
+class MetricsTurboFilter extends TurboFilter {
+
+    private static final String METER_NAME = "logback.events";
+
+    private static final String METER_DESCRIPTION = "Number of log events that were enabled by the effective log level";
+
+    private final LongAdder errorCount = new LongAdder();
+
+    private final LongAdder warnCount = new LongAdder();
+
+    private final LongAdder infoCount = new LongAdder();
+
+    private final LongAdder debugCount = new LongAdder();
+
+    private final LongAdder traceCount = new LongAdder();
+
+    MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags) {
+        FunctionCounter.builder(METER_NAME, errorCount, LongAdder::doubleValue)
+            .tags(tags)
+            .tags("level", "error")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        FunctionCounter.builder(METER_NAME, warnCount, LongAdder::doubleValue)
+            .tags(tags)
+            .tags("level", "warn")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        FunctionCounter.builder(METER_NAME, infoCount, LongAdder::doubleValue)
+            .tags(tags)
+            .tags("level", "info")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        FunctionCounter.builder(METER_NAME, debugCount, LongAdder::doubleValue)
+            .tags(tags)
+            .tags("level", "debug")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        FunctionCounter.builder(METER_NAME, traceCount, LongAdder::doubleValue)
+            .tags(tags)
+            .tags("level", "trace")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+    }
+
+    @Override
+    public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
+        // When filter is asked for decision for an isDebugEnabled call or similar test,
+        // there is no message (i.e. format) and no intention to log anything.
+        // We will not increment counters and can return immediately. See also Logback's
+        // Logger.callTurboFilters().
+        // Calling logger.isEnabledFor(level) might be sub-optimal since it calls this
+        // filter again. This behavior caused a StackOverflowError in the past.
+        if (format == null || !level.isGreaterOrEqual(logger.getEffectiveLevel())) {
+            return FilterReply.NEUTRAL;
+        }
+
+        recordMetrics(level);
+
+        return FilterReply.NEUTRAL;
+    }
+
+    private void recordMetrics(Level level) {
+        switch (level.toInt()) {
+            case Level.ERROR_INT:
+                errorCount.increment();
+                break;
+            case Level.WARN_INT:
+                warnCount.increment();
+                break;
+            case Level.INFO_INT:
+                infoCount.increment();
+                break;
+            case Level.DEBUG_INT:
+                debugCount.increment();
+                break;
+            case Level.TRACE_INT:
+                traceCount.increment();
+                break;
+        }
+
+    }
+
+}

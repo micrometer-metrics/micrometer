@@ -1,0 +1,55 @@
+= Java HttpClient instrumentation
+
+Since Java 11, an `HttpClient` is provided as part of the JDK. See https://openjdk.org/groups/net/httpclient/intro.html[this introduction] to it. Micrometer provides instrumentation of this via a `micrometer-java11` module. This module requires Java 11 or later.
+
+== Installing
+
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+
+=== Gradle
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,groovy]
+----
+implementation 'io.micrometer:micrometer-java11'
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+=== Maven
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-java11</artifactId>
+</dependency>
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+== Usage
+
+Create an `HttpClient` as you normally would. For example:
+
+[source,java,subs=+attributes]
+----
+include::{include-micrometer-java11-test}/io/micrometer/java11/instrument/binder/jdk/MicrometerHttpClientTests.java[tags=setupClient,indent=0]
+----
+
+You can instrument this `HttpClient` as follows with an `ObservationRegistry`:
+
+[source,java,subs=+attributes]
+----
+include::{include-micrometer-java11-test}/io/micrometer/java11/instrument/binder/jdk/MicrometerHttpClientTests.java[tags=observationInstrumentation,indent=0]
+----
+
+Alternatively, if you are not using an `ObservationRegistry`, you can instrument with only a `MeterRegistry` as follows:
+
+[source,java,subs=+attributes]
+----
+include::{include-micrometer-java11-test}/io/micrometer/java11/instrument/binder/jdk/MicrometerHttpClientTests.java[tags=meterRegistryInstrumentation,indent=0]
+----

@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+}
+
+dependencies {
+    implementation project(":micrometer-core")
+    implementation project(":micrometer-registry-prometheus-simpleclient")
+    implementation project(":micrometer-jetty11")
+
+    implementation libs.javalin
+    implementation "ch.qos.logback:logback-classic:$logback12Version"
+}
+
+java {
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    options.release = 11
+}

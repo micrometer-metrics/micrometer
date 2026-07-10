@@ -1,0 +1,40 @@
+[[overview]]
+= Netty Instrumentation
+
+Micrometer supports binding metrics to Netty.
+
+You can collect metrics from `ByteBuf` allocators and from `EventLoopGroup` instances.
+If you already know the resources, you can create instrumentation only once at startup:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/netty/NettyMetricsTests.java[tags=directInstrumentation,indent=0]
+-----
+
+Netty infrastructure can be configured in many ways, so you can also instrument lazily at runtime, as resources are used.
+The following example shows how to lazily create instrumentation:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/netty/NettyMetricsTests.java[tags=channelInstrumentation,indent=0]
+-----
+
+CAUTION: If you use lazy instrumentation, you must ensure that you do not bind metrics for the same resource multiple times, as this can have runtime drawbacks.
+
+== EventExecutor Metrics
+
+The `NettyEventExecutorMetrics` binder collects metrics from Netty's `EventExecutor` instances:
+
+.EventExecutor metrics
+|===
+|Metric |Type |Description
+
+|`eventexecutor.workers`
+|Gauge
+|The number of event executor workers
+
+|`eventexecutor.tasks.pending`
+|Gauge
+|The number of pending tasks in individual event executors
+
+|===
