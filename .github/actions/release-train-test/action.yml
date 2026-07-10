@@ -3,7 +3,7 @@ description: Tests the project for the release
 runs:
   using: composite
   steps:
-    - name: Test Setup
+    - name: Setup Version
       shell: bash
       run: |
         echo "RELEASE_VERSION=${GITHUB_REF_NAME/release\//}" >> "$GITHUB_ENV"
@@ -14,7 +14,7 @@ runs:
         echo 'Ref name: ${{ github.ref_name }}'
         echo 'Ref: ${{ github.ref }}'
         echo 'Commit: ${{ github.sha }}'
-        echo 'Version: ${{ env.RELEASE_VERSION }}'
+        echo 'Release Version: ${{ env.RELEASE_VERSION }}'
         ./gradlew --version
     - name: Test
       shell: bash
@@ -33,7 +33,7 @@ runs:
       run: ./gradlew dockerTest -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
 
 # TODO:
-#  - run build with all required java versions (11,17,24)
-#  - run generationalShenandoahTest on Java 24
+#  - run build with all required java versions (11,17,21,24)
+#. - run generationalShenandoahTest
 #  - run jcstress
 #  - run stackdriverTest
