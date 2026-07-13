@@ -429,6 +429,7 @@ subprojects {
                 apply plugin: 'me.champeau.gradle.japicmp'
 
                 tasks.register('downloadBaseline') {
+                    onlyIf { !project.gradle.startParameter.isOffline() }
                     doLast {
                         String originalGroup = project.group
                         project.group = 'downloadBaseline' // hack, see: https://github.com/melix/japicmp-gradle-plugin/issues/16#issuecomment-455132296
