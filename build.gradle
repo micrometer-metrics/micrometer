@@ -466,8 +466,6 @@ subprojects {
 
                     fieldExcludes = []
                     methodExcludes = []
-
-                    onlyIf { compatibleVersion != 'SKIP' }
                 }
 
                 tasks.check.dependsOn(japicmp)
