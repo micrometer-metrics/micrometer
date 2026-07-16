@@ -2,6 +2,11 @@ import aQute.bnd.gradle.Bundle
 import aQute.bnd.gradle.Resolve
 import aQute.bnd.gradle.TestOSGi
 
+// BND requires Java 17
+if (javaLanguageVersion.asInt() < 17) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
 dependencies {
     testImplementation libs.assertj
     testImplementation libs.osgiJunit5
@@ -17,7 +22,7 @@ dependencies {
     testImplementation libs.felixFramework
 
     // JUnit needs to be an 'implementation' dependency instead of 'testImplementation' otherwise
-    // tests are not dicovered and executed (so the tests never fail), see: https://github.com/micrometer-metrics/micrometer/issues/7060
+    // tests are not discovered and executed (so the tests never fail), see: https://github.com/micrometer-metrics/micrometer/issues/7060
     implementation platform(libs.junitBom)
     implementation libs.junitJupiter
     testRuntimeOnly libs.junitPlatformLauncher
@@ -29,9 +34,6 @@ dependencies {
 def testingBundle = tasks.register('testingBundle', Bundle) {
     archiveClassifier = 'tests'
     from sourceSets.test.output
-    if (javaLanguageVersion.asInt() < 17) {
-        sourceSet = sourceSets.test
-    }
     bundle {
         bnd """\
             Bundle-SymbolicName: \${task.archiveBaseName}-\${task.archiveClassifier}

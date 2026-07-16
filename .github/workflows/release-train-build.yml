@@ -39,7 +39,7 @@ jobs:
       uses: "actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95" # v5.6.0
       with:
         distribution: "liberica"
-        java-version: "21"
+        java-version: "25"
     - name: "Check Out Code"
       id: "check-out-code"
       uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v7.0.0

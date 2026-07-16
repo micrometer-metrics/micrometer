@@ -22,6 +22,9 @@ runs:
     - name: Shenandoah Test
       shell: bash
       run: ./gradlew shenandoahTest -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
+    - name: Generational Shenandoah Test
+      shell: bash
+      run: ./gradlew generationalShenandoahTest -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
     - name: ZGC Test
       shell: bash
       run: ./gradlew zgcTest -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
@@ -33,7 +36,6 @@ runs:
       run: ./gradlew dockerTest -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain
 
 # TODO:
-#  - run build with all required java versions (11,17,21,24)
-#. - run generationalShenandoahTest
+#  - run build with all required java versions (11,17,21,25)
 #  - run jcstress
 #  - run stackdriverTest
