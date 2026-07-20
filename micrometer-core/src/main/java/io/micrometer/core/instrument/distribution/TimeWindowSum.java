@@ -74,7 +74,8 @@ public class TimeWindowSum {
     }
 
     private void rotate() {
-        long timeSinceLastRotateMillis = System.currentTimeMillis() - lastRotateTimestampMillis;
+        long currentTimeMillis = System.currentTimeMillis();
+        long timeSinceLastRotateMillis = currentTimeMillis - lastRotateTimestampMillis;
         if (timeSinceLastRotateMillis < durationBetweenRotatesMillis) {
             // Need to wait more for next rotation.
             return;
@@ -88,6 +89,18 @@ public class TimeWindowSum {
         try {
             int iterations = 0;
             synchronized (this) {
+                if (timeSinceLastRotateMillis >= durationBetweenRotatesMillis * ringBuffer.length) {
+                    // Time since the last rotation is enough to clear the whole ring buffer.
+                    // Reset every bucket once and fast-forward, otherwise a later rotation would
+                    // still lag behind and wipe freshly recorded samples on the next call.
+                    for (AtomicLong bufferItem : ringBuffer) {
+                        bufferItem.set(0);
+                    }
+                    currentBucket = 0;
+                    lastRotateTimestampMillis = currentTimeMillis - timeSinceLastRotateMillis % durationBetweenRotatesMillis;
+                    return;
+                }
+
                 do {
                     ringBuffer[currentBucket].set(0);
                     if (++currentBucket >= ringBuffer.length) {
