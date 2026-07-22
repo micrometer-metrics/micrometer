@@ -5,6 +5,6 @@ workflow.generator:
       build:
         runs-on: ubuntu22-4-16
       test:
-        additional-java-versions: [11, 17, 24]
+        additional-java-versions: [11, 17, 21]
         runs-on: ubuntu22-4-16
-  project.java.versions.primary: 21
+  project.java.versions.primary: 25
