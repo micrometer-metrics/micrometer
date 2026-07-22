@@ -430,13 +430,7 @@ subprojects {
 
                 tasks.register('downloadBaseline') {
                     doLast {
-                        // Gradle 8 and earlier do not allow cycles between the current project and the root of the dependency graph
-                        // (a project cannot depend on itself, which is what we are doing here).
-                        // Since we don't use this task for the root project, we can work this limitation around by
-                        // resolving dependencies using a detached configuration of the root project instead of the current subproject.
-                        // Doing this ensures that the dependency coordinates don't collide since the root project's coordinates never match a subproject's coordinates.
-                        // See: https://github.com/melix/japicmp-gradle-plugin/issues/16#issuecomment-455135698
-                        Set<File> baselineFiles = rootProject.configurations.detachedConfiguration(dependencies.create("${project.group}:${project.name}:${compatibleVersion}@jar")).files
+                        Set<File> baselineFiles = configurations.detachedConfiguration(dependencies.create("${project.group}:${project.name}:${compatibleVersion}@jar")).files
                         logger.info("Downloaded for baseline comparison: $baselineFiles")
                         assert baselineFiles.size() == 1
                         assert baselineFiles.first().name.endsWith("${project.name}-${compatibleVersion}.jar")
@@ -503,10 +497,6 @@ subprojects {
 
     def check = tasks.findByName('check')
     if (check) project.rootProject.tasks.releaseCheck.dependsOn check
-}
-
-repositories { // for the downloadBaseline task
-    mavenCentral()
 }
 
 nexusPublishing {
