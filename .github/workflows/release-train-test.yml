@@ -40,8 +40,10 @@ jobs:
       with:
         distribution: "liberica"
         java-version: |-
+          11
           17
           21
+          26
           25
     - name: "Check Out Code"
       id: "check-out-code"

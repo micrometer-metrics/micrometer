@@ -5,7 +5,7 @@ apply plugin: libs.plugins.kotlin.get().pluginId
 
 kotlin {
     compilerOptions {
-        jvmTarget =  JvmTarget.JVM_1_8
+        jvmTarget = JvmTarget.JVM_1_8
         apiVersion = KotlinVersion.KOTLIN_2_0
         languageVersion = KotlinVersion.KOTLIN_2_0
     }
