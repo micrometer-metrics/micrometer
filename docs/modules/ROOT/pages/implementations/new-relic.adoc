@@ -4,6 +4,8 @@
 
 New Relic offers a dimensional monitoring system product called Insights. It includes a full UI and a query language called NRQL. New Relic Insights operates on a push model. Some features of NRQL assume that Insights receives a distinct event payload for every timing, count, and so on. Micrometer instead ships aggregates at a prescribed interval, letting your app's throughput scale without concern for event propagation to Insights becoming a bottleneck.
 
+NOTE: New Relic is *dimensional*, uses *client-side* xref:../concepts/rate-aggregation.adoc[rate aggregation] (Micrometer pre-aggregates before pushing), and uses a *client-push* model. See xref:../concepts/implementations.adoc[Supported Monitoring Systems] for a comparison across registries.
+
 NOTE: New Relic provides its own Micrometer `MeterRegistry` implementation based on dimensional metrics.
 It intends to supersede Micrometer's `NewRelicMeterRegistry` (which uses custom events in New Relic), because New Relic's dimensional metrics are a better fit for metrics than custom events.
 You can find more details in https://github.com/newrelic/micrometer-registry-newrelic[its GitHub repository].

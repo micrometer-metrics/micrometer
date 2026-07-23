@@ -4,6 +4,8 @@
 
 Atlas is an in-memory dimensional time series database with built-in graphing, a custom stack-based query language, and advanced math operations. Atlas originated at Netflix, where it remains the operational metrics solution.
 
+NOTE: Atlas is *dimensional*, uses *client-side* xref:../concepts/rate-aggregation.adoc[rate aggregation] (Micrometer pre-aggregates before pushing), and uses a *client-push* model. See xref:../concepts/implementations.adoc[Supported Monitoring Systems] for a comparison across registries.
+
 include::_install.adoc[]
 
 == Configuring
