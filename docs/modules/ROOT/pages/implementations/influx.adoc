@@ -118,6 +118,74 @@ management.metrics.export.influx:
     user-name: myusername # Login user of the InfluxDB server. InfluxDB v1 only.
 ----
 
+[[influx-percentiles]]
+== Percentiles and Histogram Buckets
+
+The `InfluxMeterRegistry` uses xref:../concepts/rate-aggregation.adoc[client-side rate aggregation], so percentiles must be computed by Micrometer before the data is pushed. InfluxDB has no server-side facility to compute percentiles from raw samples.
+
+[[influx-client-side-percentiles]]
+=== Client-side percentiles
+
+Configure `publishPercentiles` on a timer or distribution summary to emit pre-computed percentile values:
+
+[source, java]
+----
+Timer timer = Timer.builder("http.server.requests")
+    .publishPercentiles(0.5, 0.95, 0.99) // p50, p95, p99
+    .register(registry);
+----
+
+Each percentile is written to InfluxDB as a separate gauge-type measurement named `{meter.name}.percentile`. The percentile rank is stored in a tag named `phi`. For example, the above configuration produces three points per step interval:
+
+[source]
+----
+http_server_requests.percentile,metric_type=gauge,phi=0.5   value=42.0 <timestamp>
+http_server_requests.percentile,metric_type=gauge,phi=0.95  value=98.0 <timestamp>
+http_server_requests.percentile,metric_type=gauge,phi=0.99  value=127.0 <timestamp>
+----
+
+The values are in the base time unit of the registry (milliseconds by default for timers).
+
+NOTE: Client-side percentiles cannot be re-aggregated across dimensions (for example, across instances or regions). If you need aggregatable percentile approximations, use histogram buckets and InfluxDB's Flux `aggregateWindow` or a histogram-capable tool such as Grafana instead.
+
+[[influx-histogram-buckets]]
+=== Histogram buckets
+
+Configure `publishPercentileHistogram()` or explicit service-level objectives (SLOs) to emit histogram bucket counts:
+
+[source, java]
+----
+Timer timer = Timer.builder("http.server.requests")
+    .publishPercentileHistogram()         // automatically chosen bucket boundaries
+    // or: .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(500))
+    .register(registry);
+----
+
+Each bucket is written as a gauge-type measurement named `{meter.name}.histogram`. The upper bound of the bucket is stored in a tag named `le` (less than or equal). The cumulative count of observations that fell within the bucket is the field value:
+
+[source]
+----
+http_server_requests.histogram,metric_type=gauge,le=10.0   value=45  <timestamp>
+http_server_requests.histogram,metric_type=gauge,le=100.0  value=120 <timestamp>
+http_server_requests.histogram,metric_type=gauge,le=500.0  value=185 <timestamp>
+http_server_requests.histogram,metric_type=gauge,le=+Inf   value=200 <timestamp>
+----
+
+[[influx-timer-fields]]
+=== Standard timer and summary fields
+
+Independent of percentile configuration, every timer and distribution summary is written once per step as a `histogram`-type measurement with the following fields:
+
+[cols="1,3"]
+|===
+|Field |Description
+
+|`sum`     | Total time (or amount for summaries) in the base unit, rate-normalized over the step interval
+|`count`   | Number of observations, rate-normalized over the step interval
+|`mean`    | Average latency over the step interval
+|`upper`   | Maximum latency observed in the step interval
+|===
+
 === Through Telegraf
 
 Telegraf is a StatsD agent that expects a modified flavor of the StatsD line protocol.
