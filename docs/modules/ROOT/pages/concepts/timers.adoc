@@ -114,6 +114,18 @@ public class ExampleService {
 
 NOTE: `TimedAspect` doesn't support meta-annotations with `@Timed`.
 
+[WARNING]
+====
+*Avoid combining `TimedAspect` with Spring Boot's built-in `@Timed` support.*
+
+Spring Boot auto-configures `@Timed` processing for `@Controller` and `@RestController` beans (web request mappings).
+Registering a `TimedAspect` bean in the same application causes those controller methods to be instrumented *twice* — once by the aspect and once by the framework — producing duplicate meters with the same name but potentially different tags.
+This is especially problematic with the Prometheus registry, which rejects duplicate metric names as a registration error.
+
+Use `TimedAspect` only for methods on non-web beans (services, repositories, and so on) that Spring Boot does not instrument automatically.
+If you only need timing for web endpoints, rely on Spring Boot's built-in support and do *not* register a `TimedAspect` bean.
+====
+
 === @MeterTag on Method Parameters
 
 To support using the `@MeterTag` annotation on method parameters, you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
