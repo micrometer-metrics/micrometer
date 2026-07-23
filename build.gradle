@@ -19,7 +19,6 @@ buildscript {
         classpath libs.plugin.nexusPublish
         classpath libs.plugin.javaformat
         classpath libs.plugin.japicmp
-        classpath libs.plugin.downloadTask
         classpath libs.plugin.spotless
         classpath libs.plugin.bnd
 
@@ -428,38 +427,22 @@ subprojects {
 
             if (!(project.name in [])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
-                apply plugin: 'de.undercouch.download'
 
-                tasks.register("downloadBaseline", Download) {
-                    onlyIf {
-                        if (project.gradle.startParameter.isOffline()) {
-                            println 'Offline: skipping downloading of baseline and JAPICMP'
-                            return false
-                        } else if (compatibleVersion == 'SKIP') {
-                            println 'SKIP: Instructed to skip the baseline comparison'
-                            return false
-                        } else {
-                            println "Will download and perform baseline comparison with ${compatibleVersion}"
-                            return true
+                tasks.register('downloadBaseline') {
+                    doLast {
+                        Set<File> baselineFiles = configurations.detachedConfiguration(dependencies.create("${project.group}:${project.name}:${compatibleVersion}@jar")).files
+                        logger.info("Downloaded for baseline comparison: $baselineFiles")
+                        assert baselineFiles.size() == 1
+                        assert baselineFiles.first().name.endsWith("${project.name}-${compatibleVersion}.jar")
+                        copy {
+                            from baselineFiles.first()
+                            into layout.buildDirectory.dir('baselineLibs')
                         }
                     }
-
-                    onlyIfNewer true
-                    compress true
-                    String rootUrl
-                    if (compatibleVersion.contains('-M') || compatibleVersion.contains('-RC')) {
-                        rootUrl = 'https://repo.spring.io/milestone/'
-                    } else if (compatibleVersion.contains('-SNAPSHOT') ) {
-                        rootUrl = 'https://repo.spring.io/snapshot/'
-                    } else {
-                        rootUrl = repositories.mavenCentral().url
-                    }
-
-                    src "${rootUrl}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
-                    dest layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar")
                 }
 
                 tasks.register("japicmp", me.champeau.gradle.japicmp.JapicmpTask) {
+                    dependsOn downloadBaseline, jar
                     oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
                     newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
                     onlyBinaryIncompatibleModified = true
@@ -483,8 +466,6 @@ subprojects {
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
 
-                tasks.japicmp.dependsOn(downloadBaseline)
-                tasks.japicmp.dependsOn(jar)
                 tasks.check.dependsOn(japicmp)
             }
         }
