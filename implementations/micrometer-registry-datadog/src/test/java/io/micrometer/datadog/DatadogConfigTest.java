@@ -46,4 +46,16 @@ class DatadogConfigTest {
         assertThat(config.hostTag()).isEqualTo("instance");
     }
 
+    @Test
+    void defaultsCompressToTrue() {
+        assertThat(config.compress()).isTrue();
+    }
+
+    @Test
+    void compressCanBeDisabled() {
+        props.put("datadog.compress", "false");
+
+        assertThat(config.compress()).isFalse();
+    }
+
 }
