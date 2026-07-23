@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jvm.convention;
+package io.micrometer.core.instrument.binder.jvm.convention.otel;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmClassUnloadedMeterConvention;
 
 /**
- * Get {@link MeterConvention} for metrics related to class loading.
+ * Convention for JVM classes unloaded metrics based on OpenTelemetry semantic conventions.
  *
+ * @see <a href=
+ * "https://github.com/open-telemetry/semantic-conventions/blob/v1.37.0/docs/runtime/jvm-metrics.md">OpenTelemetry
+ * Semantic conventions for JVM metrics v1.37.0</a>
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
  * @since 1.16.0
- * @deprecated use individual convention types such as {@link JvmClassCountMeterConvention},
- * {@link JvmClassLoadedMeterConvention}, and {@link JvmClassUnloadedMeterConvention} with
- * {@link io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics.Builder} instead
  */
-@Deprecated
-public interface JvmClassLoadingMeterConventions {
+public class OpenTelemetryJvmClassUnloadedMeterConvention implements JvmClassUnloadedMeterConvention {
 
-    MeterConvention<Object> loadedConvention();
-
-    MeterConvention<Object> unloadedConvention();
-
-    MeterConvention<Object> currentClassCountConvention();
+    @Override
+    public String getName() {
+        return "jvm.class.unloaded";
+    }
 
 }
