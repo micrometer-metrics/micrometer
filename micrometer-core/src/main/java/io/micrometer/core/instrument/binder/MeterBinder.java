@@ -26,6 +26,16 @@ import io.micrometer.core.instrument.MeterRegistry;
  */
 public interface MeterBinder {
 
+    /**
+     * Bind meters to the given registry.
+     * <p>
+     * This method is typically called once per registry at application configuration
+     * time. The framework does not provide any thread-safety guarantee for concurrent
+     * calls to this method on the same {@code MeterBinder} instance. Implementations
+     * that must support concurrent binding to multiple registries should ensure their
+     * own thread safety.
+     * @param registry the registry to bind metrics to
+     */
     void bindTo(MeterRegistry registry);
 
 }
