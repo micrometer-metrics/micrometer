@@ -97,6 +97,10 @@ include::{include-java}/metrics/CountedAspectTest.java[tags=resolvers,indent=0]
 include::{include-java}/metrics/CountedAspectTest.java[tags=meter_tag_annotation_handler,indent=0]
 -----
 
+NOTE: `SpelValueExpressionResolver` is not part of Micrometer's public API — it is a utility used in the documentation examples only.
+You need to provide your own `ValueExpressionResolver` implementation.
+See the xref:concepts/timers.adoc#_metertag_on_method_parameters[`@Timed` section] for an example implementation.
+
 Let's assume that we have the following interface.
 
 [source,java,subs=+attributes]
