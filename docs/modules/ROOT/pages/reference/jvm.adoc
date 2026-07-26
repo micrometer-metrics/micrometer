@@ -126,9 +126,14 @@ If you are running your application with Java 24 or later on a JVM that has `jdk
 |Gauge
 |`scheduling.status` = `queued`
 |Approximate current number of virtual threads that are unfinished and queued waiting to be scheduled
+
+|`jvm.threads.virtual.live`
+|Gauge
+|`scheduling.status` = `total`
+|Current number of virtual threads that have started but not yet terminated
 |===
 
-Note that aggregating the values of `jvm.threads.virtual.live` across the different tags gives the total number of virtual threads started but not ended.
+The `total` scheduling status includes virtual threads in any state, including those parked waiting on I/O, locks, or other blocking operations. The `mounted` and `queued` statuses only cover virtual threads actively managed by the scheduler and do not include parked virtual threads.
 
 [[lifecycle]]
 == Lifecycle
