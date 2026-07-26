@@ -90,6 +90,89 @@ class Log4j2MetricsTest {
     }
 
     @Test
+    void log4j2MetricsCanIgnoreSpecificLoggers() {
+        new Log4j2Metrics(emptyList(), (LoggerContext) LogManager.getContext(false),
+                event -> event.getLoggerName().startsWith("ignored.logger")).bindTo(registry);
+
+        Logger logger = LogManager.getLogger("regular.logger");
+        Logger ignoredLogger = LogManager.getLogger("ignored.logger.test");
+
+        Configurator.setLevel("regular.logger", Level.INFO);
+        Configurator.setLevel("ignored.logger.test", Level.INFO);
+
+        logger.info("info");
+        ignoredLogger.info("ignored info");
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1.0);
+    }
+
+    @Test
+    void log4j2MetricsCountsAllEventsWhenPredicateIsNull() {
+        new Log4j2Metrics(emptyList(), (LoggerContext) LogManager.getContext(false), null).bindTo(registry);
+
+        Logger logger = LogManager.getLogger("null.predicate.logger");
+        Configurator.setLevel("null.predicate.logger", Level.INFO);
+
+        logger.info("info");
+        logger.warn("warn");
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1.0);
+        assertThat(registry.get("log4j2.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
+    }
+
+    @Test
+    void log4j2MetricsCountsEventWhenPredicateThrows() {
+        new Log4j2Metrics(emptyList(), (LoggerContext) LogManager.getContext(false), event -> {
+            throw new RuntimeException("boom");
+        }).bindTo(registry);
+
+        Logger logger = LogManager.getLogger("throwing.predicate.logger");
+        Configurator.setLevel("throwing.predicate.logger", Level.INFO);
+
+        logger.info("info");
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1.0);
+    }
+
+    @Test
+    void log4j2MetricsIgnoresAllLevelsForIgnoredLogger() {
+        new Log4j2Metrics(emptyList(), (LoggerContext) LogManager.getContext(false),
+                event -> event.getLoggerName().equals("noisy.logger")).bindTo(registry);
+
+        Logger noisyLogger = LogManager.getLogger("noisy.logger");
+        Configurator.setLevel("noisy.logger", Level.TRACE);
+
+        noisyLogger.trace("trace");
+        noisyLogger.debug("debug");
+        noisyLogger.info("info");
+        noisyLogger.warn("warn");
+        noisyLogger.error("error");
+        noisyLogger.fatal("fatal");
+
+        assertThat(registry.get("log4j2.events").tags("level", "trace").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("log4j2.events").tags("level", "debug").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("log4j2.events").tags("level", "warn").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("log4j2.events").tags("level", "fatal").counter().count()).isEqualTo(0.0);
+    }
+
+    @Test
+    void log4j2MetricsConvenienceConstructorWithPredicate() {
+        new Log4j2Metrics(emptyList(), event -> event.getLoggerName().equals("skip.me")).bindTo(registry);
+
+        Logger regular = LogManager.getLogger("count.me");
+        Logger skipped = LogManager.getLogger("skip.me");
+        Configurator.setLevel("count.me", Level.INFO);
+        Configurator.setLevel("skip.me", Level.INFO);
+
+        regular.info("counted");
+        skipped.info("skipped");
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1.0);
+    }
+
+    @Test
     void filterWhenLoggerAdditivityIsFalseShouldWork() {
         Logger additivityDisabledLogger = LogManager.getLogger("additivityDisabledLogger");
         Configurator.setLevel("additivityDisabledLogger", Level.INFO);

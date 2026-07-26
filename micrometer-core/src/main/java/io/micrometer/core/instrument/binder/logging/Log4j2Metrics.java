@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
+import org.jspecify.annotations.Nullable;
 
 import static java.util.Collections.emptyList;
 
@@ -72,6 +74,8 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private final List<PropertyChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
+    private final @Nullable Predicate<LogEvent> ignoreEventPredicate;
+
     public Log4j2Metrics() {
         this(emptyList());
     }
@@ -81,8 +85,35 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     }
 
     public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext) {
+        this(tags, loggerContext, null);
+    }
+
+    /**
+     * Create a {@code Log4j2Metrics} instance with the given tags and a predicate to
+     * selectively ignore log events from metrics collection.
+     * @param tags extra tags to add to all metrics
+     * @param ignoreEventPredicate a predicate that, when it returns {@code true} for a
+     * given {@link LogEvent}, causes that event to be excluded from metrics collection.
+     * The event is still logged normally. May be {@code null}.
+     */
+    public Log4j2Metrics(Iterable<Tag> tags, @Nullable Predicate<LogEvent> ignoreEventPredicate) {
+        this(tags, (LoggerContext) LogManager.getContext(false), ignoreEventPredicate);
+    }
+
+    /**
+     * Create a {@code Log4j2Metrics} instance with the given tags, logger context, and a
+     * predicate to selectively ignore log events from metrics collection.
+     * @param tags extra tags to add to all metrics
+     * @param loggerContext the Log4j2 {@link LoggerContext}
+     * @param ignoreEventPredicate a predicate that, when it returns {@code true} for a
+     * given {@link LogEvent}, causes that event to be excluded from metrics collection.
+     * The event is still logged normally. May be {@code null}.
+     */
+    public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext,
+            @Nullable Predicate<LogEvent> ignoreEventPredicate) {
         this.tags = tags;
         this.loggerContext = loggerContext;
+        this.ignoreEventPredicate = ignoreEventPredicate;
     }
 
     @Override
@@ -139,7 +170,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private MetricsFilter getOrCreateMetricsFilterAndStart(MeterRegistry registry) {
         return metricsFilters.computeIfAbsent(registry, r -> {
-            MetricsFilter metricsFilter = new MetricsFilter(r, tags);
+            MetricsFilter metricsFilter = new MetricsFilter(r, tags, ignoreEventPredicate);
             metricsFilter.start();
             return metricsFilter;
         });
@@ -189,7 +220,11 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         private final Counter traceCounter;
 
-        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags) {
+        private final @Nullable Predicate<LogEvent> ignoreEventPredicate;
+
+        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, @Nullable Predicate<LogEvent> ignoreEventPredicate) {
+            this.ignoreEventPredicate = ignoreEventPredicate;
+
             fatalCounter = Counter.builder(METER_NAME)
                 .tags(tags)
                 .tags("level", "fatal")
@@ -235,6 +270,17 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         @Override
         public Result filter(LogEvent event) {
+            if (ignoreEventPredicate != null) {
+                try {
+                    if (ignoreEventPredicate.test(event)) {
+                        return Result.NEUTRAL;
+                    }
+                }
+                catch (Exception e) {
+                    // Don't let a faulty predicate break logging.
+                    // Fall through to count the event normally.
+                }
+            }
             incrementCounter(event);
             return Result.NEUTRAL;
         }
