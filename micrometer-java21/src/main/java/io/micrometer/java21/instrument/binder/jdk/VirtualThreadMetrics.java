@@ -55,7 +55,7 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private static final String QUEUED_THREADS_DESCRIPTION = "Approximate current number of virtual threads that are unfinished and queued waiting to be scheduled";
 
-    private static final String TOTAL_THREADS_DESCRIPTION = "Current number of virtual threads that have started but not yet terminated";
+    private static final String TOTAL_THREADS_DESCRIPTION = "Approximate number of virtual threads started after this binder began JFR recording that have not yet terminated";
 
     private static final String METER_NAME_PREFIX = "jvm.threads.virtual.";
 
@@ -74,8 +74,8 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
     }
 
     private VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
-        this.recordingStream = createRecordingStream(config);
         this.tags = tags;
+        this.recordingStream = createRecordingStream(config);
     }
 
     @Override
@@ -98,10 +98,6 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
     }
 
     private void bindLiveVirtualThreadCount(MeterRegistry registry) {
-        liveVirtualThreadCount.set(countLiveVirtualThreads());
-        recordingStream.onEvent(START_EVENT, event -> liveVirtualThreadCount.incrementAndGet());
-        recordingStream.onEvent(END_EVENT, event -> liveVirtualThreadCount.decrementAndGet());
-
         Gauge.builder(METER_NAME_PREFIX + "live", liveVirtualThreadCount, AtomicLong::doubleValue)
             .tags(tags)
             .tag("scheduling.status", "total")
@@ -170,13 +166,14 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         recordingStream.enable(END_EVENT);
         recordingStream.setMaxAge(config.maxAge);
         recordingStream.setMaxSize(config.maxSizeBytes);
+        // Register before startAsync so start/end events are not dropped. There is no
+        // reliable JDK API to seed with already-running virtual threads
+        // (Thread.getAllStackTraces() is platform-threads only).
+        recordingStream.onEvent(START_EVENT, event -> liveVirtualThreadCount.incrementAndGet());
+        recordingStream.onEvent(END_EVENT, event -> liveVirtualThreadCount.decrementAndGet());
         recordingStream.startAsync();
 
         return recordingStream;
-    }
-
-    private static long countLiveVirtualThreads() {
-        return Thread.getAllStackTraces().keySet().stream().filter(Thread::isVirtual).count();
     }
 
     @Override

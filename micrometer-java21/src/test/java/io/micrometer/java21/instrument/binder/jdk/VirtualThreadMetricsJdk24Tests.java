@@ -24,6 +24,8 @@ import org.junit.jupiter.api.condition.EnabledForJreRange;
 import org.junit.jupiter.api.condition.JRE;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -105,25 +107,53 @@ class VirtualThreadMetricsJdk24Tests {
     void totalLiveThreadsIncludesParkedVirtualThreads() throws InterruptedException {
         SynchronousQueue<Object> queue = new SynchronousQueue<>();
         int expectedLiveThreads = 10;
-        for (int i = 0; i < expectedLiveThreads; i++) {
-            Thread.ofVirtual().start(() -> {
-                try {
-                    queue.take();
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-        }
+        List<Thread> parked = new ArrayList<>(expectedLiveThreads);
+        try {
+            for (int i = 0; i < expectedLiveThreads; i++) {
+                parked.add(Thread.ofVirtual().start(() -> {
+                    try {
+                        queue.take();
+                    }
+                    catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }));
+            }
 
-        await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> {
-            assertThat(registry.get("jvm.threads.virtual.live").tag("scheduling.status", "total").gauge().value())
-                .isGreaterThanOrEqualTo(expectedLiveThreads);
-            assertThat(registry.get("jvm.threads.virtual.live").tag("scheduling.status", "mounted").gauge().value())
-                .isZero();
-            assertThat(registry.get("jvm.threads.virtual.live").tag("scheduling.status", "queued").gauge().value())
-                .isZero();
-        });
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> {
+                assertThat(registry.get("jvm.threads.virtual.live").tag("scheduling.status", "total").gauge().value())
+                    .isGreaterThanOrEqualTo(expectedLiveThreads);
+                assertThat(registry.get("jvm.threads.virtual.live").tag("scheduling.status", "mounted").gauge().value())
+                    .isZero();
+                assertThat(registry.get("jvm.threads.virtual.live").tag("scheduling.status", "queued").gauge().value())
+                    .isZero();
+            });
+
+            double liveWhileParked = registry.get("jvm.threads.virtual.live")
+                .tag("scheduling.status", "total")
+                .gauge()
+                .value();
+
+            for (Thread thread : parked) {
+                thread.interrupt();
+            }
+            for (Thread thread : parked) {
+                thread.join(Duration.ofSeconds(1));
+            }
+
+            await().atMost(Duration.ofSeconds(2))
+                .untilAsserted(() -> assertThat(
+                        registry.get("jvm.threads.virtual.live").tag("scheduling.status", "total").gauge().value())
+                    .isLessThanOrEqualTo(liveWhileParked - expectedLiveThreads));
+        }
+        finally {
+            for (Thread thread : parked) {
+                thread.interrupt();
+            }
+            for (Thread thread : parked) {
+                thread.join(Duration.ofMillis(200));
+            }
+        }
     }
 
 }

@@ -99,7 +99,19 @@ Micrometer provides metrics for https://openjdk.org/jeps/444[virtual threads] re
 new VirtualThreadMetrics().bindTo(registry);
 ----
 
-The binder measures the duration (and counts the number of events) of virtual threads being pinned; it also counts the number of events when starting or unparking a virtual thread failed.
+The binder measures the duration (and counts the number of events) of virtual threads being pinned; it also counts the number of events when starting or unparking a virtual thread failed. It additionally tracks live virtual threads via JFR start/end events:
+
+
+|===
+|Meter name | Type | Tag(s) | Description
+
+|`jvm.threads.virtual.live`
+|Gauge
+|`scheduling.status` = `total`
+|Approximate number of virtual threads started after this binder began JFR recording that have not yet terminated (includes parked threads)
+|===
+
+`total` counts virtual threads in any state after recording starts, including those parked waiting on I/O, locks, or other blocking operations. Virtual threads that already existed before the binder was constructed are not included (the JDK does not expose a portable API to enumerate live virtual threads for seeding).
 
 If you are running your application with Java 24 or later on a JVM that has `jdk.management.VirtualThreadSchedulerMXBean` provided as a platform MXBean, the following additional virtual thread metrics will be provided.
 
@@ -126,14 +138,9 @@ If you are running your application with Java 24 or later on a JVM that has `jdk
 |Gauge
 |`scheduling.status` = `queued`
 |Approximate current number of virtual threads that are unfinished and queued waiting to be scheduled
-
-|`jvm.threads.virtual.live`
-|Gauge
-|`scheduling.status` = `total`
-|Current number of virtual threads that have started but not yet terminated
 |===
 
-The `total` scheduling status includes virtual threads in any state, including those parked waiting on I/O, locks, or other blocking operations. The `mounted` and `queued` statuses only cover virtual threads actively managed by the scheduler and do not include parked virtual threads.
+The `mounted` and `queued` statuses only cover virtual threads actively managed by the scheduler and do not include parked virtual threads. They must not be summed to obtain a total live count; use `scheduling.status=total` for that.
 
 [[lifecycle]]
 == Lifecycle
