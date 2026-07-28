@@ -219,7 +219,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             List<String> tagKeys = tagKeys(id);
-            String familyName = counterMetricName(conventionName(id), id.getName());
+            String familyName = conventionName(id);
             collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(familyName,
                     family -> counterSnapshot(family, family.getConventionName(), helpText(id.getDescription())),
                     new CounterDataPointSnapshot(counter.count(), Labels.of(tagKeys, tagValues), counter.exemplar(),
@@ -334,14 +334,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagValues = tagValues(id);
             List<String> tagKeys = tagKeys(id);
             if (id.getName().endsWith(".info")) {
-                String familyName = infoMetricName(conventionName(id), id.getName());
+                String familyName = conventionName(id);
                 collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(familyName,
                         family -> infoSnapshot(family, family.getConventionName(), helpText(id.getDescription())),
                         new InfoDataPointSnapshot(Labels.of(tagKeys, tagValues)))),
                         registeredFamily(MetricType.INFO, familyName, tagKeys, id.getDescription()));
             }
             else {
-                String familyName = gaugeMetricName(conventionName(id), id.getName());
+                String familyName = conventionName(id);
                 collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(familyName,
                         family -> gaugeSnapshot(family, family.getConventionName(), helpText(id.getDescription())),
                         new GaugeDataPointSnapshot(gauge.value(), Labels.of(tagKeys, tagValues), null))),
@@ -384,7 +384,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             List<String> tagKeys = tagKeys(id);
-            String familyName = counterMetricName(conventionName(id), id.getName());
+            String familyName = conventionName(id);
             collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(familyName,
                     family -> counterSnapshot(family, family.getConventionName(), helpText(id.getDescription())),
                     new CounterDataPointSnapshot(fc.count(), Labels.of(tagKeys, tagValues), null,
@@ -401,7 +401,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             List<String> statKeys = new ArrayList<>(tagKeys);
             statKeys.add("statistic");
-            List<MicrometerCollector.RegisteredFamily> registrationDescriptors = new ArrayList<>();
+            List<MetricFamilyDescriptor> registrationDescriptors = new ArrayList<>();
             String name = conventionName(id);
             for (Measurement measurement : measurements) {
                 registrationDescriptors.add(customMeterDescriptor(id, name, measurement.getStatistic(), statKeys));
@@ -415,14 +415,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             Labels.of(statKeys, statValues), measurement.getValue()));
                 }
                 return families.build();
-            }, registrationDescriptors.toArray(new MicrometerCollector.RegisteredFamily[0]));
+            }, registrationDescriptors.toArray(new MetricFamilyDescriptor[0]));
         });
 
         return new DefaultMeter(id, type, measurements);
     }
 
-    private MicrometerCollector.RegisteredFamily customMeterDescriptor(Meter.Id id, String conventionName,
-            Statistic statistic, Collection<String> labelNames) {
+    private MetricFamilyDescriptor customMeterDescriptor(Meter.Id id, String conventionName, Statistic statistic,
+            Collection<String> labelNames) {
         CustomMeterMetric metric = customMeterMetric(conventionName, statistic);
         return registeredFamily(metric.metricType, metric.name, labelNames, id.getDescription());
     }
@@ -583,12 +583,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         return getConventionName(id);
     }
 
-    private MicrometerCollector.RegisteredFamily registeredFamily(MetricType metricType, String name,
-            Collection<String> labelNames, @Nullable String description) {
+    private MetricFamilyDescriptor registeredFamily(MetricType metricType, String name, Collection<String> labelNames,
+            @Nullable String description) {
         MetricFamilyDescriptor.Builder<?> builder = MetricFamilyDescriptor.of(metricType, name)
             .help(helpText(description))
             .labelNames(labelNames);
-        return new MicrometerCollector.RegisteredFamily(builder.build());
+        return builder.build();
     }
 
     private String helpText(@Nullable String description) {
@@ -623,69 +623,29 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private CounterSnapshot counterSnapshot(MicrometerCollector.Family<CounterDataPointSnapshot> family, String name,
             String help) {
-        CounterSnapshot.Builder builder = CounterSnapshot.builder().name(name).help(help);
-        family.dataPointSnapshots.forEach(builder::dataPoint);
-        return builder.build();
+        return new CounterSnapshot(new MetricMetadata(name, help, null), family.dataPointSnapshots);
     }
 
     private GaugeSnapshot gaugeSnapshot(MicrometerCollector.Family<GaugeDataPointSnapshot> family, String name,
             String help) {
-        GaugeSnapshot.Builder builder = GaugeSnapshot.builder().name(name).help(help);
-        family.dataPointSnapshots.forEach(builder::dataPoint);
-        return builder.build();
+        return new GaugeSnapshot(new MetricMetadata(name, help, null), family.dataPointSnapshots);
     }
 
     private InfoSnapshot infoSnapshot(MicrometerCollector.Family<InfoDataPointSnapshot> family, String name,
             String help) {
-        InfoSnapshot.Builder builder = InfoSnapshot.builder().name(name).help(help);
-        family.dataPointSnapshots.forEach(builder::dataPoint);
-        return builder.build();
+        return new InfoSnapshot(new MetricMetadata(name, help, null), family.dataPointSnapshots);
     }
 
     private SummarySnapshot summarySnapshot(MicrometerCollector.Family<SummaryDataPointSnapshot> family, String name,
             String help) {
-        SummarySnapshot.Builder builder = SummarySnapshot.builder().name(name).help(help);
-        family.dataPointSnapshots.forEach(builder::dataPoint);
-        return builder.build();
+        return new SummarySnapshot(new MetricMetadata(name, help, null), family.dataPointSnapshots);
     }
 
     private io.prometheus.metrics.model.snapshots.HistogramSnapshot histogramSnapshot(
             MicrometerCollector.Family<HistogramDataPointSnapshot> family, String name, String help,
             boolean gaugeHistogram) {
-        io.prometheus.metrics.model.snapshots.HistogramSnapshot.Builder builder = io.prometheus.metrics.model.snapshots.HistogramSnapshot
-            .builder()
-            .name(name)
-            .help(help)
-            .gaugeHistogram(gaugeHistogram);
-        family.dataPointSnapshots.forEach(builder::dataPoint);
-        return builder.build();
-    }
-
-    private String counterMetricName(String prometheusName, String originalName) {
-        return normalizeBaseName(prometheusName, originalName, ".bucket", "_bucket", ".created", "_created", ".info",
-                "_info", ".total", "_total");
-    }
-
-    private String infoMetricName(String prometheusName, String originalName) {
-        return normalizeBaseName(prometheusName, originalName, ".info", "_info");
-    }
-
-    private String gaugeMetricName(String prometheusName, String originalName) {
-        return normalizeBaseName(prometheusName, originalName, ".bucket", "_bucket", ".created", "_created", ".total",
-                "_total");
-    }
-
-    private static String normalizeBaseName(String name, String originalName, String... suffixMappings) {
-        for (int i = 0; i < suffixMappings.length; i += 2) {
-            if (originalName.endsWith(suffixMappings[i])) {
-                return stripSuffix(name, suffixMappings[i + 1]);
-            }
-        }
-        return name;
-    }
-
-    private static String stripSuffix(String name, String suffix) {
-        return name.endsWith(suffix) ? name.substring(0, name.length() - suffix.length()) : name;
+        return new io.prometheus.metrics.model.snapshots.HistogramSnapshot(gaugeHistogram,
+                new MetricMetadata(name, help, null), family.dataPointSnapshots);
     }
 
     private void applyToCollector(Meter.Id id, Consumer<MicrometerCollector> consumer) {

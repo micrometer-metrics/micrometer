@@ -175,14 +175,14 @@ class MicrometerCollectorTest {
             CounterSnapshot.Builder builder = CounterSnapshot.builder().name("my_counter");
             family.dataPointSnapshots.forEach(builder::dataPoint);
             return builder.build();
-        }, sample)), new MicrometerCollector.RegisteredFamily(
-                MetricFamilyDescriptor.counter("my_counter").help("help").labelNames(asList("k")).build()));
+        }, sample)), MetricFamilyDescriptor.counter("my_counter").help("help").labelNames(asList("k")).build());
 
-        assertThat(collector.getPrometheusNames()).containsExactly("my_counter");
-        assertThat(collector.getMetricType("my_counter")).isEqualTo(MetricType.COUNTER);
-        assertThat(collector.getLabelNames("my_counter")).containsExactly("k");
-        assertThat(collector.getMetadata("my_counter")).isNotNull();
-        assertThat(collector.getMetadata("my_counter").getName()).isEqualTo("my_counter");
+        assertThat(collector.getMetricFamilyDescriptors()).singleElement().satisfies(descriptor -> {
+            assertThat(descriptor.getPrometheusName()).isEqualTo("my_counter");
+            assertThat(descriptor.getType()).isEqualTo(MetricType.COUNTER);
+            assertThat(descriptor.getLabelNames()).containsExactly("k");
+            assertThat(descriptor.getMetadata().getName()).isEqualTo("my_counter");
+        });
     }
 
 }
