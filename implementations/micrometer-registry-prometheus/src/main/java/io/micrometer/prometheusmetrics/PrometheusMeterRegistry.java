@@ -222,7 +222,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             collector.add(id,
                     (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                            family -> new CounterSnapshot(getMetadata(family.getConventionName(), id.getDescription()),
+                            family -> new CounterSnapshot(getMetadata(family.conventionName, id.getDescription()),
                                     family.dataPointSnapshots),
                             new CounterDataPointSnapshot(counter.count(), Labels.of(tagKeys, tagValues),
                                     counter.exemplar(), createdTimestampMillis))),
@@ -261,7 +261,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                     Exemplars exemplars = summary.exemplars();
                     families.add(new MicrometerCollector.Family<>(conventionName,
-                            family -> new SummarySnapshot(getMetadata(family.getConventionName(), id.getDescription()),
+                            family -> new SummarySnapshot(getMetadata(family.conventionName, id.getDescription()),
                                     family.dataPointSnapshots),
                             new SummaryDataPointSnapshot(count, sum, quantiles, Labels.of(tagKeys, tagValues),
                                     exemplars, createdTimestampMillis)));
@@ -292,8 +292,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     Exemplars exemplars = summary.exemplars();
                     families.add(new MicrometerCollector.Family<>(conventionName,
                             family -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(false,
-                                    getMetadata(family.getConventionName(), id.getDescription()),
-                                    family.dataPointSnapshots),
+                                    getMetadata(family.conventionName, id.getDescription()), family.dataPointSnapshots),
                             new HistogramDataPointSnapshot(ClassicHistogramBuckets.of(buckets, counts), sum,
                                     Labels.of(tagKeys, tagValues), exemplars, createdTimestampMillis)));
 
@@ -475,18 +474,20 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             CustomMeterMetric metric, Labels labels, double value) {
         long createdTimestampMillis = clock.wallTime();
         return new MicrometerCollector.Family<>(metric.name,
-                family -> new CounterSnapshot(getMetadata(metric.name, id.getDescription()), family.dataPointSnapshots),
+                family -> new CounterSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                        family.dataPointSnapshots),
                 new CounterDataPointSnapshot(value, labels, null, createdTimestampMillis));
     }
 
     private MicrometerCollector.Family<GaugeDataPointSnapshot> customGaugeFamily(Meter.Id id, CustomMeterMetric metric,
             Labels labels, double value) {
         return new MicrometerCollector.Family<>(metric.name,
-                family -> new GaugeSnapshot(getMetadata(metric.name, id.getDescription()), family.dataPointSnapshots),
+                family -> new GaugeSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                        family.dataPointSnapshots),
                 new GaugeDataPointSnapshot(value, labels, null));
     }
 
-    private static class CustomMeterMetric {
+    private static final class CustomMeterMetric {
 
         private final String name;
 

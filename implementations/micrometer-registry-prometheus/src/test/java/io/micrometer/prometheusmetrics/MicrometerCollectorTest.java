@@ -152,11 +152,12 @@ class MicrometerCollectorTest {
 
         CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
                 Labels.of("k", "v"), null, 0);
-        collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>("my_counter", family -> {
-            CounterSnapshot.Builder builder = CounterSnapshot.builder().name("my_counter");
-            family.dataPointSnapshots.forEach(builder::dataPoint);
-            return builder.build();
-        }, sample)), MetricFamilyDescriptor.counter("my_counter").help("help").labelNames(asList("k")).build());
+        collector.add(id,
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>("my_counter",
+                        family -> new CounterSnapshot(new MetricMetadata(family.conventionName),
+                                family.dataPointSnapshots),
+                        sample)),
+                MetricFamilyDescriptor.counter("my_counter").help("help").labelNames(asList("k")).build());
 
         assertThat(collector.getMetricFamilyDescriptors()).singleElement().satisfies(descriptor -> {
             assertThat(descriptor.getPrometheusName()).isEqualTo("my_counter");
