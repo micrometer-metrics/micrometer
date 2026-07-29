@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation.Event;
 
 /**
@@ -32,8 +34,10 @@ class SimpleEvent implements Event {
 
     private final long wallTime;
 
+    private final Iterable<KeyValue> keyValues;
+
     SimpleEvent(String name, String contextualName) {
-        this(name, contextualName, System.currentTimeMillis());
+        this(name, contextualName, System.currentTimeMillis(), KeyValues.empty());
     }
 
     /**
@@ -41,10 +45,11 @@ class SimpleEvent implements Event {
      * @param contextualName The contextual name of the event (can have high cardinality).
      * @param wallTime Wall time in milliseconds since the epoch
      */
-    SimpleEvent(String name, String contextualName, long wallTime) {
+    SimpleEvent(String name, String contextualName, long wallTime, Iterable<KeyValue> keyValues) {
         this.name = name;
         this.contextualName = contextualName;
         this.wallTime = wallTime;
+        this.keyValues = keyValues;
     }
 
     @Override
@@ -60,6 +65,11 @@ class SimpleEvent implements Event {
     @Override
     public long getWallTime() {
         return this.wallTime;
+    }
+
+    @Override
+    public Iterable<KeyValue> getKeyValues() {
+        return this.keyValues;
     }
 
     @Override
