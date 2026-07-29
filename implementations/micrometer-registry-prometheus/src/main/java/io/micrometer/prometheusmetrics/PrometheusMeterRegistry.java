@@ -46,6 +46,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -403,8 +404,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             statKeys.add("statistic");
             List<MetricFamilyDescriptor> registrationDescriptors = new ArrayList<>();
             String name = conventionName(id);
+            Set<String> descriptorNames = new HashSet<>();
             for (Measurement measurement : measurements) {
-                registrationDescriptors.add(customMeterDescriptor(id, name, measurement.getStatistic(), statKeys));
+                MetricFamilyDescriptor descriptor = customMeterDescriptor(id, name, measurement.getStatistic(),
+                        statKeys);
+                // de-duplicate names
+                if (descriptorNames.add(descriptor.getPrometheusName())) {
+                    registrationDescriptors.add(descriptor);
+                }
             }
             collector.add(id, (conventionName) -> {
                 Stream.Builder<MicrometerCollector.Family<?>> families = Stream.builder();

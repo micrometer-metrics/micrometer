@@ -1168,6 +1168,27 @@ class PrometheusMeterRegistryTest {
         assertThat(registry.scrape()).doesNotContain("_created");
     }
 
+    @Test
+    void customMeterWithAllStatistics() {
+        List<Measurement> measurements = new ArrayList<>();
+        int i = 0;
+        for (Statistic statistic : Statistic.values()) {
+            int value = i++;
+            measurements.add(new Measurement(() -> value + 10, statistic));
+        }
+        Meter.builder("test.custom", Meter.Type.OTHER, measurements).register(registry);
+
+        String scraped = registry.scrape();
+        assertThat(scraped).contains("test_custom_sum_total{statistic=\"TOTAL\"}")
+            .contains("test_custom_sum_total{statistic=\"TOTAL_TIME\"}")
+            .contains("test_custom_total{statistic=\"COUNT\"}")
+            .contains("test_custom_max{statistic=\"MAX\"}")
+            .contains("test_custom_value{statistic=\"VALUE\"}")
+            .contains("test_custom_value{statistic=\"UNKNOWN\"}")
+            .contains("test_custom_active_count{statistic=\"ACTIVE_TASKS\"}")
+            .contains("test_custom_duration_sum{statistic=\"DURATION\"}");
+    }
+
     private static class CountingPrometheusNamingConvention extends PrometheusNamingConvention {
 
         AtomicInteger nameCount = new AtomicInteger();
