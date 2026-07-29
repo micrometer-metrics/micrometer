@@ -47,7 +47,7 @@ dependencies {
     // Aspects
     optionalApi libs.aspectjrt
 
-    testRuntimeOnly libs.logback12
+    testRuntimeOnly "ch.qos.logback:logback-classic:$logback12Version"
 
     testImplementation(libs.archunitJunit5) {
         // avoid transitively pulling in slf4j 2

@@ -20,6 +20,7 @@ import io.prometheus.metrics.core.exemplars.ExemplarSampler;
 import io.prometheus.metrics.core.exemplars.ExemplarSamplerConfig;
 import io.prometheus.metrics.tracer.common.SpanContext;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -34,8 +35,8 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
 
     private final ConcurrentMap<Integer, ExemplarSamplerConfig> exemplarSamplerConfigsByNumberOfExemplars = new ConcurrentHashMap<>();
 
-    @SuppressWarnings("ArrayAsKeyOfSetOrMap")
-    private final ConcurrentMap<double[], ExemplarSamplerConfig> exemplarSamplerConfigsByHistogramUpperBounds = new ConcurrentHashMap<>();
+    // VisibleForTesting
+    final ConcurrentMap<DoubleArrayKey, ExemplarSamplerConfig> exemplarSamplerConfigsByHistogramUpperBounds = new ConcurrentHashMap<>();
 
     private final SpanContext spanContext;
 
@@ -54,8 +55,39 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
     @Override
     public ExemplarSampler createExemplarSampler(double[] histogramUpperBounds) {
         ExemplarSamplerConfig config = exemplarSamplerConfigsByHistogramUpperBounds.computeIfAbsent(
-                histogramUpperBounds, key -> new ExemplarSamplerConfig(exemplarsProperties, histogramUpperBounds));
+                new DoubleArrayKey(histogramUpperBounds),
+                key -> new ExemplarSamplerConfig(exemplarsProperties, histogramUpperBounds));
         return new ExemplarSampler(config, spanContext);
+    }
+
+    private static final class DoubleArrayKey {
+
+        private final double[] array;
+
+        private final int hashCode;
+
+        private DoubleArrayKey(double[] array) {
+            this.array = array;
+            this.hashCode = Arrays.hashCode(array);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            DoubleArrayKey that = (DoubleArrayKey) o;
+            return Arrays.equals(array, that.array);
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
     }
 
 }

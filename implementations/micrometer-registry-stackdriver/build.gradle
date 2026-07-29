@@ -9,8 +9,8 @@ dependencies {
     }
     api libs.googleOauth2Http
     implementation libs.slf4jApi
-    compileOnly libs.logback12
-    testRuntimeOnly libs.logback12
+    compileOnly "ch.qos.logback:logback-classic:$logback12Version"
+    testRuntimeOnly "ch.qos.logback:logback-classic:$logback12Version"
     testImplementation libs.mockitoCore5
     // needed for extending TimeWindowPercentileHistogram in StackdriverHistogramUtil
     compileOnly libs.hdrhistogram

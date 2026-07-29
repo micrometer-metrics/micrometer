@@ -34,6 +34,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
+import reactor.core.Disposable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -168,7 +169,8 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     }
 
     private boolean clientIsDisposed(StatsdMeterRegistry meterRegistry) {
-        return meterRegistry.statsdConnection.get().isDisposed();
+        Disposable connection = meterRegistry.statsdConnection.get();
+        return connection != null && connection.isDisposed();
     }
 
     private StatsdConfig getStatsdConfig() {

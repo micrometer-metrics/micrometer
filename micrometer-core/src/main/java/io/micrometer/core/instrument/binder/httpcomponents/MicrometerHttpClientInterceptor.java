@@ -86,12 +86,14 @@ public class MicrometerHttpClientInterceptor {
                     .tags("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request)));
 
         this.responseInterceptor = (response, context) -> {
-            timerByHttpContext.remove(context)
-                .tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
-                .tag("outcome", Outcome.forStatus(response.getStatusLine().getStatusCode()).name())
-                .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                .tags(extraTags)
-                .close();
+            Timer.ResourceSample sample = timerByHttpContext.remove(context);
+            if (sample != null) {
+                sample.tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
+                    .tag("outcome", Outcome.forStatus(response.getStatusLine().getStatusCode()).name())
+                    .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
+                    .tags(extraTags)
+                    .close();
+            }
         };
     }
 

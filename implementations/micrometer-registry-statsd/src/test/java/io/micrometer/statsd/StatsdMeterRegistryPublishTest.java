@@ -401,7 +401,8 @@ class StatsdMeterRegistryPublishTest {
     }
 
     private boolean clientIsDisposed(StatsdMeterRegistry meterRegistry) {
-        return meterRegistry.statsdConnection.get().isDisposed();
+        Disposable connection = meterRegistry.statsdConnection.get();
+        return connection == null || connection.isDisposed();
     }
 
     private DisposableChannel startServer(StatsdProtocol protocol, int port, CountDownLatch serverLatch) {
