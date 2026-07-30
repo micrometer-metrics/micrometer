@@ -226,7 +226,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                     family.dataPointSnapshots),
                             new CounterDataPointSnapshot(counter.count(), Labels.of(tagKeys, tagValues),
                                     counter.exemplar(), createdTimestampMillis))),
-                    registeredFamily(MetricType.COUNTER, getConventionName(id), tagKeys, id.getDescription()));
+                    familyDescriptor(MetricType.COUNTER, getConventionName(id), tagKeys, id.getDescription()));
         });
         return counter;
     }
@@ -312,8 +312,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         new GaugeDataPointSnapshot(summary.max(), Labels.of(tagKeys, tagValues), null)));
 
                 return families.build();
-            }, registeredFamily(primaryType, getConventionName(id), tagKeys, id.getDescription()),
-                    registeredFamily(MetricType.GAUGE, getConventionName(id) + "_max", tagKeys, id.getDescription()));
+            }, familyDescriptor(primaryType, getConventionName(id), tagKeys, id.getDescription()),
+                    familyDescriptor(MetricType.GAUGE, getConventionName(id) + "_max", tagKeys, id.getDescription()));
         });
 
         return summary;
@@ -341,7 +341,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         family -> new InfoSnapshot(getMetadata(family.conventionName, id.getDescription()),
                                 family.dataPointSnapshots),
                         new InfoDataPointSnapshot(Labels.of(tagKeys, tagValues)))),
-                        registeredFamily(MetricType.INFO, getConventionName(id), tagKeys, id.getDescription()));
+                        familyDescriptor(MetricType.INFO, getConventionName(id), tagKeys, id.getDescription()));
             }
             else {
                 collector.add(id,
@@ -349,7 +349,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                 family -> new GaugeSnapshot(getMetadata(family.conventionName, id.getDescription()),
                                         family.dataPointSnapshots),
                                 new GaugeDataPointSnapshot(gauge.value(), Labels.of(tagKeys, tagValues), null))),
-                        registeredFamily(MetricType.GAUGE, getConventionName(id), tagKeys, id.getDescription()));
+                        familyDescriptor(MetricType.GAUGE, getConventionName(id), tagKeys, id.getDescription()));
             }
         });
         return gauge;
@@ -378,7 +378,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                     family.dataPointSnapshots),
                             new SummaryDataPointSnapshot((long) ft.count(), ft.totalTime(getBaseTimeUnit()),
                                     Quantiles.EMPTY, Labels.of(tagKeys, tagValues), null, createdTimestampMillis))),
-                    registeredFamily(MetricType.SUMMARY, getConventionName(id), tagKeys, id.getDescription()));
+                    familyDescriptor(MetricType.SUMMARY, getConventionName(id), tagKeys, id.getDescription()));
         });
         return ft;
     }
@@ -396,7 +396,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                     family.dataPointSnapshots),
                             new CounterDataPointSnapshot(fc.count(), Labels.of(tagKeys, tagValues), null,
                                     createdTimestampMillis))),
-                    registeredFamily(MetricType.COUNTER, getConventionName(id), tagKeys, id.getDescription()));
+                    familyDescriptor(MetricType.COUNTER, getConventionName(id), tagKeys, id.getDescription()));
         });
         return fc;
     }
@@ -437,7 +437,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     private MetricFamilyDescriptor customMeterDescriptor(Meter.Id id, String conventionName, Statistic statistic,
             Collection<String> labelNames) {
         CustomMeterMetric metric = customMeterMetric(conventionName, statistic);
-        return registeredFamily(metric.metricType, metric.name, labelNames, id.getDescription());
+        return familyDescriptor(metric.metricType, metric.name, labelNames, id.getDescription());
     }
 
     private MicrometerCollector.Family<?> customMeterFamily(Meter.Id id, String conventionName, Statistic statistic,
@@ -592,11 +592,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             null)));
 
             return families.build();
-        }, registeredFamily(primaryType, getConventionName(id), tagKeys, id.getDescription()),
-                registeredFamily(MetricType.GAUGE, getConventionName(id) + "_max", tagKeys, id.getDescription()));
+        }, familyDescriptor(primaryType, getConventionName(id), tagKeys, id.getDescription()),
+                familyDescriptor(MetricType.GAUGE, getConventionName(id) + "_max", tagKeys, id.getDescription()));
     }
 
-    private MetricFamilyDescriptor registeredFamily(MetricType metricType, String name, Collection<String> labelNames,
+    private MetricFamilyDescriptor familyDescriptor(MetricType metricType, String name, Collection<String> labelNames,
             @Nullable String description) {
         return MetricFamilyDescriptor.of(metricType, name).help(helpText(description)).labelNames(labelNames).build();
     }
