@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.prometheus.metrics.config.PrometheusProperties;
 import io.prometheus.metrics.config.PrometheusPropertiesLoader;
 import io.prometheus.metrics.expositionformats.ExpositionFormats;
+import io.prometheus.metrics.model.registry.MetricType;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot.CounterDataPointSnapshot;
@@ -44,6 +45,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -217,10 +220,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             List<String> tagKeys = tagKeys(id);
-            collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                    family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                    getMetadata(conventionName, id.getDescription()), new CounterDataPointSnapshot(counter.count(),
-                            Labels.of(tagKeys, tagValues), counter.exemplar(), createdTimestampMillis))));
+            collector.add(id,
+                    (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                            family -> new CounterSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                                    family.dataPointSnapshots),
+                            new CounterDataPointSnapshot(counter.count(), Labels.of(tagKeys, tagValues),
+                                    counter.exemplar(), createdTimestampMillis))),
+                    familyDescriptor(MetricType.COUNTER, getConventionName(id), tagKeys, id.getDescription()));
         });
         return counter;
     }
@@ -234,6 +240,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             List<String> tagKeys = tagKeys(id);
+            MetricType primaryType = summary.histogramCounts().length == 0 ? MetricType.SUMMARY : MetricType.HISTOGRAM;
             collector.add(id, (conventionName) -> {
                 Stream.Builder<MicrometerCollector.Family<?>> families = Stream.builder();
 
@@ -254,9 +261,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                     Exemplars exemplars = summary.exemplars();
                     families.add(new MicrometerCollector.Family<>(conventionName,
-                            family -> new SummarySnapshot(family.metadata, family.dataPointSnapshots),
-                            getMetadata(conventionName, id.getDescription()), new SummaryDataPointSnapshot(count, sum,
-                                    quantiles, Labels.of(tagKeys, tagValues), exemplars, createdTimestampMillis)));
+                            family -> new SummarySnapshot(getMetadata(family.conventionName, id.getDescription()),
+                                    family.dataPointSnapshots),
+                            new SummaryDataPointSnapshot(count, sum, quantiles, Labels.of(tagKeys, tagValues),
+                                    exemplars, createdTimestampMillis)));
                 }
                 else {
                     List<Double> buckets = new ArrayList<>();
@@ -283,9 +291,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                     Exemplars exemplars = summary.exemplars();
                     families.add(new MicrometerCollector.Family<>(conventionName,
-                            family -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(family.metadata,
-                                    family.dataPointSnapshots),
-                            getMetadata(conventionName, id.getDescription()),
+                            family -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(false,
+                                    getMetadata(family.conventionName, id.getDescription()), family.dataPointSnapshots),
                             new HistogramDataPointSnapshot(ClassicHistogramBuckets.of(buckets, counts), sum,
                                     Labels.of(tagKeys, tagValues), exemplars, createdTimestampMillis)));
 
@@ -300,12 +307,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 }
 
                 families.add(new MicrometerCollector.Family<>(conventionName + "_max",
-                        family -> new GaugeSnapshot(family.metadata, family.dataPointSnapshots),
-                        getMetadata(conventionName + "_max", id.getDescription()),
+                        family -> new GaugeSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                                family.dataPointSnapshots),
                         new GaugeDataPointSnapshot(summary.max(), Labels.of(tagKeys, tagValues), null)));
 
                 return families.build();
-            });
+            }, familyDescriptor(primaryType, getConventionName(id), tagKeys, id.getDescription()),
+                    familyDescriptor(MetricType.GAUGE, getConventionName(id) + "_max", tagKeys, id.getDescription()));
         });
 
         return summary;
@@ -329,18 +337,19 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagValues = tagValues(id);
             List<String> tagKeys = tagKeys(id);
             if (id.getName().endsWith(".info")) {
-                collector.add(id,
-                        (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                                family -> new InfoSnapshot(family.metadata, family.dataPointSnapshots),
-                                getMetadata(conventionName, id.getDescription()),
-                                new InfoDataPointSnapshot(Labels.of(tagKeys, tagValues)))));
+                collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                        family -> new InfoSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                                family.dataPointSnapshots),
+                        new InfoDataPointSnapshot(Labels.of(tagKeys, tagValues)))),
+                        familyDescriptor(MetricType.INFO, getConventionName(id), tagKeys, id.getDescription()));
             }
             else {
                 collector.add(id,
                         (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                                family -> new GaugeSnapshot(family.metadata, family.dataPointSnapshots),
-                                getMetadata(conventionName, id.getDescription()),
-                                new GaugeDataPointSnapshot(gauge.value(), Labels.of(tagKeys, tagValues), null))));
+                                family -> new GaugeSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                                        family.dataPointSnapshots),
+                                new GaugeDataPointSnapshot(gauge.value(), Labels.of(tagKeys, tagValues), null))),
+                        familyDescriptor(MetricType.GAUGE, getConventionName(id), tagKeys, id.getDescription()));
             }
         });
         return gauge;
@@ -365,10 +374,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             collector.add(id,
                     (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                            family -> new SummarySnapshot(family.metadata, family.dataPointSnapshots),
-                            getMetadata(conventionName, id.getDescription()),
+                            family -> new SummarySnapshot(getMetadata(family.conventionName, id.getDescription()),
+                                    family.dataPointSnapshots),
                             new SummaryDataPointSnapshot((long) ft.count(), ft.totalTime(getBaseTimeUnit()),
-                                    Quantiles.EMPTY, Labels.of(tagKeys, tagValues), null, createdTimestampMillis))));
+                                    Quantiles.EMPTY, Labels.of(tagKeys, tagValues), null, createdTimestampMillis))),
+                    familyDescriptor(MetricType.SUMMARY, getConventionName(id), tagKeys, id.getDescription()));
         });
         return ft;
     }
@@ -382,9 +392,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             collector.add(id,
                     (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                            family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                            getMetadata(conventionName, id.getDescription()), new CounterDataPointSnapshot(fc.count(),
-                                    Labels.of(tagKeys, tagValues), null, createdTimestampMillis))));
+                            family -> new CounterSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                                    family.dataPointSnapshots),
+                            new CounterDataPointSnapshot(fc.count(), Labels.of(tagKeys, tagValues), null,
+                                    createdTimestampMillis))),
+                    familyDescriptor(MetricType.COUNTER, getConventionName(id), tagKeys, id.getDescription()));
         });
         return fc;
     }
@@ -394,64 +406,98 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             List<String> tagKeys = tagKeys(id);
+            List<String> statKeys = new ArrayList<>(tagKeys);
+            statKeys.add("statistic");
+            List<MetricFamilyDescriptor> registrationDescriptors = new ArrayList<>();
+            String name = getConventionName(id);
+            Set<String> descriptorNames = new HashSet<>();
+            for (Measurement measurement : measurements) {
+                MetricFamilyDescriptor descriptor = customMeterDescriptor(id, name, measurement.getStatistic(),
+                        statKeys);
+                // de-duplicate names
+                if (descriptorNames.add(descriptor.getPrometheusName())) {
+                    registrationDescriptors.add(descriptor);
+                }
+            }
             collector.add(id, (conventionName) -> {
                 Stream.Builder<MicrometerCollector.Family<?>> families = Stream.builder();
-                List<String> statKeys = new ArrayList<>(tagKeys);
-                statKeys.add("statistic");
                 for (Measurement measurement : measurements) {
                     List<String> statValues = new ArrayList<>(tagValues);
                     statValues.add(measurement.getStatistic().toString());
-                    switch (measurement.getStatistic()) {
-                        case TOTAL:
-                        case TOTAL_TIME:
-                            families.add(customCounterFamily(id, conventionName, "_sum",
-                                    Labels.of(statKeys, statValues), measurement.getValue()));
-                            break;
-                        case COUNT:
-                            families.add(customCounterFamily(id, conventionName, "", Labels.of(statKeys, statValues),
-                                    measurement.getValue()));
-                            break;
-                        case MAX:
-                            families.add(customGaugeFamily(id, conventionName, "_max", Labels.of(statKeys, statValues),
-                                    measurement.getValue()));
-                            break;
-                        case VALUE:
-                        case UNKNOWN:
-                            families.add(customGaugeFamily(id, conventionName, "_value",
-                                    Labels.of(statKeys, statValues), measurement.getValue()));
-                            break;
-                        case ACTIVE_TASKS:
-                            families.add(customGaugeFamily(id, conventionName, "_active_count",
-                                    Labels.of(statKeys, statValues), measurement.getValue()));
-                            break;
-                        case DURATION:
-                            families.add(customGaugeFamily(id, conventionName, "_duration_sum",
-                                    Labels.of(statKeys, statValues), measurement.getValue()));
-                            break;
-                    }
+                    families.add(customMeterFamily(id, conventionName, measurement.getStatistic(),
+                            Labels.of(statKeys, statValues), measurement.getValue()));
                 }
                 return families.build();
-            });
+            }, registrationDescriptors.toArray(new MetricFamilyDescriptor[0]));
         });
 
         return new DefaultMeter(id, type, measurements);
     }
 
-    private MicrometerCollector.Family<CounterDataPointSnapshot> customCounterFamily(Meter.Id id, String conventionName,
-            String suffix, Labels labels, double value) {
+    private MetricFamilyDescriptor customMeterDescriptor(Meter.Id id, String conventionName, Statistic statistic,
+            Collection<String> labelNames) {
+        CustomMeterMetric metric = customMeterMetric(conventionName, statistic);
+        return familyDescriptor(metric.metricType, metric.name, labelNames, id.getDescription());
+    }
+
+    private MicrometerCollector.Family<?> customMeterFamily(Meter.Id id, String conventionName, Statistic statistic,
+            Labels labels, double value) {
+        CustomMeterMetric metric = customMeterMetric(conventionName, statistic);
+        if (metric.metricType == MetricType.COUNTER) {
+            return customCounterFamily(id, metric, labels, value);
+        }
+        return customGaugeFamily(id, metric, labels, value);
+    }
+
+    private CustomMeterMetric customMeterMetric(String conventionName, Statistic statistic) {
+        switch (statistic) {
+            case TOTAL:
+            case TOTAL_TIME:
+                return new CustomMeterMetric(conventionName + "_sum", MetricType.COUNTER);
+            case COUNT:
+                return new CustomMeterMetric(conventionName, MetricType.COUNTER);
+            case MAX:
+                return new CustomMeterMetric(conventionName + "_max", MetricType.GAUGE);
+            case VALUE:
+            case UNKNOWN:
+                return new CustomMeterMetric(conventionName + "_value", MetricType.GAUGE);
+            case ACTIVE_TASKS:
+                return new CustomMeterMetric(conventionName + "_active_count", MetricType.GAUGE);
+            case DURATION:
+                return new CustomMeterMetric(conventionName + "_duration_sum", MetricType.GAUGE);
+            default:
+                throw new IllegalArgumentException("Unsupported meter statistic: " + statistic);
+        }
+    }
+
+    private MicrometerCollector.Family<CounterDataPointSnapshot> customCounterFamily(Meter.Id id,
+            CustomMeterMetric metric, Labels labels, double value) {
         long createdTimestampMillis = clock.wallTime();
-        return new MicrometerCollector.Family<>(conventionName + suffix,
-                family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                getMetadata(conventionName + suffix, id.getDescription()),
+        return new MicrometerCollector.Family<>(metric.name,
+                family -> new CounterSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                        family.dataPointSnapshots),
                 new CounterDataPointSnapshot(value, labels, null, createdTimestampMillis));
     }
 
-    private MicrometerCollector.Family<GaugeDataPointSnapshot> customGaugeFamily(Meter.Id id, String conventionName,
-            String suffix, Labels labels, double value) {
-        return new MicrometerCollector.Family<>(conventionName + suffix,
-                family -> new GaugeSnapshot(family.metadata, family.dataPointSnapshots),
-                getMetadata(conventionName + suffix, id.getDescription()),
+    private MicrometerCollector.Family<GaugeDataPointSnapshot> customGaugeFamily(Meter.Id id, CustomMeterMetric metric,
+            Labels labels, double value) {
+        return new MicrometerCollector.Family<>(metric.name,
+                family -> new GaugeSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                        family.dataPointSnapshots),
                 new GaugeDataPointSnapshot(value, labels, null));
+    }
+
+    private static final class CustomMeterMetric {
+
+        private final String name;
+
+        private final MetricType metricType;
+
+        private CustomMeterMetric(String name, MetricType metricType) {
+            this.name = name;
+            this.metricType = metricType;
+        }
+
     }
 
     @Override
@@ -471,6 +517,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             boolean forLongTaskTimer) {
         long createdTimestampMillis = clock.wallTime();
         List<String> tagKeys = tagKeys(id);
+        MetricType primaryType = histogramSupport.takeSnapshot().histogramCounts().length == 0 ? MetricType.SUMMARY
+                : MetricType.HISTOGRAM;
         collector.add(id, (conventionName) -> {
             Stream.Builder<MicrometerCollector.Family<?>> families = Stream.builder();
 
@@ -492,9 +540,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                 Exemplars exemplars = createExemplarsWithScaledValues(exemplarsSupplier.get());
                 families.add(new MicrometerCollector.Family<>(conventionName,
-                        family -> new SummarySnapshot(family.metadata, family.dataPointSnapshots),
-                        getMetadata(conventionName, id.getDescription()), new SummaryDataPointSnapshot(count, sum,
-                                quantiles, Labels.of(tagKeys, tagValues), exemplars, createdTimestampMillis)));
+                        family -> new SummarySnapshot(getMetadata(family.conventionName, id.getDescription()),
+                                family.dataPointSnapshots),
+                        new SummaryDataPointSnapshot(count, sum, quantiles, Labels.of(tagKeys, tagValues), exemplars,
+                                createdTimestampMillis)));
             }
             else {
                 List<Double> buckets = new ArrayList<>();
@@ -522,8 +571,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 Exemplars exemplars = createExemplarsWithScaledValues(exemplarsSupplier.get());
                 families.add(new MicrometerCollector.Family<>(conventionName,
                         family -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(forLongTaskTimer,
-                                family.metadata, family.dataPointSnapshots),
-                        getMetadata(conventionName, id.getDescription()),
+                                getMetadata(family.conventionName, id.getDescription()), family.dataPointSnapshots),
                         new HistogramDataPointSnapshot(ClassicHistogramBuckets.of(buckets, counts), sum,
                                 Labels.of(tagKeys, tagValues), exemplars, createdTimestampMillis)));
 
@@ -538,12 +586,23 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             }
 
             families.add(new MicrometerCollector.Family<>(conventionName + "_max",
-                    family -> new GaugeSnapshot(family.metadata, family.dataPointSnapshots),
-                    getMetadata(conventionName + "_max", id.getDescription()), new GaugeDataPointSnapshot(
-                            histogramSnapshot.max(getBaseTimeUnit()), Labels.of(tagKeys, tagValues), null)));
+                    family -> new GaugeSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                            family.dataPointSnapshots),
+                    new GaugeDataPointSnapshot(histogramSnapshot.max(getBaseTimeUnit()), Labels.of(tagKeys, tagValues),
+                            null)));
 
             return families.build();
-        });
+        }, familyDescriptor(primaryType, getConventionName(id), tagKeys, id.getDescription()),
+                familyDescriptor(MetricType.GAUGE, getConventionName(id) + "_max", tagKeys, id.getDescription()));
+    }
+
+    private MetricFamilyDescriptor familyDescriptor(MetricType metricType, String name, Collection<String> labelNames,
+            @Nullable String description) {
+        return MetricFamilyDescriptor.of(metricType, name).help(helpText(description)).labelNames(labelNames).build();
+    }
+
+    private String helpText(@Nullable String description) {
+        return prometheusConfig.descriptions() && description != null ? description : " ";
     }
 
     private Exemplars createExemplarsWithScaledValues(Exemplars exemplars) {
@@ -573,10 +632,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private MetricMetadata getMetadata(String name, @Nullable String description) {
-        String help = prometheusConfig.descriptions() && description != null ? description : " ";
         // Unit is intentionally not set, see:
         // https://github.com/OpenObservability/OpenMetrics/blob/1386544931307dff279688f332890c31b6c5de36/specification/OpenMetrics.md#unit
-        return new MetricMetadata(name, help, null);
+        return new MetricMetadata(name, helpText(description), null);
     }
 
     private void applyToCollector(Meter.Id id, Consumer<MicrometerCollector> consumer) {
@@ -584,8 +642,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             if (existingCollector == null) {
                 MicrometerCollector micrometerCollector = new MicrometerCollector(name, id);
                 consumer.accept(micrometerCollector);
-                registry.register(micrometerCollector);
-                return micrometerCollector;
+                try {
+                    registry.register(micrometerCollector);
+                    return micrometerCollector;
+                }
+                catch (IllegalArgumentException e) {
+                    meterRegistrationFailed(id, e.getMessage());
+                    return null;
+                }
             }
 
             if (!existingCollector.getOriginalId().getName().equals(id.getName())) {

@@ -80,6 +80,26 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    void collisionWithAnotherMicrometerMeterFailsAndDoesNotRetainCollector() {
+        Counter counter1 = registry.counter("test");
+
+        AtomicBoolean failed = new AtomicBoolean(false);
+        registry.config().onMeterRegistrationFailed((id, reason) -> failed.set(true));
+
+        Counter counter2 = registry.counter("test.total");
+        assertThat(failed.get()).isTrue();
+
+        registry.remove(counter1);
+        registry.remove(counter2);
+
+        failed.set(false);
+        registry.counter("test.total").increment();
+        assertThat(failed.get()).isFalse();
+
+        assertThat(registry.scrape()).contains("test_total");
+    }
+
+    @Test
     void differentMicrometerNameSamePrometheusNameFailsToRegister() {
         AtomicBoolean failed = new AtomicBoolean(false);
         registry.config().onMeterRegistrationFailed((name, reason) -> failed.set(true));
@@ -88,6 +108,19 @@ class PrometheusMeterRegistryTest {
         assertThat(failed.get()).isFalse();
         registry.counter("test.total").increment(42);
         assertThat(failed.get()).isTrue();
+    }
+
+    @Test
+    void functionTimerCollisionUsesPrometheusRegistrationMetadata() {
+        registry.throwExceptionOnRegistrationFailure();
+
+        registry.more().timer("test", Tags.empty(), this, o -> 1, o -> 2, TimeUnit.SECONDS);
+
+        assertThatThrownBy(
+                () -> Gauge.builder("test.seconds", new AtomicInteger(42), AtomicInteger::get).register(registry))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("same Prometheus name (test_seconds)")
+            .hasMessageContaining("would fail with an exception on scrape");
     }
 
     @Test
@@ -1153,6 +1186,49 @@ class PrometheusMeterRegistryTest {
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, prometheusRegistry, clock);
         registry.counter("c").increment();
         assertThat(registry.scrape()).doesNotContain("_created");
+    }
+
+    @Test
+    void customMeterWithAllStatistics() {
+        List<Measurement> measurements = new ArrayList<>();
+        int i = 0;
+        for (Statistic statistic : Statistic.values()) {
+            int value = i++;
+            measurements.add(new Measurement(() -> value + 10, statistic));
+        }
+        Meter.builder("test.custom", Meter.Type.OTHER, measurements).register(registry);
+
+        String scraped = registry.scrape();
+        assertThat(scraped).contains("test_custom_sum_total{statistic=\"TOTAL\"}")
+            .contains("test_custom_sum_total{statistic=\"TOTAL_TIME\"}")
+            .contains("test_custom_total{statistic=\"COUNT\"}")
+            .contains("test_custom_max{statistic=\"MAX\"}")
+            .contains("test_custom_value{statistic=\"VALUE\"}")
+            .contains("test_custom_value{statistic=\"UNKNOWN\"}")
+            .contains("test_custom_active_count{statistic=\"ACTIVE_TASKS\"}")
+            .contains("test_custom_duration_sum{statistic=\"DURATION\"}");
+    }
+
+    @Test
+    void gaugeWithTotalSuffixBehavior() {
+        // A gauge ending in .total with a base unit (like DiskSpaceMetrics)
+        // should retain '_total' in its Prometheus name (since it's followed by '_bytes')
+        Gauge.builder("disk.total", () -> 100).baseUnit(BaseUnits.BYTES).register(registry);
+
+        // A gauge ending in .total without a base unit (like KafkaConsumerMetrics
+        // 'select-total')
+        // should have '_total' stripped for backward compatibility
+        Gauge.builder("kafka.consumer.select.total", () -> 5).register(registry);
+
+        String scrapeResult = registry.scrape();
+
+        assertThat(scrapeResult).contains("# HELP disk_total_bytes")
+            .contains("# TYPE disk_total_bytes gauge")
+            .contains("disk_total_bytes 100");
+
+        assertThat(scrapeResult).contains("# HELP kafka_consumer_select")
+            .contains("# TYPE kafka_consumer_select gauge")
+            .contains("kafka_consumer_select 5");
     }
 
     private static class CountingPrometheusNamingConvention extends PrometheusNamingConvention {

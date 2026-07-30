@@ -18,11 +18,17 @@ package io.micrometer.prometheusmetrics;
 import io.micrometer.core.instrument.Meter;
 import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
-import io.prometheus.metrics.model.snapshots.MetricMetadata;
+import io.prometheus.metrics.model.snapshots.MetricFamilyDescriptor;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -40,6 +46,8 @@ class MicrometerCollector implements MultiCollector {
 
     private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
 
+    private final Map<Meter.Id, List<MetricFamilyDescriptor>> registeredFamilies = new ConcurrentHashMap<>();
+
     private final String conventionName;
 
     // the id of the meter used to create this MicrometerCollector
@@ -52,12 +60,14 @@ class MicrometerCollector implements MultiCollector {
         this.originalMeterId = id;
     }
 
-    public void add(Meter.Id id, Child child) {
+    public void add(Meter.Id id, Child child, MetricFamilyDescriptor... registeredFamilies) {
         children.put(id, child);
+        this.registeredFamilies.put(id, Arrays.asList(registeredFamilies));
     }
 
     public void remove(Meter.Id id) {
         children.remove(id);
+        registeredFamilies.remove(id);
     }
 
     public boolean isEmpty() {
@@ -70,6 +80,11 @@ class MicrometerCollector implements MultiCollector {
 
     Meter.Id getOriginalId() {
         return originalMeterId;
+    }
+
+    @Override
+    public List<MetricFamilyDescriptor> getMetricFamilyDescriptors() {
+        return registeredFamilies.values().stream().flatMap(Collection::stream).collect(toList());
     }
 
     @Override
@@ -101,17 +116,14 @@ class MicrometerCollector implements MultiCollector {
 
         final String conventionName;
 
-        final MetricMetadata metadata;
-
         final List<T> dataPointSnapshots = new ArrayList<>();
 
         final Function<Family<T>, MetricSnapshot> metricSnapshotFactory;
 
         Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory,
-                MetricMetadata metadata, T... dataPointSnapshots) {
+                T... dataPointSnapshots) {
             this.conventionName = conventionName;
             this.metricSnapshotFactory = metricSnapshotFactory;
-            this.metadata = metadata;
             Collections.addAll(this.dataPointSnapshots, dataPointSnapshots);
         }
 
