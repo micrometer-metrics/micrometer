@@ -48,7 +48,7 @@ class MicrometerCollectorTest {
             CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
                     Labels.of("k", Integer.toString(i)), null, 0);
 
-            collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+            collector.add(id, () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                     family -> new CounterSnapshot(new MetricMetadata(family.conventionName), family.dataPointSnapshots),
                     sample)));
         }
@@ -69,10 +69,10 @@ class MicrometerCollectorTest {
                 Labels.of("k", "v2", "k2", "v1"), null, 0);
         Meter.Id sample2Id = id.withTags(Tags.of("k", "v2", "k2", "v1"));
 
-        collector.add(sampleId, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+        collector.add(sampleId, () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                 family -> new CounterSnapshot(new MetricMetadata(family.conventionName), family.dataPointSnapshots),
                 sample)));
-        collector.add(sample2Id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+        collector.add(sample2Id, () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                 family -> new CounterSnapshot(new MetricMetadata(family.conventionName), family.dataPointSnapshots),
                 sample2)));
 
@@ -91,10 +91,10 @@ class MicrometerCollectorTest {
                 Labels.of(asList("k1", "k4"), asList("v1", "v4")), null, 0);
         Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k4", "v4"));
 
-        collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+        collector.add(id, () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                 family -> new CounterSnapshot(new MetricMetadata(family.conventionName), family.dataPointSnapshots),
                 sample)));
-        collector.add(id2, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+        collector.add(id2, () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                 family -> new CounterSnapshot(new MetricMetadata(family.conventionName), family.dataPointSnapshots),
                 sample2)));
 
@@ -113,10 +113,10 @@ class MicrometerCollectorTest {
                 Labels.of(asList("k1", "k2"), asList("v1", "v2")), null, 0);
         Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k2", "v2"));
 
-        collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+        collector.add(id, () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                 family -> new CounterSnapshot(new MetricMetadata(family.conventionName), family.dataPointSnapshots),
                 sample)));
-        collector.add(id2, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+        collector.add(id2, () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                 family -> new CounterSnapshot(new MetricMetadata(family.conventionName), family.dataPointSnapshots),
                 sample2)));
 
@@ -135,10 +135,10 @@ class MicrometerCollectorTest {
                 Labels.EMPTY, null, 0);
         Meter.Id id2 = id.replaceTags(Tags.empty());
 
-        collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+        collector.add(id, () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                 family -> new CounterSnapshot(new MetricMetadata(family.conventionName), family.dataPointSnapshots),
                 sample)));
-        collector.add(id2, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+        collector.add(id2, () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                 family -> new CounterSnapshot(new MetricMetadata(family.conventionName), family.dataPointSnapshots),
                 sample2)));
 
@@ -153,7 +153,7 @@ class MicrometerCollectorTest {
         CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
                 Labels.of("k", "v"), null, 0);
         collector.add(id,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>("my_counter",
+                () -> Stream.of(new MicrometerCollector.Family<>("my_counter",
                         family -> new CounterSnapshot(new MetricMetadata(family.conventionName),
                                 family.dataPointSnapshots),
                         sample)),
