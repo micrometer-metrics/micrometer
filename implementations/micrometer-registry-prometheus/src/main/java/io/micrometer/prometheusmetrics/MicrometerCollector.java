@@ -60,6 +60,10 @@ class MicrometerCollector implements MultiCollector {
         this.originalMeterId = id;
     }
 
+    public String getConventionName() {
+        return conventionName;
+    }
+
     public void add(Meter.Id id, Child child, MetricFamilyDescriptor... registeredFamilies) {
         children.put(id, child);
         this.registeredFamilies.put(id, Arrays.asList(registeredFamilies));
