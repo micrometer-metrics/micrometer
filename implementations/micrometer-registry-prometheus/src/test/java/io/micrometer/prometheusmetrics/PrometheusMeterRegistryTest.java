@@ -450,6 +450,21 @@ class PrometheusMeterRegistryTest {
         assertThat(registry.scrape()).contains("api_requests_total 1.0");
     }
 
+    @Test
+    void functionCounterNegativeValueIncludesMeterNameInScrapeException() {
+        AtomicInteger value = new AtomicInteger(1);
+        FunctionCounter.builder("api.requests", value, AtomicInteger::doubleValue).register(registry);
+
+        assertThat(registry.scrape()).contains("api_requests_total 1.0");
+
+        value.set(-2);
+
+        Throwable thrown = catchThrowable(registry::scrape);
+
+        assertThat(thrown).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("api.requests");
+        assertThat(thrown).hasCauseInstanceOf(IllegalArgumentException.class);
+    }
+
     private Condition<Iterable<? extends MetricSnapshot>> withNameAndQuantile(String name) {
         return new Condition<>(
                 metricSnapshots -> ((MetricSnapshots) metricSnapshots).stream()
