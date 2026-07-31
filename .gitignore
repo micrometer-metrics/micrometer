@@ -20,6 +20,7 @@ bin/
 .vscode
 .DS_Store
 .java-version
+.envrc
 
 # jcstress
 generated/
