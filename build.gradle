@@ -16,7 +16,6 @@ buildscript {
         classpath libs.plugin.nebulaProject
         classpath libs.plugin.nebulaInfo
         classpath libs.plugin.noHttp
-        classpath libs.plugin.nexusPublish
         classpath libs.plugin.javaformat
         classpath libs.plugin.japicmp
         classpath libs.plugin.spotless
@@ -57,8 +56,6 @@ apply plugin: 'com.netflix.nebula.info'
 apply plugin: 'com.netflix.nebula.project'
 apply plugin: 'com.netflix.nebula.release'
 release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
-
-apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 allprojects {
     group = 'io.micrometer'
@@ -497,17 +494,6 @@ subprojects {
 
     def check = tasks.findByName('check')
     if (check) project.rootProject.tasks.releaseCheck.dependsOn check
-}
-
-nexusPublishing {
-    repositories {
-        mavenCentral {
-            nexusUrl.set(uri('https://ossrh-staging-api.central.sonatype.com/service/local/'))
-            snapshotRepositoryUrl.set(uri('https://repo.spring.io/snapshot/')) // not used but necessary for the plugin
-            username = findProperty('MAVEN_CENTRAL_USER')
-            password = findProperty('MAVEN_CENTRAL_PASSWORD')
-        }
-    }
 }
 
 tasks.register('verifyDependencyVersions') {
