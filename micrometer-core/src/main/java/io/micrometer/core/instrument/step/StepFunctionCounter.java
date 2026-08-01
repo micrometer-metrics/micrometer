@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.FunctionCounter;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.ToDoubleFunction;
 
 public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCounter, StepMeter {
@@ -28,7 +29,7 @@ public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCou
 
     private final ToDoubleFunction<T> f;
 
-    private volatile double last;
+    private final AtomicLong last = new AtomicLong();
 
     private StepDouble count;
 
@@ -43,9 +44,9 @@ public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCou
     public double count() {
         T obj2 = ref.get();
         if (obj2 != null) {
-            double prevLast = last;
-            last = f.applyAsDouble(obj2);
-            count.getCurrent().add(last - prevLast);
+            double newLast = f.applyAsDouble(obj2);
+            double prevLast = Double.longBitsToDouble(last.getAndSet(Double.doubleToLongBits(newLast)));
+            count.getCurrent().add(newLast - prevLast);
         }
         return count.poll();
     }
