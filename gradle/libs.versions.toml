@@ -144,7 +144,7 @@ jmhCore = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmhAnnotationProcessor = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
 jsonPath = { module = "com.jayway.jsonpath:json-path", version = "2.10.0" }
-jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
+jspecify = { module = "org.jspecify:jspecify", version = "1.0.1" }
 jsr107 = { module = "org.jsr107.ri:cache-ri-impl", version.ref = "jsr107" }
 jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
 junitBom = { module = "org.junit:junit-bom", version.ref = "junit" }
