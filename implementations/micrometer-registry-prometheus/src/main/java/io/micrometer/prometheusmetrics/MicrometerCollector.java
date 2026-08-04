@@ -17,21 +17,24 @@ package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
 import io.prometheus.metrics.model.registry.MultiCollector;
+import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
+import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
+import io.prometheus.metrics.model.snapshots.HistogramSnapshot;
+import io.prometheus.metrics.model.snapshots.InfoSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricFamilyDescriptor;
+import io.prometheus.metrics.model.snapshots.MetricMetadata;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
+import io.prometheus.metrics.model.snapshots.SummarySnapshot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -47,6 +50,8 @@ class MicrometerCollector implements MultiCollector {
     private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
 
     private final Map<Meter.Id, List<MetricFamilyDescriptor>> registeredFamilies = new ConcurrentHashMap<>();
+
+    private final Map<MetricFamilyDescriptor, SnapshotFactory> customSnapshotFactories = new ConcurrentHashMap<>();
 
     final String conventionName;
 
@@ -65,9 +70,16 @@ class MicrometerCollector implements MultiCollector {
         this.registeredFamilies.put(id, Arrays.asList(registeredFamilies));
     }
 
+    public void registerCustomSnapshotFactory(MetricFamilyDescriptor descriptor, SnapshotFactory factory) {
+        customSnapshotFactories.put(descriptor, factory);
+    }
+
     public void remove(Meter.Id id) {
         children.remove(id);
-        registeredFamilies.remove(id);
+        List<MetricFamilyDescriptor> descriptors = registeredFamilies.remove(id);
+        if (descriptors != null) {
+            descriptors.forEach(customSnapshotFactories::remove);
+        }
     }
 
     public boolean isEmpty() {
@@ -89,56 +101,58 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public MetricSnapshots collect() {
-        Map<String, Family> families = new HashMap<>();
+        Map<MetricFamilyDescriptor, List<DataPointSnapshot>> familyDataPoints = new LinkedHashMap<>();
 
         for (Child child : children.values()) {
-            child.samples()
-                .forEach(family -> families.compute(family.getConventionName(),
-                        (name, matchingFamily) -> matchingFamily != null
-                                ? matchingFamily.addSamples(family.dataPointSnapshots) : family));
+            child.collect(familyDataPoints);
         }
 
-        Collection<MetricSnapshot> metricSnapshots = families.values()
-            .stream()
-            .map(Family::toMetricSnapshot)
-            .collect(toList());
+        List<MetricSnapshot> snapshots = new ArrayList<>(familyDataPoints.size());
+        for (Map.Entry<MetricFamilyDescriptor, List<DataPointSnapshot>> entry : familyDataPoints.entrySet()) {
+            MetricFamilyDescriptor descriptor = entry.getKey();
+            List<DataPointSnapshot> dataPoints = entry.getValue();
+            if (!dataPoints.isEmpty()) {
+                snapshots.add(createSnapshot(descriptor, dataPoints));
+            }
+        }
 
-        return new MetricSnapshots(metricSnapshots);
+        return new MetricSnapshots(snapshots);
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private MetricSnapshot createSnapshot(MetricFamilyDescriptor descriptor, List<DataPointSnapshot> dataPoints) {
+        SnapshotFactory customFactory = customSnapshotFactories.get(descriptor);
+        if (customFactory != null) {
+            return customFactory.create(descriptor.getMetadata(), (List) dataPoints);
+        }
+        MetricMetadata metadata = descriptor.getMetadata();
+        switch (descriptor.getType()) {
+            case COUNTER:
+                return new CounterSnapshot(metadata, (List) dataPoints);
+            case GAUGE:
+                return new GaugeSnapshot(metadata, (List) dataPoints);
+            case SUMMARY:
+                return new SummarySnapshot(metadata, (List) dataPoints);
+            case HISTOGRAM:
+                return new HistogramSnapshot(metadata, (List) dataPoints);
+            case INFO:
+                return new InfoSnapshot(metadata, (List) dataPoints);
+            default:
+                throw new IllegalArgumentException("Unsupported metric type: " + descriptor.getType());
+        }
+    }
+
+    @FunctionalInterface
     interface Child {
 
-        Stream<Family<?>> samples();
+        void collect(Map<MetricFamilyDescriptor, List<DataPointSnapshot>> samples);
 
     }
 
-    static class Family<T extends DataPointSnapshot> {
+    @FunctionalInterface
+    interface SnapshotFactory {
 
-        final String conventionName;
-
-        final List<T> dataPointSnapshots = new ArrayList<>();
-
-        final Function<Family<T>, MetricSnapshot> metricSnapshotFactory;
-
-        Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory,
-                T... dataPointSnapshots) {
-            this.conventionName = conventionName;
-            this.metricSnapshotFactory = metricSnapshotFactory;
-            Collections.addAll(this.dataPointSnapshots, dataPointSnapshots);
-        }
-
-        String getConventionName() {
-            return conventionName;
-        }
-
-        Family<T> addSamples(Collection<T> dataPointSnapshots) {
-            this.dataPointSnapshots.addAll(dataPointSnapshots);
-            return this;
-        }
-
-        MetricSnapshot toMetricSnapshot() {
-            return metricSnapshotFactory.apply(this);
-        }
+        MetricSnapshot create(MetricMetadata metadata, List<DataPointSnapshot> dataPoints);
 
     }
 
