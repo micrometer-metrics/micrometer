@@ -46,9 +46,8 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -418,49 +417,53 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             List<String> statKeys = new ArrayList<>(tagKeys);
             statKeys.add("statistic");
-
-            Map<String, MetricFamilyDescriptor> prometheusNameToDescriptor = new LinkedHashMap<>();
-            List<CustomMeterMeasurement> customMeasurements = new ArrayList<>();
-
+            List<MetricFamilyDescriptor> registrationDescriptors = new ArrayList<>();
+            String name = collector.conventionName;
+            Set<String> descriptorNames = new HashSet<>();
             for (Measurement measurement : measurements) {
-                CustomMeterMetric metric = customMeterMetric(collector.conventionName, measurement.getStatistic());
-
-                // De-duplicate names: metrics with the same Prometheus name will use the
-                // same descriptor and metadata
-                MetricFamilyDescriptor candidateDescriptor = familyDescriptor(metric.metricType, metric.name, statKeys,
-                        id.getDescription());
-                MetricFamilyDescriptor descriptor;
-                if (prometheusNameToDescriptor.containsKey(candidateDescriptor.getPrometheusName())) {
-                    descriptor = prometheusNameToDescriptor.get(candidateDescriptor.getPrometheusName());
+                MetricFamilyDescriptor descriptor = customMeterDescriptor(id, name, measurement.getStatistic(),
+                        statKeys);
+                // de-duplicate names
+                if (descriptorNames.add(descriptor.getPrometheusName())) {
+                    registrationDescriptors.add(descriptor);
                 }
-                else {
-                    descriptor = candidateDescriptor;
-                    prometheusNameToDescriptor.put(descriptor.getPrometheusName(), descriptor);
-                }
-
-                List<String> statValues = new ArrayList<>(tagValues);
-                statValues.add(measurement.getStatistic().toString());
-                customMeasurements.add(new CustomMeterMeasurement(measurement, metric, descriptor.getMetadata(),
-                        Labels.of(statKeys, statValues)));
             }
-
             collector.add(id, () -> {
                 Stream.Builder<MicrometerCollector.Family<?>> families = Stream.builder();
-                for (CustomMeterMeasurement measurement : customMeasurements) {
-                    families.add(customMeterFamily(measurement));
+                for (Measurement measurement : measurements) {
+                    // NB: Unlike all the other meters, where `MetricMetadata` and
+                    // `Labels` are constructed once at registration time, for custom
+                    // meters they are obtained on each scrape. We might construct them at
+                    // registration time and cache them, but this would force us to deal
+                    // with potentially misbehaving `Iterable<Measurement>` (which may
+                    // return different measurements or in different order, breaking
+                    // contract of `Meter#measure`). Custom meters should be rare, so
+                    // this should be a relatively minor performance hit.
+                    List<String> statValues = new ArrayList<>(tagValues);
+                    statValues.add(measurement.getStatistic().toString());
+                    families.add(customMeterFamily(id, collector.conventionName, measurement.getStatistic(),
+                            Labels.of(statKeys, statValues), measurement.getValue()));
                 }
                 return families.build();
-            }, prometheusNameToDescriptor.values().toArray(new MetricFamilyDescriptor[0]));
+            }, registrationDescriptors.toArray(new MetricFamilyDescriptor[0]));
         });
 
         return new DefaultMeter(id, type, measurements);
     }
 
-    private MicrometerCollector.Family<?> customMeterFamily(CustomMeterMeasurement measurement) {
-        if (measurement.metric.metricType == MetricType.COUNTER) {
-            return customCounterFamily(measurement);
+    private MetricFamilyDescriptor customMeterDescriptor(Meter.Id id, String conventionName, Statistic statistic,
+            Collection<String> labelNames) {
+        CustomMeterMetric metric = customMeterMetric(conventionName, statistic);
+        return familyDescriptor(metric.metricType, metric.name, labelNames, id.getDescription());
+    }
+
+    private MicrometerCollector.Family<?> customMeterFamily(Meter.Id id, String conventionName, Statistic statistic,
+            Labels labels, double value) {
+        CustomMeterMetric metric = customMeterMetric(conventionName, statistic);
+        if (metric.metricType == MetricType.COUNTER) {
+            return customCounterFamily(id, metric, labels, value);
         }
-        return customGaugeFamily(measurement);
+        return customGaugeFamily(id, metric, labels, value);
     }
 
     private CustomMeterMetric customMeterMetric(String conventionName, Statistic statistic) {
@@ -484,19 +487,21 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         }
     }
 
-    private MicrometerCollector.Family<CounterDataPointSnapshot> customCounterFamily(
-            CustomMeterMeasurement measurement) {
+    private MicrometerCollector.Family<CounterDataPointSnapshot> customCounterFamily(Meter.Id id,
+            CustomMeterMetric metric, Labels labels, double value) {
         long createdTimestampMillis = clock.wallTime();
-        return new MicrometerCollector.Family<>(measurement.metric.name,
-                family -> new CounterSnapshot(measurement.metadata, family.dataPointSnapshots),
-                new CounterDataPointSnapshot(measurement.measurement.getValue(), measurement.labels, null,
-                        createdTimestampMillis));
+        return new MicrometerCollector.Family<>(metric.name,
+                family -> new CounterSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                        family.dataPointSnapshots),
+                new CounterDataPointSnapshot(value, labels, null, createdTimestampMillis));
     }
 
-    private MicrometerCollector.Family<GaugeDataPointSnapshot> customGaugeFamily(CustomMeterMeasurement measurement) {
-        return new MicrometerCollector.Family<>(measurement.metric.name,
-                family -> new GaugeSnapshot(measurement.metadata, family.dataPointSnapshots),
-                new GaugeDataPointSnapshot(measurement.measurement.getValue(), measurement.labels, null));
+    private MicrometerCollector.Family<GaugeDataPointSnapshot> customGaugeFamily(Meter.Id id, CustomMeterMetric metric,
+            Labels labels, double value) {
+        return new MicrometerCollector.Family<>(metric.name,
+                family -> new GaugeSnapshot(getMetadata(family.conventionName, id.getDescription()),
+                        family.dataPointSnapshots),
+                new GaugeDataPointSnapshot(value, labels, null));
     }
 
     private static final class CustomMeterMetric {
@@ -508,26 +513,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         private CustomMeterMetric(String name, MetricType metricType) {
             this.name = name;
             this.metricType = metricType;
-        }
-
-    }
-
-    private static final class CustomMeterMeasurement {
-
-        private final Measurement measurement;
-
-        private final CustomMeterMetric metric;
-
-        private final MetricMetadata metadata;
-
-        private final Labels labels;
-
-        private CustomMeterMeasurement(Measurement measurement, CustomMeterMetric metric, MetricMetadata metadata,
-                Labels labels) {
-            this.measurement = measurement;
-            this.metric = metric;
-            this.metadata = metadata;
-            this.labels = labels;
         }
 
     }
@@ -636,6 +621,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         // Unit is intentionally not set, see:
         // https://github.com/OpenObservability/OpenMetrics/blob/1386544931307dff279688f332890c31b6c5de36/specification/OpenMetrics.md#unit
         return MetricFamilyDescriptor.of(metricType, name).help(helpText(description)).labelNames(labelNames).build();
+    }
+
+    /**
+     * Used only for custom meters; all other meters' metadata is obtained through
+     * {@link MetricFamilyDescriptor} returned from {@link familyDescriptor}.
+     */
+    private MetricMetadata getMetadata(String name, @Nullable String description) {
+        return new MetricMetadata(name, helpText(description), null);
     }
 
     private String helpText(@Nullable String description) {
