@@ -618,6 +618,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private MetricFamilyDescriptor familyDescriptor(MetricType metricType, String name, Collection<String> labelNames,
             @Nullable String description) {
+        // NB: For custom meters that use `getMetadata`, the metadata inside the
+        // descriptor should be consistent with the one returned by `getMetadata`.
+
         // Unit is intentionally not set, see:
         // https://github.com/OpenObservability/OpenMetrics/blob/1386544931307dff279688f332890c31b6c5de36/specification/OpenMetrics.md#unit
         return MetricFamilyDescriptor.of(metricType, name).help(helpText(description)).labelNames(labelNames).build();
@@ -628,6 +631,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * {@link MetricFamilyDescriptor} returned from {@link familyDescriptor}.
      */
     private MetricMetadata getMetadata(String name, @Nullable String description) {
+        // The returned metadata should be consistent with the metadata in the
+        // `MetricFamilyDescriptor`.
         return new MetricMetadata(name, helpText(description), null);
     }
 
