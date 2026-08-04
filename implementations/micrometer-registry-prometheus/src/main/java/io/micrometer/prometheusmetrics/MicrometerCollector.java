@@ -48,7 +48,7 @@ class MicrometerCollector implements MultiCollector {
 
     private final Map<Meter.Id, List<MetricFamilyDescriptor>> registeredFamilies = new ConcurrentHashMap<>();
 
-    private final String conventionName;
+    final String conventionName;
 
     // the id of the meter used to create this MicrometerCollector
     private final Meter.Id originalMeterId;
@@ -58,10 +58,6 @@ class MicrometerCollector implements MultiCollector {
     MicrometerCollector(String name, Meter.Id id) {
         this.conventionName = name;
         this.originalMeterId = id;
-    }
-
-    public String getConventionName() {
-        return conventionName;
     }
 
     public void add(Meter.Id id, Child child, MetricFamilyDescriptor... registeredFamilies) {

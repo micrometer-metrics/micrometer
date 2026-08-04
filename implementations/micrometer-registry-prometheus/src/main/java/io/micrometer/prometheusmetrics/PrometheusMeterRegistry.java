@@ -221,7 +221,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagKeys = tagKeys(id);
             Labels labels = Labels.of(tagKeys, tagValues(id));
-            String conventionName = collector.getConventionName();
+            String conventionName = collector.conventionName;
             MetricFamilyDescriptor familyDescriptor = familyDescriptor(MetricType.COUNTER, conventionName, tagKeys,
                     id.getDescription());
             collector.add(id, () -> Stream.of(new MicrometerCollector.Family<>(conventionName,
@@ -242,7 +242,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             Labels labels = Labels.of(tagKeys, tagValues(id));
             MetricType primaryType = summary.histogramCounts().length == 0 ? MetricType.SUMMARY : MetricType.HISTOGRAM;
-            String conventionName = collector.getConventionName();
+            String conventionName = collector.conventionName;
             MetricFamilyDescriptor familyDescriptor = familyDescriptor(primaryType, conventionName, tagKeys,
                     id.getDescription());
             String conventionNameMax = conventionName + "_max";
@@ -267,7 +267,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     }
 
                     Exemplars exemplars = summary.exemplars();
-                    families.add(new MicrometerCollector.Family<>(collector.getConventionName(),
+                    families.add(new MicrometerCollector.Family<>(collector.conventionName,
                             family -> new SummarySnapshot(familyDescriptor.getMetadata(), family.dataPointSnapshots),
                             new SummaryDataPointSnapshot(count, sum, quantiles, labels, exemplars,
                                     createdTimestampMillis)));
@@ -296,7 +296,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     }
 
                     Exemplars exemplars = summary.exemplars();
-                    families.add(new MicrometerCollector.Family<>(collector.getConventionName(),
+                    families.add(new MicrometerCollector.Family<>(collector.conventionName,
                             family -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(false,
                                     familyDescriptor.getMetadata(), family.dataPointSnapshots),
                             new HistogramDataPointSnapshot(ClassicHistogramBuckets.of(buckets, counts), sum, labels,
@@ -340,7 +340,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagKeys = tagKeys(id);
             Labels labels = Labels.of(tagKeys, tagValues(id));
-            String conventionName = collector.getConventionName();
+            String conventionName = collector.conventionName;
             MetricFamilyDescriptor familyDescriptor;
             if (id.getName().endsWith(".info")) {
                 familyDescriptor = familyDescriptor(MetricType.INFO, conventionName, tagKeys, id.getDescription());
@@ -379,7 +379,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagKeys = tagKeys(id);
             Labels labels = Labels.of(tagKeys, tagValues(id));
-            String conventionName = collector.getConventionName();
+            String conventionName = collector.conventionName;
             MetricFamilyDescriptor familyDescriptor = familyDescriptor(MetricType.SUMMARY, conventionName, tagKeys,
                     id.getDescription());
             collector.add(id,
@@ -399,7 +399,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagKeys = tagKeys(id);
             Labels labels = Labels.of(tagKeys, tagValues(id));
-            String conventionName = collector.getConventionName();
+            String conventionName = collector.conventionName;
             MetricFamilyDescriptor familyDescriptor = familyDescriptor(MetricType.COUNTER, conventionName, tagKeys,
                     id.getDescription());
             collector.add(id,
@@ -423,7 +423,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<CustomMeterMeasurement> customMeasurements = new ArrayList<>();
 
             for (Measurement measurement : measurements) {
-                CustomMeterMetric metric = customMeterMetric(collector.getConventionName(), measurement.getStatistic());
+                CustomMeterMetric metric = customMeterMetric(collector.conventionName, measurement.getStatistic());
 
                 // De-duplicate names: metrics with the same Prometheus name will use the
                 // same descriptor and metadata
@@ -552,7 +552,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         Labels labels = Labels.of(tagKeys, tagValues);
         MetricType primaryType = histogramSupport.takeSnapshot().histogramCounts().length == 0 ? MetricType.SUMMARY
                 : MetricType.HISTOGRAM;
-        String conventionName = collector.getConventionName();
+        String conventionName = collector.conventionName;
         MetricFamilyDescriptor familyDescriptor = familyDescriptor(primaryType, conventionName, tagKeys,
                 id.getDescription());
         String conventionNameMax = conventionName + "_max";
