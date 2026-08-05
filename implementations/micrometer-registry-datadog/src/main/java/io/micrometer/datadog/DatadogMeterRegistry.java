@@ -142,6 +142,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
                 httpClient.post(datadogEndpoint)
                     .withJsonContent(body)
+                    .compressWhen(config::compress)
                     .send()
                     .onSuccess(response -> logger.debug("successfully sent {} metrics to datadog", batch.size()))
                     .onError(response -> logger.error("failed to send metrics to datadog: {}", response.body()));
