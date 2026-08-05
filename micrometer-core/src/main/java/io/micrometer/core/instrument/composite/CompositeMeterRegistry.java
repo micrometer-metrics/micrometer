@@ -49,6 +49,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
 
+    private final IdentityHashMap<MeterRegistry, IdentityHashMap<Meter, Integer>> childMeterReferences = new IdentityHashMap<>();
+
     // VisibleForTesting
     volatile Set<MeterRegistry> nonCompositeDescendants = Collections.emptySet();
 
@@ -68,15 +70,59 @@ public class CompositeMeterRegistry extends MeterRegistry {
         super(clock);
         config().namingConvention(NamingConvention.identity).onMeterAdded(m -> {
             if (m instanceof CompositeMeter) { // should always be
-                lock(registriesLock, () -> nonCompositeDescendants.forEach(((CompositeMeter) m)::add));
+                lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> addChildMeter((CompositeMeter) m, r)));
             }
         }).onMeterRemoved(m -> {
             if (m instanceof CompositeMeter) { // should always be
-                lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.removeByPreFilterId(m.getId())));
+                lock(registriesLock,
+                        () -> nonCompositeDescendants.forEach(r -> removeChildMeter((CompositeMeter) m, r, true)));
             }
         });
 
         registries.forEach(this::add);
+    }
+
+    private void addChildMeter(CompositeMeter compositeMeter, MeterRegistry registry) {
+        Meter childMeter = compositeMeter.add(registry);
+        if (childMeter == null) {
+            return;
+        }
+
+        IdentityHashMap<Meter, Integer> references = childMeterReferences.get(registry);
+        if (references == null) {
+            references = new IdentityHashMap<>();
+            childMeterReferences.put(registry, references);
+        }
+        Integer count = references.get(childMeter);
+        references.put(childMeter, count == null ? 1 : count + 1);
+    }
+
+    private void removeChildMeter(CompositeMeter compositeMeter, MeterRegistry registry, boolean removeFromRegistry) {
+        Meter childMeter = compositeMeter.remove(registry);
+        if (childMeter == null) {
+            return;
+        }
+
+        IdentityHashMap<Meter, Integer> references = childMeterReferences.get(registry);
+        if (references == null) {
+            return;
+        }
+        Integer count = references.get(childMeter);
+        if (count == null) {
+            return;
+        }
+        if (count > 1) {
+            references.put(childMeter, count - 1);
+            return;
+        }
+
+        references.remove(childMeter);
+        if (references.isEmpty()) {
+            childMeterReferences.remove(registry);
+        }
+        if (removeFromRegistry) {
+            registry.remove(childMeter);
+        }
     }
 
     @Override
@@ -229,8 +275,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
             for (Meter meter : getMeters()) {
                 if (meter instanceof CompositeMeter) { // should always be
                     CompositeMeter composite = (CompositeMeter) meter;
-                    removes.forEach(composite::remove);
-                    adds.forEach(composite::add);
+                    removes.forEach(r -> removeChildMeter(composite, r, false));
+                    adds.forEach(r -> addChildMeter(composite, r));
                 }
             }
         }

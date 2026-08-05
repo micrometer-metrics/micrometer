@@ -66,19 +66,19 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
     }
 
     @Override
-    public final void add(MeterRegistry registry) {
+    public final @Nullable T add(MeterRegistry registry) {
         final T newMeter = registerNewMeter(registry);
         if (newMeter == null) {
-            return;
+            return null;
         }
 
         for (;;) {
             if (childrenGuard.compareAndSet(false, true)) {
                 try {
                     IdentityHashMap<MeterRegistry, T> newChildren = new IdentityHashMap<>(children);
-                    newChildren.put(registry, newMeter);
+                    T previous = newChildren.put(registry, newMeter);
                     this.children = newChildren;
-                    break;
+                    return previous == null ? newMeter : null;
                 }
                 finally {
                     childrenGuard.set(false);
@@ -94,14 +94,14 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
      */
     @Override
     @Deprecated
-    public final void remove(MeterRegistry registry) {
+    public final @Nullable T remove(MeterRegistry registry) {
         for (;;) {
             if (childrenGuard.compareAndSet(false, true)) {
                 try {
                     IdentityHashMap<MeterRegistry, T> newChildren = new IdentityHashMap<>(children);
-                    newChildren.remove(registry);
+                    T removed = newChildren.remove(registry);
                     this.children = newChildren;
-                    break;
+                    return removed;
                 }
                 finally {
                     childrenGuard.set(false);
