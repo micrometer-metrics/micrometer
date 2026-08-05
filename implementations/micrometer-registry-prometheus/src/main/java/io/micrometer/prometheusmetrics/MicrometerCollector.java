@@ -16,6 +16,7 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
+import io.prometheus.metrics.model.registry.MetricType;
 import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
@@ -29,15 +30,12 @@ import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 import io.prometheus.metrics.model.snapshots.SummarySnapshot;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-
-import static java.util.stream.Collectors.toList;
+import java.util.function.Supplier;
 
 /**
  * {@link MultiCollector} for Micrometer.
@@ -48,7 +46,9 @@ import static java.util.stream.Collectors.toList;
  */
 class MicrometerCollector implements MultiCollector {
 
-    private final Map<Meter.Id, Registration> registrations = new ConcurrentHashMap<>();
+    private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
+
+    private final Map<String, MetricFamilyDescriptor> descriptorsByFamilyName = new ConcurrentHashMap<>();
 
     final String conventionName;
 
@@ -62,50 +62,58 @@ class MicrometerCollector implements MultiCollector {
         this.originalMeterId = id;
     }
 
-    public void add(Meter.Id id, Child child, MetricFamilyDescriptor... familyDescriptors) {
-        validateTypesMatchExistingFamilies(familyDescriptors);
-        registrations.put(id, new Registration(child, Arrays.asList(familyDescriptors)));
+    public MetricFamilyDescriptor getOrCreateDescriptor(MetricType metricType, String familyName,
+            Supplier<MetricFamilyDescriptor> factory) {
+        MetricFamilyDescriptor existing = descriptorsByFamilyName.get(familyName);
+        if (existing != null) {
+            if (existing.getType() != metricType) {
+                throw new IllegalArgumentException(
+                        "Meters with the same name must produce the same Prometheus metric family types. The family ("
+                                + familyName + ") was already registered with type " + existing.getType()
+                                + ", but this meter produces type " + metricType
+                                + ". This can happen when only some meters with"
+                                + " the same name publish histogram buckets.");
+            }
+            return existing;
+        }
+        MetricFamilyDescriptor created = factory.get();
+        existing = descriptorsByFamilyName.putIfAbsent(familyName, created);
+        if (existing != null) {
+            if (existing.getType() != metricType) {
+                throw new IllegalArgumentException(
+                        "Meters with the same name must produce the same Prometheus metric family types. The family ("
+                                + familyName + ") was already registered with type " + existing.getType()
+                                + ", but this meter produces type " + metricType
+                                + ". This can happen when only some meters with"
+                                + " the same name publish histogram buckets.");
+            }
+            return existing;
+        }
+        return created;
     }
 
-    /**
-     * Fail registration instead of failing later on scrape if the given family
-     * descriptors conflict in type with the metric families of the already registered
-     * meters, e.g. only some meters with the same name publish histogram buckets.
-     * {@link io.prometheus.metrics.model.registry.PrometheusRegistry} only validates this
-     * for the families present when the collector is registered, not for meters added to
-     * this collector afterwards.
-     */
-    private void validateTypesMatchExistingFamilies(MetricFamilyDescriptor[] familyDescriptors) {
-        // Existing registrations are mutually consistent since each was validated when
-        // added, so validating against a single one of them is sufficient; only the
-        // primary family of distribution meters can vary in type (SUMMARY vs HISTOGRAM)
-        // and every distribution meter registers it.
-        Iterator<Registration> registrationIterator = registrations.values().iterator();
-        if (!registrationIterator.hasNext()) {
-            return;
-        }
-        List<MetricFamilyDescriptor> existingDescriptors = registrationIterator.next().familyDescriptors;
+    public void add(Meter.Id id, Child child, MetricFamilyDescriptor... familyDescriptors) {
         for (MetricFamilyDescriptor descriptor : familyDescriptors) {
-            for (MetricFamilyDescriptor existingDescriptor : existingDescriptors) {
-                if (descriptor.getPrometheusName().equals(existingDescriptor.getPrometheusName())
-                        && descriptor.getType() != existingDescriptor.getType()) {
-                    throw new IllegalArgumentException(
-                            "Meters with the same name must produce the same Prometheus metric family types. The family ("
-                                    + descriptor.getPrometheusName() + ") was already registered with type "
-                                    + existingDescriptor.getType() + ", but this meter produces type "
-                                    + descriptor.getType() + ". This can happen when only some meters with"
-                                    + " the same name publish histogram buckets.");
-                }
+            MetricFamilyDescriptor existing = descriptorsByFamilyName.putIfAbsent(descriptor.getPrometheusName(),
+                    descriptor);
+            if (existing != null && existing.getType() != descriptor.getType()) {
+                throw new IllegalArgumentException(
+                        "Meters with the same name must produce the same Prometheus metric family types. The family ("
+                                + descriptor.getPrometheusName() + ") was already registered with type "
+                                + existing.getType() + ", but this meter produces type " + descriptor.getType()
+                                + ". This can happen when only some meters with"
+                                + " the same name publish histogram buckets.");
             }
         }
+        children.put(id, child);
     }
 
     public void remove(Meter.Id id) {
-        registrations.remove(id);
+        children.remove(id);
     }
 
     public boolean isEmpty() {
-        return registrations.isEmpty();
+        return children.isEmpty();
     }
 
     Meter.Id getOriginalId() {
@@ -114,10 +122,7 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public List<MetricFamilyDescriptor> getMetricFamilyDescriptors() {
-        return registrations.values()
-            .stream()
-            .flatMap(registration -> registration.familyDescriptors.stream())
-            .collect(toList());
+        return new ArrayList<>(descriptorsByFamilyName.values());
     }
 
     @Override
@@ -129,8 +134,8 @@ class MicrometerCollector implements MultiCollector {
             .computeIfAbsent(descriptor.getPrometheusName(), name -> new FamilySamples(descriptor)).dataPoints
             .add(dataPoint);
 
-        for (Registration registration : registrations.values()) {
-            registration.child.collect(sink);
+        for (Child child : children.values()) {
+            child.collect(sink);
         }
 
         List<MetricSnapshot> snapshots = new ArrayList<>(samplesByFamilyName.size());
@@ -168,22 +173,6 @@ class MicrometerCollector implements MultiCollector {
     interface Child {
 
         void collect(BiConsumer<MetricFamilyDescriptor, DataPointSnapshot> samples);
-
-    }
-
-    /**
-     * A {@link Child} together with the family descriptors it was registered with.
-     */
-    private static final class Registration {
-
-        private final Child child;
-
-        private final List<MetricFamilyDescriptor> familyDescriptors;
-
-        private Registration(Child child, List<MetricFamilyDescriptor> familyDescriptors) {
-            this.child = child;
-            this.familyDescriptors = familyDescriptors;
-        }
 
     }
 

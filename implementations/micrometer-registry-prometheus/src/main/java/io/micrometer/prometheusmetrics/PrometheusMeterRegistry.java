@@ -217,8 +217,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             Labels labels = Labels.of(tagKeys, tagValues(id));
             String conventionName = collector.conventionName;
-            MetricFamilyDescriptor familyDescriptor = familyDescriptor(MetricType.COUNTER, conventionName, tagKeys,
-                    id.getDescription());
+            MetricFamilyDescriptor familyDescriptor = familyDescriptor(collector, MetricType.COUNTER, conventionName,
+                    tagKeys, id.getDescription());
             collector.add(id, samples -> samples.accept(familyDescriptor,
                     new CounterDataPointSnapshot(counter.count(), labels, counter.exemplar(), createdTimestampMillis)),
                     familyDescriptor);
@@ -256,12 +256,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             String conventionName = collector.conventionName;
             MetricFamilyDescriptor familyDescriptor;
             if (id.getName().endsWith(".info")) {
-                familyDescriptor = familyDescriptor(MetricType.INFO, conventionName, tagKeys, id.getDescription());
+                familyDescriptor = familyDescriptor(collector, MetricType.INFO, conventionName, tagKeys,
+                        id.getDescription());
                 collector.add(id, samples -> samples.accept(familyDescriptor, new InfoDataPointSnapshot(labels)),
                         familyDescriptor);
             }
             else {
-                familyDescriptor = familyDescriptor(MetricType.GAUGE, conventionName, tagKeys, id.getDescription());
+                familyDescriptor = familyDescriptor(collector, MetricType.GAUGE, conventionName, tagKeys,
+                        id.getDescription());
                 collector.add(id, samples -> samples.accept(familyDescriptor,
                         new GaugeDataPointSnapshot(gauge.value(), labels, null)), familyDescriptor);
             }
@@ -287,8 +289,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             Labels labels = Labels.of(tagKeys, tagValues(id));
             String conventionName = collector.conventionName;
-            MetricFamilyDescriptor familyDescriptor = familyDescriptor(MetricType.SUMMARY, conventionName, tagKeys,
-                    id.getDescription());
+            MetricFamilyDescriptor familyDescriptor = familyDescriptor(collector, MetricType.SUMMARY, conventionName,
+                    tagKeys, id.getDescription());
             collector.add(id,
                     samples -> samples.accept(familyDescriptor, new SummaryDataPointSnapshot((long) ft.count(),
                             ft.totalTime(getBaseTimeUnit()), Quantiles.EMPTY, labels, null, createdTimestampMillis)),
@@ -305,8 +307,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             Labels labels = Labels.of(tagKeys, tagValues(id));
             String conventionName = collector.conventionName;
-            MetricFamilyDescriptor familyDescriptor = familyDescriptor(MetricType.COUNTER, conventionName, tagKeys,
-                    id.getDescription());
+            MetricFamilyDescriptor familyDescriptor = familyDescriptor(collector, MetricType.COUNTER, conventionName,
+                    tagKeys, id.getDescription());
             collector.add(id,
                     samples -> samples.accept(familyDescriptor,
                             new CounterDataPointSnapshot(fc.count(), labels, null, createdTimestampMillis)),
@@ -330,8 +332,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             Map<Statistic, MeasurementFamily> familiesByStatistic = new EnumMap<>(Statistic.class);
             for (Measurement measurement : measurements) {
                 familiesByStatistic.computeIfAbsent(measurement.getStatistic(), statistic -> {
-                    MetricFamilyDescriptor descriptor = customMeterDescriptor(id, collector.conventionName, statistic,
-                            statKeys);
+                    MetricFamilyDescriptor descriptor = customMeterDescriptor(collector, id, collector.conventionName,
+                            statistic, statKeys);
                     MetricFamilyDescriptor existing = descriptorsByName.putIfAbsent(descriptor.getPrometheusName(),
                             descriptor);
                     List<String> statValues = new ArrayList<>(tagValues);
@@ -359,24 +361,27 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         return new DefaultMeter(id, type, measurements);
     }
 
-    private MetricFamilyDescriptor customMeterDescriptor(Meter.Id id, String conventionName, Statistic statistic,
-            Collection<String> labelNames) {
+    private MetricFamilyDescriptor customMeterDescriptor(MicrometerCollector collector, Meter.Id id,
+            String conventionName, Statistic statistic, Collection<String> labelNames) {
         switch (statistic) {
             case TOTAL:
             case TOTAL_TIME:
-                return familyDescriptor(MetricType.COUNTER, conventionName + "_sum", labelNames, id.getDescription());
+                return familyDescriptor(collector, MetricType.COUNTER, conventionName + "_sum", labelNames,
+                        id.getDescription());
             case COUNT:
-                return familyDescriptor(MetricType.COUNTER, conventionName, labelNames, id.getDescription());
+                return familyDescriptor(collector, MetricType.COUNTER, conventionName, labelNames, id.getDescription());
             case MAX:
-                return familyDescriptor(MetricType.GAUGE, conventionName + "_max", labelNames, id.getDescription());
+                return familyDescriptor(collector, MetricType.GAUGE, conventionName + "_max", labelNames,
+                        id.getDescription());
             case VALUE:
             case UNKNOWN:
-                return familyDescriptor(MetricType.GAUGE, conventionName + "_value", labelNames, id.getDescription());
+                return familyDescriptor(collector, MetricType.GAUGE, conventionName + "_value", labelNames,
+                        id.getDescription());
             case ACTIVE_TASKS:
-                return familyDescriptor(MetricType.GAUGE, conventionName + "_active_count", labelNames,
+                return familyDescriptor(collector, MetricType.GAUGE, conventionName + "_active_count", labelNames,
                         id.getDescription());
             case DURATION:
-                return familyDescriptor(MetricType.GAUGE, conventionName + "_duration_sum", labelNames,
+                return familyDescriptor(collector, MetricType.GAUGE, conventionName + "_duration_sum", labelNames,
                         id.getDescription());
             default:
                 throw new IllegalArgumentException("Unsupported meter statistic: " + statistic);
@@ -427,9 +432,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         MetricType primaryType = histogramSupport.takeSnapshot().histogramCounts().length == 0 ? MetricType.SUMMARY
                 : MetricType.HISTOGRAM;
         String conventionName = collector.conventionName;
-        MetricFamilyDescriptor familyDescriptor = familyDescriptor(primaryType, conventionName, tagKeys,
+        MetricFamilyDescriptor familyDescriptor = familyDescriptor(collector, primaryType, conventionName, tagKeys,
                 id.getDescription());
-        MetricFamilyDescriptor familyDescriptorMax = familyDescriptor(MetricType.GAUGE, conventionName + "_max",
+        MetricFamilyDescriptor familyDescriptorMax = familyDescriptor(collector, MetricType.GAUGE, conventionName + "_max",
                 tagKeys, id.getDescription());
 
         collector.add(id, samples -> {
@@ -501,6 +506,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private static double bucket(CountAtBucket countAtBucket, @Nullable TimeUnit timeUnit) {
         return timeUnit == null ? countAtBucket.bucket() : countAtBucket.bucket(timeUnit);
+    }
+
+    private MetricFamilyDescriptor familyDescriptor(MicrometerCollector collector, MetricType metricType, String name,
+            Collection<String> labelNames, @Nullable String description) {
+        return collector.getOrCreateDescriptor(metricType, name,
+                () -> familyDescriptor(metricType, name, labelNames, description));
     }
 
     private MetricFamilyDescriptor familyDescriptor(MetricType metricType, String name, Collection<String> labelNames,
