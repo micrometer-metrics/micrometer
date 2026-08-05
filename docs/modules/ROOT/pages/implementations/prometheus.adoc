@@ -79,6 +79,73 @@ PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(Prometh
 HttpServlet servlet = new MetricsServlet(prometheusRegistry.getPrometheusRegistry());
 ----
 
+=== Using the Prometheus PushGateway
+
+In short-lived jobs (such as batch jobs) that Prometheus cannot scrape, you can push metrics to a https://prometheus.io/docs/practices/pushing/[Prometheus PushGateway] instead.
+
+If you use the "new" client (`micrometer-registry-prometheus`), add the `io.prometheus:prometheus-metrics-exporter-pushgateway` dependency (it is managed by `prometheus-metrics-bom`):
+
+[source,groovy,role=primary]
+.Gradle
+----
+implementation 'io.prometheus:prometheus-metrics-exporter-pushgateway'
+----
+
+[source,xml,role=secondary]
+.Maven
+----
+<dependency>
+  <groupId>io.prometheus</groupId>
+  <artifactId>prometheus-metrics-exporter-pushgateway</artifactId>
+</dependency>
+----
+
+Then build a `PushGateway` with the registry from your `PrometheusMeterRegistry`:
+
+[source,java]
+----
+PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+
+PushGateway pg = PushGateway.builder()
+    .address("pushgateway:9091")
+    .job("my-batch-job")
+    .registry(registry.getPrometheusRegistry())
+    .build();
+
+// push the current state of all meters
+pg.push();
+
+// alternatively, call pg.close() to push one final time and release resources
+----
+
+See the https://prometheus.github.io/client_java/exporters/pushgateway/[Prometheus Java Client PushGateway docs] for the full set of options (grouping keys, format, scheduler, etc.).
+
+If you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`), add `io.prometheus:simpleclient_pushgateway` and use `io.prometheus.client.exporter.PushGateway`:
+
+[source,groovy,role=primary]
+.Gradle
+----
+implementation 'io.prometheus:simpleclient_pushgateway'
+----
+
+[source,xml,role=secondary]
+.Maven
+----
+<dependency>
+  <groupId>io.prometheus</groupId>
+  <artifactId>simpleclient_pushgateway</artifactId>
+</dependency>
+----
+
+[source,java]
+----
+PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+
+io.prometheus.client.exporter.PushGateway pg =
+    new io.prometheus.client.exporter.PushGateway("pushgateway:9091");
+pg.push(registry.getPrometheusRegistry(), "my-batch-job");
+----
+
 === Scrape Format
 
 By default, the `PrometheusMeterRegistry` `scrape()` method returns the https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format[Prometheus text format].
