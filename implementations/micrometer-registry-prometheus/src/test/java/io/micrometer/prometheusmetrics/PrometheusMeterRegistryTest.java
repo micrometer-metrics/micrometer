@@ -31,7 +31,6 @@ import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.tracer.common.SpanContext;
 import org.assertj.core.api.Condition;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -124,7 +123,6 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
-    @Disabled("We don't detect this situation yet; scrape will fail")
     void differentTypesThatProduceSamePrometheusMetricFamilyFailsToRegister() {
         AtomicBoolean failed = new AtomicBoolean(false);
         registry.config().onMeterRegistrationFailed((name, reason) -> failed.set(true));
@@ -133,6 +131,33 @@ class PrometheusMeterRegistryTest {
         assertThat(failed.get()).isFalse();
         Gauge.builder("test_seconds_max", new AtomicInteger(42), AtomicInteger::get).register(registry);
         assertThat(failed.get()).isTrue();
+    }
+
+    @Test
+    void timersWithSameNameButOnlyOnePublishingHistogramFailToRegister() {
+        registry.throwExceptionOnRegistrationFailure();
+        Timer.builder("my.timer").tag("k", "v1").register(registry);
+
+        assertThatThrownBy(
+                () -> Timer.builder("my.timer").tag("k", "v2").publishPercentileHistogram().register(registry))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("my_timer_seconds")
+            .hasMessageContaining("SUMMARY")
+            .hasMessageContaining("HISTOGRAM");
+
+        assertThat(registry.scrape()).contains("my_timer_seconds_count");
+    }
+
+    @Test
+    void timersWithSameNameButOnlyOnePublishingHistogramFailToRegisterHistogramFirst() {
+        AtomicBoolean failed = new AtomicBoolean();
+        registry.config().onMeterRegistrationFailed((id, reason) -> failed.set(true));
+
+        Timer.builder("my.timer").tag("k", "v1").publishPercentileHistogram().register(registry);
+        Timer.builder("my.timer").tag("k", "v2").register(registry);
+
+        assertThat(failed).isTrue();
+        assertThat(registry.scrape()).contains("my_timer_seconds_bucket");
     }
 
     @Test

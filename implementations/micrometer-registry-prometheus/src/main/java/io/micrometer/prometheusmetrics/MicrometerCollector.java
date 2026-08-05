@@ -30,11 +30,12 @@ import io.prometheus.metrics.model.snapshots.SummarySnapshot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 import static java.util.stream.Collectors.toList;
 
@@ -47,11 +48,7 @@ import static java.util.stream.Collectors.toList;
  */
 class MicrometerCollector implements MultiCollector {
 
-    private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
-
-    private final Map<Meter.Id, List<MetricFamilyDescriptor>> registeredFamilies = new ConcurrentHashMap<>();
-
-    private final Map<MetricFamilyDescriptor, SnapshotFactory> customSnapshotFactories = new ConcurrentHashMap<>();
+    private final Map<Meter.Id, Registration> registrations = new ConcurrentHashMap<>();
 
     final String conventionName;
 
@@ -65,29 +62,50 @@ class MicrometerCollector implements MultiCollector {
         this.originalMeterId = id;
     }
 
-    public void add(Meter.Id id, Child child, MetricFamilyDescriptor... registeredFamilies) {
-        children.put(id, child);
-        this.registeredFamilies.put(id, Arrays.asList(registeredFamilies));
+    public void add(Meter.Id id, Child child, MetricFamilyDescriptor... familyDescriptors) {
+        validateTypesMatchExistingFamilies(familyDescriptors);
+        registrations.put(id, new Registration(child, Arrays.asList(familyDescriptors)));
     }
 
-    public void registerCustomSnapshotFactory(MetricFamilyDescriptor descriptor, SnapshotFactory factory) {
-        customSnapshotFactories.put(descriptor, factory);
-    }
-
-    public void remove(Meter.Id id) {
-        children.remove(id);
-        List<MetricFamilyDescriptor> descriptors = registeredFamilies.remove(id);
-        if (descriptors != null) {
-            descriptors.forEach(customSnapshotFactories::remove);
+    /**
+     * Fail registration instead of failing later on scrape if the given family
+     * descriptors conflict in type with the metric families of the already registered
+     * meters, e.g. only some meters with the same name publish histogram buckets.
+     * {@link io.prometheus.metrics.model.registry.PrometheusRegistry} only validates this
+     * for the families present when the collector is registered, not for meters added to
+     * this collector afterwards.
+     */
+    private void validateTypesMatchExistingFamilies(MetricFamilyDescriptor[] familyDescriptors) {
+        // Existing registrations are mutually consistent since each was validated when
+        // added, so validating against a single one of them is sufficient; only the
+        // primary family of distribution meters can vary in type (SUMMARY vs HISTOGRAM)
+        // and every distribution meter registers it.
+        Iterator<Registration> registrationIterator = registrations.values().iterator();
+        if (!registrationIterator.hasNext()) {
+            return;
+        }
+        List<MetricFamilyDescriptor> existingDescriptors = registrationIterator.next().familyDescriptors;
+        for (MetricFamilyDescriptor descriptor : familyDescriptors) {
+            for (MetricFamilyDescriptor existingDescriptor : existingDescriptors) {
+                if (descriptor.getPrometheusName().equals(existingDescriptor.getPrometheusName())
+                        && descriptor.getType() != existingDescriptor.getType()) {
+                    throw new IllegalArgumentException(
+                            "Meters with the same name must produce the same Prometheus metric family types. The family ("
+                                    + descriptor.getPrometheusName() + ") was already registered with type "
+                                    + existingDescriptor.getType() + ", but this meter produces type "
+                                    + descriptor.getType() + ". This can happen when only some meters with"
+                                    + " the same name publish histogram buckets.");
+                }
+            }
         }
     }
 
-    public boolean isEmpty() {
-        return children.isEmpty();
+    public void remove(Meter.Id id) {
+        registrations.remove(id);
     }
 
-    Meter.Type getMeterType() {
-        return originalMeterId.getType();
+    public boolean isEmpty() {
+        return registrations.isEmpty();
     }
 
     Meter.Id getOriginalId() {
@@ -96,24 +114,28 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public List<MetricFamilyDescriptor> getMetricFamilyDescriptors() {
-        return registeredFamilies.values().stream().flatMap(Collection::stream).collect(toList());
+        return registrations.values()
+            .stream()
+            .flatMap(registration -> registration.familyDescriptors.stream())
+            .collect(toList());
     }
 
     @Override
     public MetricSnapshots collect() {
-        Map<MetricFamilyDescriptor, List<DataPointSnapshot>> familyDataPoints = new LinkedHashMap<>();
+        // group data points from all children by family name so that each family is
+        // exposed as a single MetricSnapshot
+        Map<String, FamilySamples> samplesByFamilyName = new LinkedHashMap<>();
+        BiConsumer<MetricFamilyDescriptor, DataPointSnapshot> sink = (descriptor, dataPoint) -> samplesByFamilyName
+            .computeIfAbsent(descriptor.getPrometheusName(), name -> new FamilySamples(descriptor)).dataPoints
+            .add(dataPoint);
 
-        for (Child child : children.values()) {
-            child.collect(familyDataPoints);
+        for (Registration registration : registrations.values()) {
+            registration.child.collect(sink);
         }
 
-        List<MetricSnapshot> snapshots = new ArrayList<>(familyDataPoints.size());
-        for (Map.Entry<MetricFamilyDescriptor, List<DataPointSnapshot>> entry : familyDataPoints.entrySet()) {
-            MetricFamilyDescriptor descriptor = entry.getKey();
-            List<DataPointSnapshot> dataPoints = entry.getValue();
-            if (!dataPoints.isEmpty()) {
-                snapshots.add(createSnapshot(descriptor, dataPoints));
-            }
+        List<MetricSnapshot> snapshots = new ArrayList<>(samplesByFamilyName.size());
+        for (FamilySamples familySamples : samplesByFamilyName.values()) {
+            snapshots.add(createSnapshot(familySamples.descriptor, familySamples.dataPoints));
         }
 
         return new MetricSnapshots(snapshots);
@@ -121,10 +143,6 @@ class MicrometerCollector implements MultiCollector {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private MetricSnapshot createSnapshot(MetricFamilyDescriptor descriptor, List<DataPointSnapshot> dataPoints) {
-        SnapshotFactory customFactory = customSnapshotFactories.get(descriptor);
-        if (customFactory != null) {
-            return customFactory.create(descriptor.getMetadata(), (List) dataPoints);
-        }
         MetricMetadata metadata = descriptor.getMetadata();
         switch (descriptor.getType()) {
             case COUNTER:
@@ -134,7 +152,11 @@ class MicrometerCollector implements MultiCollector {
             case SUMMARY:
                 return new SummarySnapshot(metadata, (List) dataPoints);
             case HISTOGRAM:
-                return new HistogramSnapshot(metadata, (List) dataPoints);
+                // A LongTaskTimer histogram is point-in-time and non-monotonic, which
+                // maps to a Prometheus gauge histogram; it is the only meter for which
+                // we produce one.
+                return new HistogramSnapshot(originalMeterId.getType() == Meter.Type.LONG_TASK_TIMER, metadata,
+                        (List) dataPoints);
             case INFO:
                 return new InfoSnapshot(metadata, (List) dataPoints);
             default:
@@ -145,14 +167,40 @@ class MicrometerCollector implements MultiCollector {
     @FunctionalInterface
     interface Child {
 
-        void collect(Map<MetricFamilyDescriptor, List<DataPointSnapshot>> samples);
+        void collect(BiConsumer<MetricFamilyDescriptor, DataPointSnapshot> samples);
 
     }
 
-    @FunctionalInterface
-    interface SnapshotFactory {
+    /**
+     * A {@link Child} together with the family descriptors it was registered with.
+     */
+    private static final class Registration {
 
-        MetricSnapshot create(MetricMetadata metadata, List<DataPointSnapshot> dataPoints);
+        private final Child child;
+
+        private final List<MetricFamilyDescriptor> familyDescriptors;
+
+        private Registration(Child child, List<MetricFamilyDescriptor> familyDescriptors) {
+            this.child = child;
+            this.familyDescriptors = familyDescriptors;
+        }
+
+    }
+
+    /**
+     * Data points collected for one metric family during a single {@link #collect()}
+     * call. Since children register their own descriptor instances, the descriptor of the
+     * first child that contributes to the family is used for the snapshot metadata.
+     */
+    private static final class FamilySamples {
+
+        private final MetricFamilyDescriptor descriptor;
+
+        private final List<DataPointSnapshot> dataPoints = new ArrayList<>();
+
+        private FamilySamples(MetricFamilyDescriptor descriptor) {
+            this.descriptor = descriptor;
+        }
 
     }
 

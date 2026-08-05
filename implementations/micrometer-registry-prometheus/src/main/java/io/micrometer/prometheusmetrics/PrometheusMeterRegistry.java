@@ -46,7 +46,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,9 +55,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
@@ -75,6 +75,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private static final WarnThenDebugLogger meterRegistrationFailureLogger = new WarnThenDebugLogger(
             PrometheusMeterRegistry.class);
+
+    private static final String TEXT_004_CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
 
     private final PrometheusConfig prometheusConfig;
 
@@ -132,7 +134,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * designated for Prometheus to scrape.
      */
     public String scrape() {
-        return scrape(Format.TEXT_004.getContentType());
+        return scrape(TEXT_004_CONTENT_TYPE);
     }
 
     /**
@@ -142,15 +144,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * @see ExpositionFormats
      */
     public String scrape(String contentType) {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            scrape(outputStream, contentType);
-            return outputStream.toString(StandardCharsets.UTF_8.name());
-        }
-        catch (IOException e) {
-            // This should not happen during writing a ByteArrayOutputStream
-            throw new RuntimeException(e);
-        }
+        return scrape(contentType, null);
     }
 
     /**
@@ -159,7 +153,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * @throws IOException if writing fails
      */
     public void scrape(OutputStream outputStream) throws IOException {
-        scrape(outputStream, Format.TEXT_004.getContentType());
+        scrape(outputStream, TEXT_004_CONTENT_TYPE);
     }
 
     /**
@@ -225,10 +219,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             String conventionName = collector.conventionName;
             MetricFamilyDescriptor familyDescriptor = familyDescriptor(MetricType.COUNTER, conventionName, tagKeys,
                     id.getDescription());
-            collector.add(id,
-                    samples -> samples.computeIfAbsent(familyDescriptor, k -> new ArrayList<>())
-                            .add(new CounterDataPointSnapshot(counter.count(), labels, counter.exemplar(),
-                                    createdTimestampMillis)),
+            collector.add(id, samples -> samples.accept(familyDescriptor,
+                    new CounterDataPointSnapshot(counter.count(), labels, counter.exemplar(), createdTimestampMillis)),
                     familyDescriptor);
         });
         return counter;
@@ -239,81 +231,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock,
                 distributionStatisticConfig, scale, exemplarSamplerFactory);
-        long createdTimestampMillis = clock.wallTime();
-        applyToCollector(id, (collector) -> {
-            List<String> tagKeys = tagKeys(id);
-            Labels labels = Labels.of(tagKeys, tagValues(id));
-            MetricType primaryType = summary.histogramCounts().length == 0 ? MetricType.SUMMARY : MetricType.HISTOGRAM;
-            String conventionName = collector.conventionName;
-            MetricFamilyDescriptor familyDescriptor = familyDescriptor(primaryType, conventionName, tagKeys,
-                    id.getDescription());
-            String conventionNameMax = conventionName + "_max";
-            MetricFamilyDescriptor familyDescriptorMax = familyDescriptor(MetricType.GAUGE, conventionNameMax, tagKeys,
-                    id.getDescription());
-            collector.add(id, samples -> {
-                final ValueAtPercentile[] percentileValues = summary.takeSnapshot().percentileValues();
-                final CountAtBucket[] histogramCounts = summary.histogramCounts();
-                long count = summary.count();
-                double sum = summary.totalAmount();
-
-                if (histogramCounts.length == 0) {
-                    Quantiles quantiles = Quantiles.EMPTY;
-                    if (percentileValues.length > 0) {
-                        List<Quantile> quantileList = new ArrayList<>();
-                        for (ValueAtPercentile v : percentileValues) {
-                            quantileList.add(new Quantile(v.percentile(), v.value()));
-                        }
-                        quantiles = Quantiles.of(quantileList);
-                    }
-
-                    Exemplars exemplars = summary.exemplars();
-                    samples.computeIfAbsent(familyDescriptor, k -> new ArrayList<>())
-                            .add(new SummaryDataPointSnapshot(count, sum, quantiles, labels, exemplars,
-                                    createdTimestampMillis));
-                }
-                else {
-                    List<Double> buckets = new ArrayList<>();
-                    List<Number> counts = new ArrayList<>();
-                    // TODO: remove this cumulative -> non cumulative conversion
-                    // ClassicHistogramBuckets is not cumulative but the
-                    // histograms we use are cumulative
-                    // so we convert it to non-cumulative just for the
-                    // Prometheus client library
-                    // can convert it back to cumulative.
-                    buckets.add(histogramCounts[0].bucket());
-                    counts.add(histogramCounts[0].count());
-                    for (int i = 1; i < histogramCounts.length; i++) {
-                        CountAtBucket countAtBucket = histogramCounts[i];
-                        buckets.add(countAtBucket.bucket());
-                        counts.add(countAtBucket.count() - histogramCounts[i - 1].count());
-                    }
-                    if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
-                        // ClassicHistogramBuckets is not cumulative
-                        buckets.add(Double.POSITIVE_INFINITY);
-                        double infCount = count - histogramCounts[histogramCounts.length - 1].count();
-                        counts.add(infCount >= 0 ? infCount : 0);
-                    }
-
-                    Exemplars exemplars = summary.exemplars();
-                    samples.computeIfAbsent(familyDescriptor, k -> new ArrayList<>())
-                            .add(new HistogramDataPointSnapshot(ClassicHistogramBuckets.of(buckets, counts), sum,
-                                    labels, exemplars, createdTimestampMillis));
-
-                    // TODO: Add support back for VictoriaMetrics
-                    // Previously we had low-level control so a histogram was just
-                    // a bunch of Collector.MetricFamilySamples.Sample
-                    // that has an le label for Prometheus and a vmrange label for
-                    // Victoria.
-                    // That control is gone now, so we don’t have control over the
-                    // output and when HistogramDataPointSnapshot is written, the
-                    // bucket name is hardcoded to le.
-                }
-
-                samples.computeIfAbsent(familyDescriptorMax, k -> new ArrayList<>())
-                        .add(new GaugeDataPointSnapshot(summary.max(), labels, null));
-            }, familyDescriptor, familyDescriptorMax);
-        });
-
+        applyToCollector(id,
+                (collector) -> addDistributionStatisticSamples(id, collector, summary, summary::exemplars, null));
         return summary;
     }
 
@@ -322,8 +241,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector,
                 exemplarSamplerFactory);
-        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, timer, timer::exemplars,
-                tagValues(id), false));
+        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, timer,
+                () -> createExemplarsWithScaledValues(timer.exemplars()), getBaseTimeUnit()));
         return timer;
     }
 
@@ -338,17 +257,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             MetricFamilyDescriptor familyDescriptor;
             if (id.getName().endsWith(".info")) {
                 familyDescriptor = familyDescriptor(MetricType.INFO, conventionName, tagKeys, id.getDescription());
-                collector.add(id,
-                        samples -> samples.computeIfAbsent(familyDescriptor, k -> new ArrayList<>())
-                                .add(new InfoDataPointSnapshot(labels)),
+                collector.add(id, samples -> samples.accept(familyDescriptor, new InfoDataPointSnapshot(labels)),
                         familyDescriptor);
             }
             else {
                 familyDescriptor = familyDescriptor(MetricType.GAUGE, conventionName, tagKeys, id.getDescription());
-                collector.add(id,
-                        samples -> samples.computeIfAbsent(familyDescriptor, k -> new ArrayList<>())
-                                .add(new GaugeDataPointSnapshot(gauge.value(), labels, null)),
-                        familyDescriptor);
+                collector.add(id, samples -> samples.accept(familyDescriptor,
+                        new GaugeDataPointSnapshot(gauge.value(), labels, null)), familyDescriptor);
             }
         });
         return gauge;
@@ -358,7 +273,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, true);
         applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, ltt, () -> Exemplars.EMPTY,
-                tagValues(id), true));
+                getBaseTimeUnit()));
         return ltt;
     }
 
@@ -375,9 +290,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             MetricFamilyDescriptor familyDescriptor = familyDescriptor(MetricType.SUMMARY, conventionName, tagKeys,
                     id.getDescription());
             collector.add(id,
-                    samples -> samples.computeIfAbsent(familyDescriptor, k -> new ArrayList<>())
-                            .add(new SummaryDataPointSnapshot((long) ft.count(), ft.totalTime(getBaseTimeUnit()),
-                                    Quantiles.EMPTY, labels, null, createdTimestampMillis)),
+                    samples -> samples.accept(familyDescriptor, new SummaryDataPointSnapshot((long) ft.count(),
+                            ft.totalTime(getBaseTimeUnit()), Quantiles.EMPTY, labels, null, createdTimestampMillis)),
                     familyDescriptor);
         });
         return ft;
@@ -394,8 +308,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             MetricFamilyDescriptor familyDescriptor = familyDescriptor(MetricType.COUNTER, conventionName, tagKeys,
                     id.getDescription());
             collector.add(id,
-                    samples -> samples.computeIfAbsent(familyDescriptor, k -> new ArrayList<>())
-                            .add(new CounterDataPointSnapshot(fc.count(), labels, null, createdTimestampMillis)),
+                    samples -> samples.accept(familyDescriptor,
+                            new CounterDataPointSnapshot(fc.count(), labels, null, createdTimestampMillis)),
                     familyDescriptor);
         });
         return fc;
@@ -403,38 +317,43 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        long createdTimestampMillis = clock.wallTime();
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
-            List<String> tagKeys = tagKeys(id);
-            List<String> statKeys = new ArrayList<>(tagKeys);
+            List<String> statKeys = new ArrayList<>(tagKeys(id));
             statKeys.add("statistic");
-            Map<String, MetricFamilyDescriptor> descriptorsMap = new LinkedHashMap<>();
-            String name = collector.conventionName;
+
+            // precompute the family descriptor and labels per statistic; measurements
+            // with statistics that map to the same Prometheus name (e.g. TOTAL and
+            // TOTAL_TIME) share one family descriptor
+            Map<String, MetricFamilyDescriptor> descriptorsByName = new LinkedHashMap<>();
+            Map<Statistic, MeasurementFamily> familiesByStatistic = new EnumMap<>(Statistic.class);
             for (Measurement measurement : measurements) {
-                MetricFamilyDescriptor descriptor = customMeterDescriptor(id, name, measurement.getStatistic(),
-                        statKeys);
-                descriptorsMap.putIfAbsent(descriptor.getPrometheusName(), descriptor);
+                familiesByStatistic.computeIfAbsent(measurement.getStatistic(), statistic -> {
+                    MetricFamilyDescriptor descriptor = customMeterDescriptor(id, collector.conventionName, statistic,
+                            statKeys);
+                    MetricFamilyDescriptor existing = descriptorsByName.putIfAbsent(descriptor.getPrometheusName(),
+                            descriptor);
+                    List<String> statValues = new ArrayList<>(tagValues);
+                    statValues.add(statistic.toString());
+                    return new MeasurementFamily(existing != null ? existing : descriptor,
+                            Labels.of(statKeys, statValues));
+                });
             }
-            MetricFamilyDescriptor[] descriptors = descriptorsMap.values().toArray(new MetricFamilyDescriptor[0]);
+
             collector.add(id, samples -> {
                 for (Measurement measurement : measurements) {
-                    List<String> statValues = new ArrayList<>(tagValues);
-                    statValues.add(measurement.getStatistic().toString());
-                    Labels labels = Labels.of(statKeys, statValues);
-                    CustomMeterMetric metric = customMeterMetric(collector.conventionName, measurement.getStatistic());
-                    MetricFamilyDescriptor descriptor = descriptorsMap.get(metric.name);
-
-                    if (metric.metricType == MetricType.COUNTER) {
-                        samples.computeIfAbsent(descriptor, k -> new ArrayList<>())
-                                .add(new CounterDataPointSnapshot(measurement.getValue(), labels, null,
-                                        clock.wallTime()));
+                    MeasurementFamily family = requireNonNull(familiesByStatistic.get(measurement.getStatistic()));
+                    if (family.descriptor.getType() == MetricType.COUNTER) {
+                        samples.accept(family.descriptor, new CounterDataPointSnapshot(measurement.getValue(),
+                                family.labels, null, createdTimestampMillis));
                     }
                     else {
-                        samples.computeIfAbsent(descriptor, k -> new ArrayList<>())
-                                .add(new GaugeDataPointSnapshot(measurement.getValue(), labels, null));
+                        samples.accept(family.descriptor,
+                                new GaugeDataPointSnapshot(measurement.getValue(), family.labels, null));
                     }
                 }
-            }, descriptors);
+            }, descriptorsByName.values().toArray(new MetricFamilyDescriptor[0]));
         });
 
         return new DefaultMeter(id, type, measurements);
@@ -442,40 +361,41 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private MetricFamilyDescriptor customMeterDescriptor(Meter.Id id, String conventionName, Statistic statistic,
             Collection<String> labelNames) {
-        CustomMeterMetric metric = customMeterMetric(conventionName, statistic);
-        return familyDescriptor(metric.metricType, metric.name, labelNames, id.getDescription());
-    }
-
-    private CustomMeterMetric customMeterMetric(String conventionName, Statistic statistic) {
         switch (statistic) {
             case TOTAL:
             case TOTAL_TIME:
-                return new CustomMeterMetric(conventionName + "_sum", MetricType.COUNTER);
+                return familyDescriptor(MetricType.COUNTER, conventionName + "_sum", labelNames, id.getDescription());
             case COUNT:
-                return new CustomMeterMetric(conventionName, MetricType.COUNTER);
+                return familyDescriptor(MetricType.COUNTER, conventionName, labelNames, id.getDescription());
             case MAX:
-                return new CustomMeterMetric(conventionName + "_max", MetricType.GAUGE);
+                return familyDescriptor(MetricType.GAUGE, conventionName + "_max", labelNames, id.getDescription());
             case VALUE:
             case UNKNOWN:
-                return new CustomMeterMetric(conventionName + "_value", MetricType.GAUGE);
+                return familyDescriptor(MetricType.GAUGE, conventionName + "_value", labelNames, id.getDescription());
             case ACTIVE_TASKS:
-                return new CustomMeterMetric(conventionName + "_active_count", MetricType.GAUGE);
+                return familyDescriptor(MetricType.GAUGE, conventionName + "_active_count", labelNames,
+                        id.getDescription());
             case DURATION:
-                return new CustomMeterMetric(conventionName + "_duration_sum", MetricType.GAUGE);
+                return familyDescriptor(MetricType.GAUGE, conventionName + "_duration_sum", labelNames,
+                        id.getDescription());
             default:
                 throw new IllegalArgumentException("Unsupported meter statistic: " + statistic);
         }
     }
 
-    private static final class CustomMeterMetric {
+    /**
+     * The Prometheus metric family and precomputed labels for the measurements of one
+     * {@link Statistic} of a custom meter.
+     */
+    private static final class MeasurementFamily {
 
-        private final String name;
+        private final MetricFamilyDescriptor descriptor;
 
-        private final MetricType metricType;
+        private final Labels labels;
 
-        private CustomMeterMetric(String name, MetricType metricType) {
-            this.name = name;
-            this.metricType = metricType;
+        private MeasurementFamily(MetricFamilyDescriptor descriptor, Labels labels) {
+            this.descriptor = descriptor;
+            this.labels = labels;
         }
 
     }
@@ -492,77 +412,42 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         return registry;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Adds samples for meters with distribution statistics, i.e. timers, long task
+     * timers, and distribution summaries.
+     * @param timeUnit if {@code null}, snapshot values are used as-is (distribution
+     * summaries); otherwise, time-based snapshot values are converted to this unit
+     * (timers, long task timers)
+     */
     private void addDistributionStatisticSamples(Meter.Id id, MicrometerCollector collector,
-            HistogramSupport histogramSupport, Supplier<Exemplars> exemplarsSupplier, List<String> tagValues,
-            boolean forLongTaskTimer) {
+            HistogramSupport histogramSupport, Supplier<Exemplars> exemplarsSupplier, @Nullable TimeUnit timeUnit) {
         long createdTimestampMillis = clock.wallTime();
         List<String> tagKeys = tagKeys(id);
-        Labels labels = Labels.of(tagKeys, tagValues);
+        Labels labels = Labels.of(tagKeys, tagValues(id));
         MetricType primaryType = histogramSupport.takeSnapshot().histogramCounts().length == 0 ? MetricType.SUMMARY
                 : MetricType.HISTOGRAM;
         String conventionName = collector.conventionName;
         MetricFamilyDescriptor familyDescriptor = familyDescriptor(primaryType, conventionName, tagKeys,
                 id.getDescription());
-        String conventionNameMax = conventionName + "_max";
-        MetricFamilyDescriptor familyDescriptorMax = familyDescriptor(MetricType.GAUGE, conventionNameMax, tagKeys,
-                id.getDescription());
-
-        if (forLongTaskTimer && primaryType == MetricType.HISTOGRAM) {
-            collector.registerCustomSnapshotFactory(familyDescriptor,
-                    (metadata, dataPoints) -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(true,
-                            metadata, (List) dataPoints));
-        }
+        MetricFamilyDescriptor familyDescriptorMax = familyDescriptor(MetricType.GAUGE, conventionName + "_max",
+                tagKeys, id.getDescription());
 
         collector.add(id, samples -> {
             HistogramSnapshot histogramSnapshot = histogramSupport.takeSnapshot();
-            ValueAtPercentile[] percentileValues = histogramSnapshot.percentileValues();
             CountAtBucket[] histogramCounts = histogramSnapshot.histogramCounts();
             long count = histogramSnapshot.count();
-            double sum = histogramSnapshot.total(getBaseTimeUnit());
+            double sum = timeUnit == null ? histogramSnapshot.total() : histogramSnapshot.total(timeUnit);
 
             if (histogramCounts.length == 0) {
-                Quantiles quantiles = Quantiles.EMPTY;
-                if (percentileValues.length > 0) {
-                    List<Quantile> quantileList = new ArrayList<>();
-                    for (ValueAtPercentile v : percentileValues) {
-                        quantileList.add(new Quantile(v.percentile(), v.value(getBaseTimeUnit())));
-                    }
-                    quantiles = Quantiles.of(quantileList);
-                }
-
-                Exemplars exemplars = createExemplarsWithScaledValues(exemplarsSupplier.get());
-                samples.computeIfAbsent(familyDescriptor, k -> new ArrayList<>())
-                        .add(new SummaryDataPointSnapshot(count, sum, quantiles, labels, exemplars,
-                                createdTimestampMillis));
+                samples.accept(familyDescriptor,
+                        new SummaryDataPointSnapshot(count, sum,
+                                quantiles(histogramSnapshot.percentileValues(), timeUnit), labels,
+                                exemplarsSupplier.get(), createdTimestampMillis));
             }
             else {
-                List<Double> buckets = new ArrayList<>();
-                List<Number> counts = new ArrayList<>();
-                // TODO: remove this cumulative -> non cumulative conversion
-                // ClassicHistogramBuckets is not cumulative but the histograms we
-                // use are cumulative
-                // so we convert it to non-cumulative just for the Prometheus
-                // client library
-                // can convert it back to cumulative.
-                buckets.add(histogramCounts[0].bucket(getBaseTimeUnit()));
-                counts.add(histogramCounts[0].count());
-                for (int i = 1; i < histogramCounts.length; i++) {
-                    CountAtBucket countAtBucket = histogramCounts[i];
-                    buckets.add(countAtBucket.bucket(getBaseTimeUnit()));
-                    counts.add(countAtBucket.count() - histogramCounts[i - 1].count());
-                }
-                if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
-                    // ClassicHistogramBuckets is not cumulative
-                    buckets.add(Double.POSITIVE_INFINITY);
-                    double infCount = count - histogramCounts[histogramCounts.length - 1].count();
-                    counts.add(infCount >= 0 ? infCount : 0);
-                }
-
-                Exemplars exemplars = createExemplarsWithScaledValues(exemplarsSupplier.get());
-                samples.computeIfAbsent(familyDescriptor, k -> new ArrayList<>())
-                        .add(new HistogramDataPointSnapshot(ClassicHistogramBuckets.of(buckets, counts), sum, labels,
-                                exemplars, createdTimestampMillis));
+                samples.accept(familyDescriptor,
+                        new HistogramDataPointSnapshot(nonCumulativeBuckets(histogramCounts, count, timeUnit), sum,
+                                labels, exemplarsSupplier.get(), createdTimestampMillis));
 
                 // TODO: Add support back for VictoriaMetrics
                 // Previously we had low-level control so a histogram was just
@@ -574,9 +459,48 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 // bucket name is hardcoded to le.
             }
 
-            samples.computeIfAbsent(familyDescriptorMax, k -> new ArrayList<>())
-                    .add(new GaugeDataPointSnapshot(histogramSnapshot.max(getBaseTimeUnit()), labels, null));
+            double max = timeUnit == null ? histogramSnapshot.max() : histogramSnapshot.max(timeUnit);
+            samples.accept(familyDescriptorMax, new GaugeDataPointSnapshot(max, labels, null));
         }, familyDescriptor, familyDescriptorMax);
+    }
+
+    private static Quantiles quantiles(ValueAtPercentile[] percentileValues, @Nullable TimeUnit timeUnit) {
+        if (percentileValues.length == 0) {
+            return Quantiles.EMPTY;
+        }
+        List<Quantile> quantiles = new ArrayList<>(percentileValues.length);
+        for (ValueAtPercentile percentileValue : percentileValues) {
+            quantiles.add(new Quantile(percentileValue.percentile(),
+                    timeUnit == null ? percentileValue.value() : percentileValue.value(timeUnit)));
+        }
+        return Quantiles.of(quantiles);
+    }
+
+    // TODO: remove this cumulative -> non cumulative conversion
+    // ClassicHistogramBuckets is not cumulative but the histograms we use are cumulative
+    // so we convert it to non-cumulative just for the Prometheus client library
+    // can convert it back to cumulative.
+    private static ClassicHistogramBuckets nonCumulativeBuckets(CountAtBucket[] histogramCounts, long count,
+            @Nullable TimeUnit timeUnit) {
+        List<Double> buckets = new ArrayList<>();
+        List<Number> counts = new ArrayList<>();
+        buckets.add(bucket(histogramCounts[0], timeUnit));
+        counts.add(histogramCounts[0].count());
+        for (int i = 1; i < histogramCounts.length; i++) {
+            buckets.add(bucket(histogramCounts[i], timeUnit));
+            counts.add(histogramCounts[i].count() - histogramCounts[i - 1].count());
+        }
+        if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
+            // ClassicHistogramBuckets is not cumulative
+            buckets.add(Double.POSITIVE_INFINITY);
+            double infCount = count - histogramCounts[histogramCounts.length - 1].count();
+            counts.add(infCount >= 0 ? infCount : 0);
+        }
+        return ClassicHistogramBuckets.of(buckets, counts);
+    }
+
+    private static double bucket(CountAtBucket countAtBucket, @Nullable TimeUnit timeUnit) {
+        return timeUnit == null ? countAtBucket.bucket() : countAtBucket.bucket(timeUnit);
     }
 
     private MetricFamilyDescriptor familyDescriptor(MetricType metricType, String name, Collection<String> labelNames,
@@ -609,11 +533,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void onMeterRemoved(Meter meter) {
-        MicrometerCollector collector = collectorMap.get(getConventionName(meter.getId()));
+        String conventionName = getConventionName(meter.getId());
+        MicrometerCollector collector = collectorMap.get(conventionName);
         if (collector != null) {
             collector.remove(meter.getId());
             if (collector.isEmpty()) {
-                collectorMap.remove(getConventionName(meter.getId()));
+                collectorMap.remove(conventionName);
                 getPrometheusRegistry().unregister(collector);
             }
         }
@@ -641,7 +566,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 return existingCollector;
             }
 
-            Meter.Type type = existingCollector.getMeterType();
+            Meter.Type type = existingCollector.getOriginalId().getType();
             if (!type.equals(id.getType())) {
                 meterRegistrationFailed(id,
                         "Prometheus requires that all meters with the same name have the same"
@@ -650,7 +575,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 return existingCollector;
             }
 
-            consumer.accept(existingCollector);
+            try {
+                consumer.accept(existingCollector);
+            }
+            catch (IllegalArgumentException e) {
+                meterRegistrationFailed(id, e.getMessage());
+            }
             return existingCollector;
         });
     }
@@ -694,22 +624,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             message += ".";
         }
         return message;
-    }
-
-    private enum Format {
-
-        TEXT_004("text/plain; version=0.0.4; charset=utf-8");
-
-        private final String contentType;
-
-        Format(String contentType) {
-            this.contentType = contentType;
-        }
-
-        String getContentType() {
-            return contentType;
-        }
-
     }
 
 }
