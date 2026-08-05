@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.cache.HazelcastIMapAdapter.LocalMapStats;
@@ -33,6 +35,8 @@ import java.util.function.ToLongFunction;
  */
 public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(HazelcastCacheMetrics.class);
+
     private static final String DESCRIPTION_CACHE_ENTRIES = "The number of entries held by this member";
 
     private static final String DESCRIPTION_CACHE_ENTRY_MEMORY = "Memory cost of entries held by this member";
@@ -40,6 +44,8 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
     private static final String DESCRIPTION_CACHE_NEAR_REQUESTS = "The number of requests (hits or misses) of near cache entries owned by this member";
 
     private final HazelcastIMapAdapter cache;
+
+    private final boolean statisticsEnabled;
 
     /**
      * Record metrics on a Hazelcast cache.
@@ -75,10 +81,20 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
     public HazelcastCacheMetrics(Object cache, Iterable<Tag> tags) {
         super(cache, HazelcastIMapAdapter.nameOf(cache), tags);
         this.cache = new HazelcastIMapAdapter(cache);
+        String name = HazelcastIMapAdapter.nameOf(cache);
+        this.statisticsEnabled = this.cache.isStatisticsEnabled(name);
+        if (!statisticsEnabled) {
+            log.warn(
+                    "The cache '{}' is not recording statistics. No meters that require statistics will be registered. Enable statistics for this cache (for example by calling 'MapConfig#setStatisticsEnabled(true)' when building the cache) before binding metrics.",
+                    name);
+        }
     }
 
     @Override
     protected @Nullable Long size() {
+        if (!statisticsEnabled) {
+            return null;
+        }
         LocalMapStats localMapStats = cache.getLocalMapStats();
         if (localMapStats != null) {
             return localMapStats.getOwnedEntryCount();
@@ -96,6 +112,9 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
      */
     @Override
     protected long hitCount() {
+        if (!statisticsEnabled) {
+            return UNSUPPORTED;
+        }
         LocalMapStats localMapStats = cache.getLocalMapStats();
         if (localMapStats != null) {
             return localMapStats.getHits();
@@ -119,6 +138,9 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
     @Override
     protected long putCount() {
+        if (!statisticsEnabled) {
+            return UNSUPPORTED;
+        }
         LocalMapStats localMapStats = cache.getLocalMapStats();
         if (localMapStats != null) {
             return localMapStats.getPutOperationCount() + localMapStats.getSetOperationCount();
@@ -129,6 +151,9 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
+        if (!statisticsEnabled) {
+            return;
+        }
         Gauge
             .builder("cache.entries", cache,
                     cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getBackupEntryCount))
