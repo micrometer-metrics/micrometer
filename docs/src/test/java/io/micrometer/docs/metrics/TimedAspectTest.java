@@ -23,7 +23,7 @@ import io.micrometer.core.aop.MeterTag;
 import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.docs.SpelValueExpressionResolver;
+import io.micrometer.docs.CustomValueExpressionResolver;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -36,8 +36,8 @@ class TimedAspectTest {
     // tag::resolvers[]
     ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
 
-    // Example of a ValueExpressionResolver that uses Spring Expression Language
-    ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
+    // Example of a custom ValueExpressionResolver; see CustomValueExpressionResolver for an implementation using SpEL
+    ValueExpressionResolver valueExpressionResolver = new CustomValueExpressionResolver();
 
     // end::resolvers[]
 
