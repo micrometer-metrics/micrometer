@@ -83,4 +83,33 @@ class StepFunctionCounterTest {
         assertThat(counter.count()).isEqualTo(3);
     }
 
+    @Test
+    void concurrentCountDoesNotOverCount() throws InterruptedException {
+        AtomicInteger n = new AtomicInteger(0);
+        FunctionCounter counter = registry.more().counter("my.counter", Tags.empty(), n);
+
+        int threads = 4;
+        int incrementsPerThread = 10_000;
+        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(threads);
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
+
+        for (int i = 0; i < threads; i++) {
+            executor.submit(() -> {
+                for (int j = 0; j < incrementsPerThread; j++) {
+                    n.incrementAndGet();
+                    counter.count();
+                }
+                latch.countDown();
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+
+        @SuppressWarnings("rawtypes")
+        StepFunctionCounter stepCounter = (StepFunctionCounter) counter;
+        stepCounter._closingRollover();
+        assertThat(counter.count()).isEqualTo(threads * incrementsPerThread);
+    }
+
 }

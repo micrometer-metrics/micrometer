@@ -106,4 +106,50 @@ class StepFunctionTimerTest {
         assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(150);
     }
 
+    @Test
+    void concurrentAccumulateDoesNotOverCount() throws InterruptedException {
+        java.util.concurrent.atomic.AtomicLong count = new java.util.concurrent.atomic.AtomicLong();
+        java.util.concurrent.atomic.AtomicLong totalTime = new java.util.concurrent.atomic.AtomicLong();
+
+        io.micrometer.core.instrument.Clock concurrentClock = new io.micrometer.core.instrument.Clock() {
+            private final java.util.concurrent.atomic.AtomicLong time = new java.util.concurrent.atomic.AtomicLong(0);
+
+            @Override
+            public long wallTime() {
+                return time.get();
+            }
+
+            @Override
+            public long monotonicTime() {
+                return time.getAndAdd(2_000_000);
+            }
+        };
+
+        StepFunctionTimer<Object> timer = new StepFunctionTimer<>(mock(Meter.Id.class), concurrentClock, 1000L,
+                new Object(), (o) -> count.get(), (o) -> (double) totalTime.get(), TimeUnit.SECONDS, TimeUnit.SECONDS);
+
+        int threads = 4;
+        int incrementsPerThread = 10_000;
+        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(threads);
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
+
+        for (int i = 0; i < threads; i++) {
+            executor.submit(() -> {
+                for (int j = 0; j < incrementsPerThread; j++) {
+                    count.incrementAndGet();
+                    totalTime.addAndGet(2);
+                    timer.count();
+                }
+                latch.countDown();
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+
+        timer._closingRollover();
+        assertThat(timer.count()).isEqualTo(threads * incrementsPerThread);
+        assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(threads * incrementsPerThread * 2);
+    }
+
 }
