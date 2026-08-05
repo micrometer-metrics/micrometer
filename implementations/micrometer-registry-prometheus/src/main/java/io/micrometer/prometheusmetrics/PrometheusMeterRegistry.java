@@ -434,8 +434,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         String conventionName = collector.conventionName;
         MetricFamilyDescriptor familyDescriptor = familyDescriptor(collector, primaryType, conventionName, tagKeys,
                 id.getDescription());
-        MetricFamilyDescriptor familyDescriptorMax = familyDescriptor(collector, MetricType.GAUGE, conventionName + "_max",
-                tagKeys, id.getDescription());
+        MetricFamilyDescriptor familyDescriptorMax = familyDescriptor(collector, MetricType.GAUGE,
+                conventionName + "_max", tagKeys, id.getDescription());
 
         collector.add(id, samples -> {
             HistogramSnapshot histogramSnapshot = histogramSupport.takeSnapshot();
