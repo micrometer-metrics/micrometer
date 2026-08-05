@@ -28,9 +28,6 @@ import io.prometheus.metrics.model.snapshots.HistogramSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricFamilyDescriptor;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
-import io.prometheus.metrics.model.snapshots.MetricSnapshots;
-import io.prometheus.metrics.model.snapshots.Quantiles;
-import io.prometheus.metrics.model.snapshots.SummarySnapshot;
 import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
@@ -53,7 +50,7 @@ class MicrometerCollectorTest {
             CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
                     Labels.of("k", Integer.toString(i)), null, 0);
 
-            collector.add(id, samples -> samples.accept(descriptor, sample), descriptor);
+            collector.add(id, samples -> samples.accept(descriptor, sample));
         }
 
         // Threw StackOverflowException because of too many nested streams originally
@@ -73,8 +70,8 @@ class MicrometerCollectorTest {
                 Labels.of("k", "v2", "k2", "v1"), null, 0);
         Meter.Id sample2Id = id.withTags(Tags.of("k", "v2", "k2", "v1"));
 
-        collector.add(sampleId, samples -> samples.accept(descriptor, sample), descriptor);
-        collector.add(sample2Id, samples -> samples.accept(descriptor, sample2), descriptor);
+        collector.add(sampleId, samples -> samples.accept(descriptor, sample));
+        collector.add(sample2Id, samples -> samples.accept(descriptor, sample2));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
@@ -92,8 +89,8 @@ class MicrometerCollectorTest {
                 Labels.of(asList("k1", "k4"), asList("v1", "v4")), null, 0);
         Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k4", "v4"));
 
-        collector.add(id, samples -> samples.accept(descriptor, sample), descriptor);
-        collector.add(id2, samples -> samples.accept(descriptor, sample2), descriptor);
+        collector.add(id, samples -> samples.accept(descriptor, sample));
+        collector.add(id2, samples -> samples.accept(descriptor, sample2));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
@@ -111,8 +108,8 @@ class MicrometerCollectorTest {
                 Labels.of(asList("k1", "k2"), asList("v1", "v2")), null, 0);
         Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k2", "v2"));
 
-        collector.add(id, samples -> samples.accept(descriptor, sample), descriptor);
-        collector.add(id2, samples -> samples.accept(descriptor, sample2), descriptor);
+        collector.add(id, samples -> samples.accept(descriptor, sample));
+        collector.add(id2, samples -> samples.accept(descriptor, sample2));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
@@ -130,55 +127,43 @@ class MicrometerCollectorTest {
                 Labels.EMPTY, null, 0);
         Meter.Id id2 = id.replaceTags(Tags.empty());
 
-        collector.add(id, samples -> samples.accept(descriptor, sample), descriptor);
-        collector.add(id2, samples -> samples.accept(descriptor, sample2), descriptor);
+        collector.add(id, samples -> samples.accept(descriptor, sample));
+        collector.add(id2, samples -> samples.accept(descriptor, sample2));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
 
     @Test
-    void separateDescriptorInstancesWithSameNameProduceOneSnapshot() {
-        // children register their own descriptor instances (as the registry does per
-        // meter) and descriptors have identity equality; they should still be collected
-        // into a single snapshot per family name
+    void descriptorIsCreatedOnceAndReusedForTheSameFamily() {
         Meter.Id id = Metrics.counter("my.counter", "k", "v1").getId();
         MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
-        MetricFamilyDescriptor descriptor = MetricFamilyDescriptor.counter(collector.conventionName).build();
-        MetricFamilyDescriptor descriptor2 = MetricFamilyDescriptor.counter(collector.conventionName).build();
 
-        CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
-                Labels.of("k", "v1"), null, 0);
-        CounterSnapshot.CounterDataPointSnapshot sample2 = new CounterSnapshot.CounterDataPointSnapshot(1.0,
-                Labels.of("k", "v2"), null, 0);
-        Meter.Id id2 = id.replaceTags(Tags.of("k", "v2"));
+        MetricFamilyDescriptor descriptor = collector.getOrCreateDescriptor(MetricType.COUNTER,
+                collector.conventionName, () -> MetricFamilyDescriptor.counter(collector.conventionName).build());
+        MetricFamilyDescriptor descriptor2 = collector.getOrCreateDescriptor(MetricType.COUNTER,
+                collector.conventionName, () -> {
+                    throw new AssertionError("descriptor should have been reused");
+                });
 
-        collector.add(id, samples -> samples.accept(descriptor, sample), descriptor);
-        collector.add(id2, samples -> samples.accept(descriptor2, sample2), descriptor2);
-
-        MetricSnapshots snapshots = collector.collect();
-        assertThat(snapshots.size()).isOne();
-        assertThat(snapshots.get(0).getDataPoints()).hasSize(2);
+        assertThat(descriptor2).isSameAs(descriptor);
+        assertThat(collector.getMetricFamilyDescriptors()).containsExactly(descriptor);
     }
 
     @Test
-    void conflictingFamilyTypesUnderSameNameFailToAdd() {
+    void conflictingFamilyTypesUnderSameNameFail() {
         Meter.Id id = Metrics.timer("my.timer", "k", "v1").getId();
         MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
-        MetricFamilyDescriptor summaryDescriptor = MetricFamilyDescriptor.summary(collector.conventionName).build();
-        MetricFamilyDescriptor histogramDescriptor = MetricFamilyDescriptor.histogram(collector.conventionName).build();
 
-        SummarySnapshot.SummaryDataPointSnapshot summaryDataPoint = new SummarySnapshot.SummaryDataPointSnapshot(1, 1.0,
-                Quantiles.EMPTY, Labels.of("k", "v1"), null, 0);
-        Meter.Id id2 = id.replaceTags(Tags.of("k", "v2"));
+        MetricFamilyDescriptor summaryDescriptor = collector.getOrCreateDescriptor(MetricType.SUMMARY,
+                collector.conventionName, () -> MetricFamilyDescriptor.summary(collector.conventionName).build());
 
-        collector.add(id, samples -> samples.accept(summaryDescriptor, summaryDataPoint), summaryDescriptor);
-
-        assertThatThrownBy(() -> collector.add(id2, samples -> {
-        }, histogramDescriptor)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> collector.getOrCreateDescriptor(MetricType.HISTOGRAM, collector.conventionName,
+                () -> MetricFamilyDescriptor.histogram(collector.conventionName).build()))
+            .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("same Prometheus metric family types");
 
-        // the conflicting child was not added; collecting still works
-        assertThat(collector.collect().size()).isOne();
+        // the conflicting type was not cached
+        assertThat(collector.getMetricFamilyDescriptors()).containsExactly(summaryDescriptor);
     }
 
     @Test
@@ -189,7 +174,7 @@ class MicrometerCollectorTest {
 
         HistogramSnapshot.HistogramDataPointSnapshot dataPoint = new HistogramSnapshot.HistogramDataPointSnapshot(
                 ClassicHistogramBuckets.of(asList(Double.POSITIVE_INFINITY), asList(0L)), 0.0, Labels.EMPTY, null, 0);
-        collector.add(id, samples -> samples.accept(descriptor, dataPoint), descriptor);
+        collector.add(id, samples -> samples.accept(descriptor, dataPoint));
 
         MetricSnapshot snapshot = collector.collect().get(0);
         assertThat(snapshot).isInstanceOf(HistogramSnapshot.class);
@@ -204,7 +189,7 @@ class MicrometerCollectorTest {
 
         HistogramSnapshot.HistogramDataPointSnapshot dataPoint = new HistogramSnapshot.HistogramDataPointSnapshot(
                 ClassicHistogramBuckets.of(asList(Double.POSITIVE_INFINITY), asList(0L)), 0.0, Labels.EMPTY, null, 0);
-        collector.add(id, samples -> samples.accept(descriptor, dataPoint), descriptor);
+        collector.add(id, samples -> samples.accept(descriptor, dataPoint));
 
         MetricSnapshot snapshot = collector.collect().get(0);
         assertThat(snapshot).isInstanceOf(HistogramSnapshot.class);
@@ -215,14 +200,8 @@ class MicrometerCollectorTest {
     void registrationDescriptorUsesPrometheusFamilyName() {
         Meter.Id id = Metrics.counter("my.counter").getId();
         MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
-        MetricFamilyDescriptor descriptor = MetricFamilyDescriptor.counter("my_counter")
-            .help("help")
-            .labelNames(asList("k"))
-            .build();
-
-        CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
-                Labels.of("k", "v"), null, 0);
-        collector.add(id, samples -> samples.accept(descriptor, sample), descriptor);
+        collector.getOrCreateDescriptor(MetricType.COUNTER, "my_counter",
+                () -> MetricFamilyDescriptor.counter("my_counter").help("help").labelNames(asList("k")).build());
 
         assertThat(collector.getMetricFamilyDescriptors()).singleElement().satisfies(d -> {
             assertThat(d.getPrometheusName()).isEqualTo("my_counter");
