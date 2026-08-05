@@ -108,7 +108,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
 
-        String datadogEndpoint = config.uri() + "/api/v1/series?api_key=" + config.apiKey();
+        String datadogEndpoint = config.uri() + "/api/v1/series";
 
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
@@ -141,6 +141,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 logger.trace("sending metrics batch to datadog:{}{}", System.lineSeparator(), body);
 
                 httpClient.post(datadogEndpoint)
+                    .withHeader("DD-API-KEY", config.apiKey())
                     .withJsonContent(body)
                     .compressWhen(config::compress)
                     .send()
@@ -265,15 +266,16 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     // VisibleForTesting
     void postMetricMetadata(String metricName, DatadogMetricMetadata metadata) {
-        // already posted the metadata for this metric, or no data to post
-        if (metadata.editMetadataBody() == null || verifiedMetadata.contains(metricName)) {
+        // no application key, or no data to post, or already posted the metadata
+        if (config.applicationKey() == null || metadata.editMetadataBody() == null
+                || verifiedMetadata.contains(metricName)) {
             return;
         }
 
         try {
-            httpClient
-                .put(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8") + "?api_key="
-                        + config.apiKey() + "&application_key=" + config.applicationKey())
+            httpClient.put(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8"))
+                .withHeader("DD-API-KEY", config.apiKey())
+                .withHeader("DD-APPLICATION-KEY", config.applicationKey())
                 .withJsonContent(metadata.editMetadataBody())
                 .send()
                 .onSuccess(response -> verifiedMetadata.add(metricName))
