@@ -53,3 +53,60 @@ Alternatively, if you are not using an `ObservationRegistry`, you can instrument
 ----
 include::{include-micrometer-java11-test}/io/micrometer/java11/instrument/binder/jdk/MicrometerHttpClientTests.java[tags=meterRegistryInstrumentation,indent=0]
 ----
+
+== Customizing observations
+
+=== Default tags
+
+The instrumented `HttpClient` produces an observation named `http.client.requests` with the following default low-cardinality tags:
+
+[cols="2,3", options="header"]
+|===
+| Tag | Description
+
+| `method`
+| The HTTP method (for example, `GET` or `POST`).
+
+| `uri`
+| The request URI, as determined by the configured URI mapper (defaults to `UNKNOWN` when no mapper is set).
+
+| `status`
+| The HTTP response status code as a string (for example, `200`, `404`), or `UNKNOWN` when no response was received.
+
+| `outcome`
+| The outcome derived from the HTTP status: `SUCCESS` (2xx), `REDIRECTION` (3xx), `CLIENT_ERROR` (4xx), `SERVER_ERROR` (5xx), or `UNKNOWN`.
+|===
+
+=== Adding or overriding tags
+
+To customize the tags on `http.client.requests` observations, provide a custom `HttpClientObservationConvention`.
+The easiest approach is to extend `DefaultHttpClientObservationConvention` and override `getLowCardinalityKeyValues`:
+
+[source,java]
+----
+class CustomHttpClientObservationConvention extends DefaultHttpClientObservationConvention {
+    @Override
+    public KeyValues getLowCardinalityKeyValues(HttpClientContext context) {
+        // Extend the default tags with an additional "clientName" tag
+        return super.getLowCardinalityKeyValues(context)
+                .and("clientName", resolveClientName(context));
+    }
+
+    private String resolveClientName(HttpClientContext context) {
+        if (context.getCarrier() == null) {
+            return "unknown";
+        }
+        return context.getCarrier().build().uri().getHost();
+    }
+}
+----
+
+Pass the custom convention to the instrumentation builder:
+
+[source,java]
+----
+HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry)
+        .observationRegistry(observationRegistry)
+        .customObservationConvention(new CustomHttpClientObservationConvention())
+        .build();
+----
