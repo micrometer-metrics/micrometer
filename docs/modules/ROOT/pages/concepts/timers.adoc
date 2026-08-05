@@ -125,6 +125,35 @@ include::{include-java}/metrics/TimedAspectTest.java[tags=resolvers,indent=0]
 include::{include-java}/metrics/TimedAspectTest.java[tags=meter_tag_annotation_handler,indent=0]
 -----
 
+NOTE: `SpelValueExpressionResolver` is not part of Micrometer's public API — it is a utility used in the documentation examples only.
+You need to provide your own `ValueExpressionResolver` implementation.
+If you are using Spring, you can implement one backed by Spring Expression Language (SpEL):
+
+[source,java]
+----
+class SpelValueExpressionResolver implements ValueExpressionResolver {
+
+    @Override
+    public String resolve(String expression, Object parameter) {
+        try {
+            SimpleEvaluationContext context = SimpleEvaluationContext.forReadOnlyDataBinding().build();
+            ExpressionParser parser = new SpelExpressionParser();
+            return String.valueOf(parser.parseExpression(expression).getValue(context, parameter, String.class));
+        }
+        catch (Exception ex) {
+            return String.valueOf(parameter);
+        }
+    }
+}
+----
+
+If your application does not need SpEL, you can use a simpler implementation that falls back to `toString()`:
+
+[source,java]
+----
+ValueExpressionResolver valueExpressionResolver = (expression, parameter) -> String.valueOf(parameter);
+----
+
 Let's assume that we have the following interface.
 
 [source,java,subs=+attributes]
