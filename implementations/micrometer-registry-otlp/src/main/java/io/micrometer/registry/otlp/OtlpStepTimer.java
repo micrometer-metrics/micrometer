@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
@@ -47,7 +47,8 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport, OtlpE
      * @param pauseDetector pause detector
      * @param otlpConfig config of the registry
      */
-    OtlpStepTimer(Id id, Clock clock, PauseDetector pauseDetector, Histogram histogram, OtlpConfig otlpConfig,
+    @SuppressWarnings("NullAway")
+    OtlpStepTimer(Id id, Clock clock, PauseDetector pauseDetector, @Nullable Histogram histogram, OtlpConfig otlpConfig,
             @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock, pauseDetector, otlpConfig.baseTimeUnit(), histogram);
         countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0L, count::sumThenReset,
@@ -73,7 +74,7 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport, OtlpE
     }
 
     @Override
-    public List<Exemplar> exemplars() {
+    public List<DoubleExemplarData> exemplars() {
         if (exemplarSampler != null) {
             return exemplarSampler.collectExemplars();
         }

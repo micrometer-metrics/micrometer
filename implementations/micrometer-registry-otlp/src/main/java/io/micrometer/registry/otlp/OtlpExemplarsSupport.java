@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.opentelemetry.proto.metrics.v1.Exemplar;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ interface OtlpExemplarsSupport {
     /**
      * @return the sampled exemplars
      */
-    List<Exemplar> exemplars();
+    List<DoubleExemplarData> exemplars();
 
     /**
      * Rolls the values regardless of the clock or current time and ensures the value will

@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 class OtlpMeterRegistryCustomizationTest {
 
     @Test
+    @SuppressWarnings("unused")
     void customizeHttpSender() {
         // tag::customizeHttpSender[]
         OtlpConfig config = OtlpConfig.DEFAULT;
@@ -33,6 +34,7 @@ class OtlpMeterRegistryCustomizationTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     void customizeOtlpSender() {
         // tag::customGrpcSender[]
         OtlpConfig config = OtlpConfig.DEFAULT;
@@ -42,6 +44,7 @@ class OtlpMeterRegistryCustomizationTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     void customizeExemplarContextProvider() {
         // tag::customizeExemplarContextProvider[]
         OtlpConfig config = OtlpConfig.DEFAULT;

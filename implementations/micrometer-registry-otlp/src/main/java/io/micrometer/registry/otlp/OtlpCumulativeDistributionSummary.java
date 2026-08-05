@@ -18,7 +18,7 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
@@ -32,8 +32,9 @@ class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary
 
     private final @Nullable ExemplarSampler exemplarSampler;
 
+    @SuppressWarnings("NullAway")
     OtlpCumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, Histogram histogram, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
+            double scale, @Nullable Histogram histogram, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock, distributionStatisticConfig, scale, histogram);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
         if (histogram instanceof OtlpExemplarsSupport) {
@@ -66,7 +67,7 @@ class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary
     }
 
     @Override
-    public List<Exemplar> exemplars() {
+    public List<DoubleExemplarData> exemplars() {
         if (exemplarSampler != null) {
             return exemplarSampler.collectExemplars();
         }

@@ -15,8 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
@@ -55,6 +53,8 @@ public interface OtlpMetricsSender {
 
         private final CompressionMode compressionMode;
 
+        private final @Nullable String readableMetricsData;
+
         /**
          * Represents a payload of metrics to be sent.
          * @param address where to send the metrics
@@ -63,11 +63,12 @@ public interface OtlpMetricsSender {
          * @param compressionMode compression mode for the metrics data
          */
         private Request(@Nullable String address, Map<String, String> headers, byte[] metricsData,
-                CompressionMode compressionMode) {
+                CompressionMode compressionMode, @Nullable String readableMetricsData) {
             this.address = address;
             this.headers = headers;
             this.metricsData = metricsData;
             this.compressionMode = compressionMode;
+            this.readableMetricsData = readableMetricsData;
         }
 
         public @Nullable String getAddress() {
@@ -93,12 +94,10 @@ public interface OtlpMetricsSender {
         }
 
         private String readableMetricsData() {
-            try {
-                return ExportMetricsServiceRequest.parseFrom(metricsData).toString();
+            if (this.readableMetricsData != null) {
+                return this.readableMetricsData;
             }
-            catch (InvalidProtocolBufferException e) {
-                return new String(metricsData, StandardCharsets.UTF_8);
-            }
+            return new String(metricsData, StandardCharsets.UTF_8);
         }
 
         /**
@@ -120,6 +119,8 @@ public interface OtlpMetricsSender {
 
             private CompressionMode compressionMode = CompressionMode.NONE;
 
+            private @Nullable String readableMetricsData;
+
             private Builder(byte[] metricsData) {
                 this.metricsData = Objects.requireNonNull(metricsData);
             }
@@ -139,8 +140,13 @@ public interface OtlpMetricsSender {
                 return this;
             }
 
+            Builder readableMetricsData(String readableMetricsData) {
+                this.readableMetricsData = readableMetricsData;
+                return this;
+            }
+
             public Request build() {
-                return new Request(address, headers, metricsData, compressionMode);
+                return new Request(address, headers, metricsData, compressionMode, readableMetricsData);
             }
 
         }

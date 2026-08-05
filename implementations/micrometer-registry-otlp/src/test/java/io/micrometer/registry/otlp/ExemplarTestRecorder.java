@@ -15,12 +15,15 @@
  */
 package io.micrometer.registry.otlp;
 
-import com.google.protobuf.ByteString;
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.Clock;
-import io.opentelemetry.proto.common.v1.AnyValue;
-import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.api.trace.SpanContext;
+import io.opentelemetry.api.trace.TraceFlags;
+import io.opentelemetry.api.trace.TraceState;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
+import io.opentelemetry.sdk.metrics.internal.data.ImmutableDoubleExemplarData;
 import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -66,11 +69,11 @@ class ExemplarTestRecorder {
         }
     }
 
-    Exemplar record(String traceId, String spanId, double amount) {
+    DoubleExemplarData record(String traceId, String spanId, double amount) {
         return record(traceId, spanId, KeyValues.empty(), amount);
     }
 
-    Exemplar record(@Nullable String traceId, @Nullable String spanId, KeyValues keyValues, double value) {
+    DoubleExemplarData record(@Nullable String traceId, @Nullable String spanId, KeyValues keyValues, double value) {
         return record(traceId, spanId, keyValues, () -> {
             if (sampler != null) {
                 sampler.sampleMeasurement(value);
@@ -79,28 +82,28 @@ class ExemplarTestRecorder {
         });
     }
 
-    Exemplar record(String traceId, String spanId, Runnable runnable, double value) {
+    DoubleExemplarData record(String traceId, String spanId, Runnable runnable, double value) {
         return record(traceId, spanId, KeyValues.empty(), () -> {
             runnable.run();
             return value;
         });
     }
 
-    Exemplar record(String traceId, String spanId, DoubleSupplier doubleSupplier) {
+    DoubleExemplarData record(String traceId, String spanId, DoubleSupplier doubleSupplier) {
         return record(traceId, spanId, KeyValues.empty(), doubleSupplier);
     }
 
-    private Exemplar record(@Nullable String traceId, @Nullable String spanId, KeyValues keyValues,
+    private DoubleExemplarData record(@Nullable String traceId, @Nullable String spanId, KeyValues keyValues,
             DoubleSupplier doubleSupplier) {
         contextProvider.setExemplar(traceId, spanId, keyValues);
         double value = doubleSupplier.getAsDouble();
-        Exemplar exemplar = createExemplar(contextProvider.getExemplarContext(), value);
+        DoubleExemplarData exemplar = createExemplar(contextProvider.getExemplarContext(), value);
         contextProvider.reset();
 
         return exemplar;
     }
 
-    private Exemplar createExemplar(@Nullable OtlpExemplarContext exemplarContext, double value) {
+    private DoubleExemplarData createExemplar(@Nullable OtlpExemplarContext exemplarContext, double value) {
         if (exemplarContext == null) {
             throw new IllegalStateException("Exemplar context is null!");
         }
@@ -108,24 +111,17 @@ class ExemplarTestRecorder {
         String traceId = exemplarContext.getTraceId();
         String spanId = exemplarContext.getSpanId();
 
-        Exemplar.Builder builder = Exemplar.newBuilder()
-            .setAsDouble(value)
-            .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
-
-        if (traceId != null) {
-            builder.setTraceId(ByteString.fromHex(traceId));
-        }
-        if (spanId != null) {
-            builder.setSpanId(ByteString.fromHex(spanId));
-        }
+        AttributesBuilder builder = Attributes.builder();
         for (io.micrometer.common.KeyValue keyValue : exemplarContext.getKeyValues()) {
-            builder.addFilteredAttributes(KeyValue.newBuilder()
-                .setKey(keyValue.getKey())
-                .setValue(AnyValue.newBuilder().setStringValue(keyValue.getValue()).build())
-                .build());
+            builder.put(keyValue.getKey(), keyValue.getValue());
         }
 
-        return builder.build();
+        SpanContext spanContext = (traceId != null && spanId != null)
+                ? SpanContext.create(traceId, spanId, TraceFlags.getDefault(), TraceState.getDefault())
+                : SpanContext.getInvalid();
+
+        return ImmutableDoubleExemplarData.create(builder.build(), TimeUnit.MILLISECONDS.toNanos(clock.wallTime()),
+                spanContext, value);
     }
 
     static class TestExemplarContextProvider implements ExemplarContextProvider {

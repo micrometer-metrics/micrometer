@@ -1,9 +1,17 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+plugins {
+    alias(libs.plugins.shadow)
+}
+
 description = 'Publishes Micrometer meters in OTLP format'
 
 dependencies {
     api project(':micrometer-core')
 
-    implementation libs.openTelemetry.proto
+    api platform(libs.openTelemetry.bom)
+    api 'io.opentelemetry:opentelemetry-exporter-otlp-common'
+    api libs.openTelemetry.sdk.metrics
 
     testImplementation project(':micrometer-test')
     testImplementation libs.systemStubsJupiter
@@ -14,6 +22,50 @@ dependencies {
     testImplementation libs.logbackLatest
     testImplementation(platform(libs.prometheusMetricsBom))
     testImplementation libs.prometheusMetricsExpositionFormats
+}
+
+tasks.named('jar') {
+    enabled = false
+}
+
+def shadowJar = tasks.named('shadowJar', ShadowJar) {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    failOnDuplicateEntries = true
+    configurations.set([project.configurations.runtimeClasspath])
+    archiveClassifier.set('')
+    dependencies {
+        include(dependency('io.opentelemetry:.*'))
+    }
+    exclude("META-INF/maven/**")
+    relocate 'io.opentelemetry', 'io.micrometer.shaded.io.opentelemetry'
+    metaInf {
+        from "$rootDir/LICENSE"
+        from "$rootDir/NOTICE"
+    }
+    mergeServiceFiles()
+}
+
+configurations.apiElements.outgoing.variants.clear()
+configurations.apiElements.outgoing.artifacts.clear()
+configurations.apiElements.outgoing.artifact(shadowJar)
+configurations.runtimeElements.outgoing.variants.clear()
+configurations.runtimeElements.outgoing.artifacts.clear()
+configurations.runtimeElements.outgoing.artifact(shadowJar)
+
+tasks.japicmp.dependsOn(shadowJar)
+
+publishing {
+    publications {
+        withType(MavenPublication) {
+            pom.withXml {
+                asNode()
+                    .dependencies
+                    .dependency
+                    .findAll { ['opentelemetry-exporter-otlp', 'opentelemetry-sdk-metrics', 'opentelemetry-bom'].contains(it.artifactId.text()) }
+                    .each { it.parent().remove(it) }
+            }
+        }
+    }
 }
 
 dockerTest {

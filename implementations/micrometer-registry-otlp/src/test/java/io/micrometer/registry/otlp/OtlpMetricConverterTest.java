@@ -17,7 +17,10 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.opentelemetry.proto.metrics.v1.Metric;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.sdk.metrics.data.MetricData;
+import io.opentelemetry.sdk.metrics.data.MetricDataType;
+import io.opentelemetry.sdk.resources.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +48,7 @@ class OtlpMetricConverterTest {
     void setUp() {
         mockClock = new MockClock();
         otlpMetricConverter = new OtlpMetricConverter(mockClock, STEP, TimeUnit.MILLISECONDS,
-                AggregationTemporality.CUMULATIVE, NamingConvention.dot, true);
+                AggregationTemporality.CUMULATIVE, NamingConvention.dot, true, Resource.empty());
         otlpMeterRegistry = new OtlpMeterRegistry(OtlpConfig.DEFAULT, mockClock);
     }
 
@@ -55,10 +58,10 @@ class OtlpMetricConverterTest {
         Gauge.builder("test.meter", () -> 1).tags(SECOND_TAG).description("description").register(otlpMeterRegistry);
 
         otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
-        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        List<MetricData> metrics = otlpMetricConverter.getAllMetrics();
         assertThat(metrics).singleElement().satisfies(metric -> {
             assertThat(metric.getDescription()).isEqualTo("description");
-            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(2);
+            assertThat(metric.getDoubleGaugeData().getPoints()).hasSize(2);
         });
     }
 
@@ -68,16 +71,16 @@ class OtlpMetricConverterTest {
         Gauge.builder("test.meter", () -> 1).tags(SECOND_TAG).description("description2").register(otlpMeterRegistry);
 
         otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
-        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        List<MetricData> metrics = otlpMetricConverter.getAllMetrics();
 
         assertThat(metrics).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
             assertThat(metric.getDescription()).isEqualTo("description1");
-            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(1);
-            assertThat(metric.getGauge().getDataPoints(0).getAttributesList()).hasSize(1);
+            assertThat(metric.getDoubleGaugeData().getPoints()).hasSize(1);
+            assertThat(metric.getDoubleGaugeData().getPoints().iterator().next().getAttributes().size()).isEqualTo(1);
         }, metric -> {
             assertThat(metric.getDescription()).isEqualTo("description2");
-            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(1);
-            assertThat(metric.getGauge().getDataPoints(0).getAttributesList()).hasSize(1);
+            assertThat(metric.getDoubleGaugeData().getPoints()).hasSize(1);
+            assertThat(metric.getDoubleGaugeData().getPoints().iterator().next().getAttributes().size()).isEqualTo(1);
         });
     }
 
@@ -87,10 +90,10 @@ class OtlpMetricConverterTest {
         Gauge.builder("test.meter", () -> 1).tags(SECOND_TAG).baseUnit("xyz").register(otlpMeterRegistry);
 
         otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
-        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        List<MetricData> metrics = otlpMetricConverter.getAllMetrics();
         assertThat(metrics).singleElement().satisfies(metric -> {
             assertThat(metric.getUnit()).isEqualTo("xyz");
-            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(2);
+            assertThat(metric.getDoubleGaugeData().getPoints()).hasSize(2);
         });
     }
 
@@ -100,16 +103,16 @@ class OtlpMetricConverterTest {
         Gauge.builder("test.meter", () -> 1).tags(SECOND_TAG).baseUnit("abc").register(otlpMeterRegistry);
 
         otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
-        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        List<MetricData> metrics = otlpMetricConverter.getAllMetrics();
 
         assertThat(metrics).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
             assertThat(metric.getUnit()).isEqualTo("xyz");
-            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(1);
-            assertThat(metric.getGauge().getDataPoints(0).getAttributesList()).hasSize(1);
+            assertThat(metric.getDoubleGaugeData().getPoints()).hasSize(1);
+            assertThat(metric.getDoubleGaugeData().getPoints().iterator().next().getAttributes().size()).isEqualTo(1);
         }, metric -> {
             assertThat(metric.getUnit()).isEqualTo("abc");
-            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(1);
-            assertThat(metric.getGauge().getDataPoints(0).getAttributesList()).hasSize(1);
+            assertThat(metric.getDoubleGaugeData().getPoints()).hasSize(1);
+            assertThat(metric.getDoubleGaugeData().getPoints().iterator().next().getAttributes().size()).isEqualTo(1);
         });
     }
 
@@ -128,45 +131,49 @@ class OtlpMetricConverterTest {
         Timer.builder("test.timer").description("description").tag("type", "vanilla").register(otlpMeterRegistry);
 
         otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
-        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        List<MetricData> metrics = otlpMetricConverter.getAllMetrics();
         assertThat(metrics).hasSize(3);
 
-        assertThat(metrics).filteredOn(Metric::hasSummary)
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.SUMMARY)
             .singleElement()
-            .satisfies(metric -> assertThat(metric.getSummary().getDataPointsList()).singleElement()
+            .satisfies(metric -> assertThat(metric.getSummaryData().getPoints()).singleElement()
                 .satisfies(summaryDataPoint -> {
-                    assertThat(summaryDataPoint.getAttributesCount()).isEqualTo(1);
-                    assertThat(summaryDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("summary");
-                    assertThat(summaryDataPoint.getQuantileValuesCount()).isEqualTo(1);
-                    assertThat(summaryDataPoint.getQuantileValues(0).getQuantile()).isEqualTo(0.5);
+                    assertThat(summaryDataPoint.getAttributes().size()).isEqualTo(1);
+                    assertThat(summaryDataPoint.getAttributes().get(AttributeKey.stringKey("type")))
+                        .isEqualTo("summary");
+                    assertThat(summaryDataPoint.getValues()).hasSize(1);
+                    assertThat(summaryDataPoint.getValues().get(0).getQuantile()).isEqualTo(0.5);
                 }));
 
-        assertThat(metrics).filteredOn(Metric::hasHistogram)
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
             .singleElement()
-            .satisfies(metric -> assertThat(metric.getHistogram().getDataPointsList()).hasSize(2)
+            .satisfies(metric -> assertThat(metric.getHistogramData().getPoints()).hasSize(2)
                 .satisfiesExactlyInAnyOrder(histogramDataPoint -> {
-                    assertThat(histogramDataPoint.getAttributesCount()).isEqualTo(1);
-                    assertThat(histogramDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("vanilla");
-                    assertThat(histogramDataPoint.getBucketCountsCount()).isZero();
+                    assertThat(histogramDataPoint.getAttributes().size()).isEqualTo(1);
+                    assertThat(histogramDataPoint.getAttributes().get(AttributeKey.stringKey("type")))
+                        .isEqualTo("vanilla");
+                    assertThat(histogramDataPoint.getBoundaries()).isEmpty();
                 }, histogramDataPoint -> {
-                    assertThat(histogramDataPoint.getAttributesCount()).isEqualTo(1);
-                    assertThat(histogramDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("histogram");
-                    assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(1);
-                    assertThat(histogramDataPoint.getBucketCountsCount()).isEqualTo(2);
+                    assertThat(histogramDataPoint.getAttributes().size()).isEqualTo(1);
+                    assertThat(histogramDataPoint.getAttributes().get(AttributeKey.stringKey("type")))
+                        .isEqualTo("histogram");
+                    assertThat(histogramDataPoint.getBoundaries()).hasSize(1);
+                    assertThat(histogramDataPoint.getCounts()).hasSize(2);
                 }));
 
-        assertThat(metrics).filteredOn(Metric::hasGauge)
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.DOUBLE_GAUGE)
             .singleElement()
-            .satisfies(metric -> assertThat(metric.getGauge().getDataPointsList()).hasSize(3)
+            .satisfies(metric -> assertThat(metric.getDoubleGaugeData().getPoints()).hasSize(3)
                 .satisfiesExactlyInAnyOrder(gaugeDataPoint -> {
-                    assertThat(gaugeDataPoint.getAttributesCount()).isEqualTo(1);
-                    assertThat(gaugeDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("vanilla");
+                    assertThat(gaugeDataPoint.getAttributes().size()).isEqualTo(1);
+                    assertThat(gaugeDataPoint.getAttributes().get(AttributeKey.stringKey("type"))).isEqualTo("vanilla");
                 }, gaugeDataPoint -> {
-                    assertThat(gaugeDataPoint.getAttributesCount()).isEqualTo(1);
-                    assertThat(gaugeDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("histogram");
+                    assertThat(gaugeDataPoint.getAttributes().size()).isEqualTo(1);
+                    assertThat(gaugeDataPoint.getAttributes().get(AttributeKey.stringKey("type")))
+                        .isEqualTo("histogram");
                 }, gaugeDataPoint -> {
-                    assertThat(gaugeDataPoint.getAttributesCount()).isEqualTo(1);
-                    assertThat(gaugeDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("summary");
+                    assertThat(gaugeDataPoint.getAttributes().size()).isEqualTo(1);
+                    assertThat(gaugeDataPoint.getAttributes().get(AttributeKey.stringKey("type"))).isEqualTo("summary");
                 }));
     }
 
@@ -178,14 +185,15 @@ class OtlpMetricConverterTest {
             .register(otlpMeterRegistry);
 
         OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(mockClock, Duration.ofMillis(1),
-                TimeUnit.MILLISECONDS, AggregationTemporality.CUMULATIVE, NamingConvention.snakeCase, true);
+                TimeUnit.MILLISECONDS, AggregationTemporality.CUMULATIVE, NamingConvention.snakeCase, true,
+                Resource.empty());
         otlpMetricConverter.addMeter(gauge);
 
         assertThat(otlpMetricConverter.getAllMetrics()).singleElement().satisfies(metric -> {
             assertThat(metric.getName()).isEqualTo("test_meter");
-            assertThat(metric.getGauge().getDataPointsList()).singleElement()
-                .satisfies(dataPoint -> assertThat(dataPoint.getAttributesList()).singleElement()
-                    .satisfies(attribute -> assertThat(attribute.getKey()).isEqualTo("test_tag")));
+            assertThat(metric.getDoubleGaugeData().getPoints()).singleElement()
+                .satisfies(dataPoint -> assertThat(dataPoint.getAttributes().get(AttributeKey.stringKey("test_tag")))
+                    .isEqualTo("1"));
         });
     }
 
@@ -199,41 +207,41 @@ class OtlpMetricConverterTest {
         mockClock.add(STEP);
 
         otlpMetricConverter.addMeter(summary);
-        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        List<MetricData> metrics = otlpMetricConverter.getAllMetrics();
         assertThat(metrics).hasSize(2);
-        assertThat(metrics).filteredOn(Metric::hasSummary)
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.SUMMARY)
             .singleElement()
-            .satisfies(metric -> assertThat(metric.getSummary().getDataPointsList()).singleElement()
-                .satisfies(dataPoint -> assertThat(dataPoint.getQuantileValuesList()).singleElement()
+            .satisfies(metric -> assertThat(metric.getSummaryData().getPoints()).singleElement()
+                .satisfies(dataPoint -> assertThat(dataPoint.getValues()).singleElement()
                     .satisfies(valueAtQuantile -> assertThat(valueAtQuantile.getValue()).isEqualTo(5))));
-        assertThat(metrics).filteredOn(Metric::hasGauge)
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.DOUBLE_GAUGE)
             .singleElement()
-            .satisfies(metric -> assertThat(metric.getGauge().getDataPointsList()).hasSize(1));
+            .satisfies(metric -> assertThat(metric.getDoubleGaugeData().getPoints()).hasSize(1));
     }
 
     @Test
     void shouldNotPublishMaxGaugeWhenPublishHistogramMaxIsFalse() {
         OtlpMetricConverter converterWithoutMax = new OtlpMetricConverter(mockClock, STEP, TimeUnit.MILLISECONDS,
-                AggregationTemporality.CUMULATIVE, NamingConvention.dot, false);
+                AggregationTemporality.CUMULATIVE, NamingConvention.dot, false, Resource.empty());
 
         Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(otlpMeterRegistry);
         timer.record(Duration.ofMillis(100));
         mockClock.add(STEP);
 
         converterWithoutMax.addMeter(timer);
-        List<Metric> metrics = converterWithoutMax.getAllMetrics();
+        List<MetricData> metrics = converterWithoutMax.getAllMetrics();
 
         assertThat(metrics).hasSize(1);
-        assertThat(metrics).filteredOn(Metric::hasHistogram)
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
             .singleElement()
             .satisfies(metric -> assertThat(metric.getName()).isEqualTo("test.timer"));
-        assertThat(metrics).filteredOn(Metric::hasGauge).isEmpty();
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.DOUBLE_GAUGE).isEmpty();
     }
 
     @Test
     void shouldNotPublishMaxGaugeForDistributionSummaryWhenPublishHistogramMaxIsFalse() {
         OtlpMetricConverter converterWithoutMax = new OtlpMetricConverter(mockClock, STEP, TimeUnit.MILLISECONDS,
-                AggregationTemporality.CUMULATIVE, NamingConvention.dot, false);
+                AggregationTemporality.CUMULATIVE, NamingConvention.dot, false, Resource.empty());
 
         DistributionSummary summary = DistributionSummary.builder("test.summary")
             .publishPercentileHistogram()
@@ -242,13 +250,13 @@ class OtlpMetricConverterTest {
         mockClock.add(STEP);
 
         converterWithoutMax.addMeter(summary);
-        List<Metric> metrics = converterWithoutMax.getAllMetrics();
+        List<MetricData> metrics = converterWithoutMax.getAllMetrics();
 
         assertThat(metrics).hasSize(1);
-        assertThat(metrics).filteredOn(Metric::hasHistogram)
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
             .singleElement()
             .satisfies(metric -> assertThat(metric.getName()).isEqualTo("test.summary"));
-        assertThat(metrics).filteredOn(Metric::hasGauge).isEmpty();
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.DOUBLE_GAUGE).isEmpty();
     }
 
 }

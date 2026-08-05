@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.step.StepCounter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
@@ -34,16 +35,17 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
-import io.opentelemetry.proto.common.v1.AnyValue;
-import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
-import io.opentelemetry.proto.metrics.v1.ScopeMetrics;
-import io.opentelemetry.proto.resource.v1.Resource;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.exporter.internal.otlp.metrics.MetricsRequestMarshaler;
+import io.opentelemetry.sdk.common.CompletableResultCode;
+import io.opentelemetry.sdk.metrics.data.MetricData;
+import io.opentelemetry.sdk.metrics.export.MetricExporter;
+import io.opentelemetry.sdk.resources.Resource;
 import org.jspecify.annotations.Nullable;
 
-import java.time.Duration;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -79,7 +81,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpConfig config;
 
-    private final OtlpMetricsSender metricsSender;
+    private final @Nullable OtlpMetricsSender metricsSender;
+
+    private final @Nullable MetricExporter metricExporter;
 
     private final HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup;
 
@@ -108,30 +112,52 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     /**
-     * Create an {@code OtlpMeterRegistry} instance with an HTTP metrics sender.
+     * Create an {@code OtlpMeterRegistry} instance with an HTTP metrics exporter.
      * @param config config
      * @param clock clock
      * @param threadFactory thread factory
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()), null);
+        this(config, clock, threadFactory, createDefaultSender(config), null);
     }
 
-    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
+    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
             OtlpMetricsSender metricsSender, @Nullable ExemplarContextProvider exemplarContextProvider) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
         this.metricsSender = metricsSender;
+        this.metricExporter = null;
         this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
         this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
-        this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
+        this.resource = createResource();
         this.aggregationTemporality = config.aggregationTemporality();
         this.exemplarSamplerFactory = exemplarContextProvider != null
                 ? new OtlpExemplarSamplerFactory(exemplarContextProvider, clock, config) : null;
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
+    }
+
+    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, MetricExporter metricExporter,
+            @Nullable ExemplarContextProvider exemplarContextProvider) {
+        super(config, clock);
+        this.config = config;
+        this.baseTimeUnit = config.baseTimeUnit();
+        this.metricsSender = null;
+        this.metricExporter = metricExporter;
+        this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
+        this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
+        this.resource = createResource();
+        this.aggregationTemporality = config.aggregationTemporality();
+        this.exemplarSamplerFactory = exemplarContextProvider != null
+                ? new OtlpExemplarSamplerFactory(exemplarContextProvider, clock, config) : null;
+        config().namingConvention(NamingConvention.dot);
+        start(threadFactory);
+    }
+
+    private static OtlpMetricsSender createDefaultSender(OtlpConfig config) {
+        return new OtlpHttpMetricsSender(new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
     /**
@@ -145,6 +171,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void start(ThreadFactory threadFactory) {
         super.start(threadFactory);
 
@@ -173,32 +200,50 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(clock, config.step(), getBaseTimeUnit(),
-                    config.aggregationTemporality(), config().namingConvention(),
-                    config.publishMaxGaugeForHistograms());
+                    config.aggregationTemporality(), config().namingConvention(), config.publishMaxGaugeForHistograms(),
+                    this.resource);
             otlpMetricConverter.addMeters(batch);
 
-            try {
-                ExportMetricsServiceRequest request = ExportMetricsServiceRequest.newBuilder()
-                    .addResourceMetrics(ResourceMetrics.newBuilder()
-                        .setResource(this.resource)
-                        .addScopeMetrics(ScopeMetrics.newBuilder()
-                            // we don't have instrumentation library/version
-                            // attached to meters; leave unknown for now
-                            // .setScope(InstrumentationScope.newBuilder().setName("").setVersion("").build())
-                            .addAllMetrics(otlpMetricConverter.getAllMetrics())
-                            .build())
-                        .build())
-                    .build();
-                logger.trace("Request: {}", request);
-                metricsSender.send(OtlpMetricsSender.Request.builder(request.toByteArray())
-                    .address(config.url())
-                    .headers(config.headers())
-                    .compressionMode(config.compressionMode())
-                    .build());
-            }
-            catch (Exception e) {
-                logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
-                        getConfigurationContext()), e);
+            Collection<MetricData> metrics = otlpMetricConverter.getAllMetrics();
+            if (!metrics.isEmpty()) {
+                try {
+                    if (this.metricsSender != null) {
+                        MetricsRequestMarshaler marshaler = MetricsRequestMarshaler.create(metrics);
+                        ByteArrayOutputStream os = new ByteArrayOutputStream(marshaler.getBinarySerializedSize());
+                        marshaler.writeBinaryTo(os);
+
+                        String readableData;
+                        try {
+                            ByteArrayOutputStream jsonOs = new ByteArrayOutputStream();
+                            marshaler.writeJsonTo(jsonOs);
+                            readableData = new String(jsonOs.toByteArray(), StandardCharsets.UTF_8);
+                        }
+                        catch (Throwable t) {
+                            readableData = metrics.toString();
+                        }
+
+                        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(os.toByteArray())
+                            .address(config.url())
+                            .headers(config.headers())
+                            .compressionMode(config.compressionMode())
+                            .readableMetricsData(readableData)
+                            .build();
+
+                        this.metricsSender.send(request);
+                    }
+                    else if (this.metricExporter != null) {
+                        CompletableResultCode resultCode = this.metricExporter.export(metrics);
+                        resultCode.join(config.readTimeout().toMillis(), TimeUnit.MILLISECONDS);
+                        if (!resultCode.isSuccess()) {
+                            logger.warn("Failed to publish metrics to OTLP receiver (context: {})",
+                                    getConfigurationContext());
+                        }
+                    }
+                }
+                catch (Exception e) {
+                    logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
+                            getConfigurationContext()), e);
+                }
             }
         }
     }
@@ -317,36 +362,52 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .forEach(OtlpExemplarsSupport::closingExemplarsRollover);
         }
 
+        if (this.metricExporter != null) {
+            this.metricExporter.close();
+        }
         super.close();
     }
 
-    private boolean shouldPublishDataForLastStep() {
-        if (lastMeterRolloverStartTime < 0)
-            return false;
-
-        final long lastPublishedStep = getLastScheduledPublishStartTime() / config.step().toMillis();
-        final long lastPolledStep = lastMeterRolloverStartTime / config.step().toMillis();
-        return lastPublishedStep < lastPolledStep;
+    private void closingRollover(Meter meter) {
+        if (isCumulative() && meter instanceof OtlpExemplarsSupport) {
+            ((OtlpExemplarsSupport) meter).closingExemplarsRollover();
+        }
+        meter.match(gauge -> null, this::rollover, this::rollover, this::rollover, meter1 -> null, meter1 -> null,
+                functionCounter -> null, functionTimer -> null, meter1 -> null);
     }
 
-    // Either we do this or make StepMeter public
-    // and still call OtlpStepTimer and OtlpStepDistributionSummary separately.
-    private void closingRollover(Meter meter) {
-        if (meter instanceof StepCounter) {
-            ((StepCounter) meter)._closingRollover();
+    private double rollover(Counter counter) {
+        if (counter instanceof StepCounter) {
+            ((StepCounter) counter)._closingRollover();
         }
-        else if (meter instanceof StepFunctionCounter) {
-            ((StepFunctionCounter<?>) meter)._closingRollover();
+
+        return counter.count();
+    }
+
+    private HistogramSnapshot rollover(HistogramSupport histogramSupport) {
+        if (histogramSupport instanceof OtlpStepTimer) {
+            ((OtlpStepTimer) histogramSupport)._closingRollover();
         }
-        else if (meter instanceof StepFunctionTimer) {
-            ((StepFunctionTimer<?>) meter)._closingRollover();
+        else if (histogramSupport instanceof OtlpStepDistributionSummary) {
+            ((OtlpStepDistributionSummary) histogramSupport)._closingRollover();
         }
-        else if (meter instanceof OtlpStepTimer) {
-            ((OtlpStepTimer) meter)._closingRollover();
+
+        return histogramSupport.takeSnapshot();
+    }
+
+    /**
+     * Determine if data for the last step should be published during close. The decision
+     * is made based on when the last scheduled rollover started.
+     */
+    // VisibleForTesting
+    boolean shouldPublishDataForLastStep() {
+        if (this.lastMeterRolloverStartTime == -1) {
+            return true;
         }
-        else if (meter instanceof OtlpStepDistributionSummary) {
-            ((OtlpStepDistributionSummary) meter)._closingRollover();
-        }
+
+        long lastMeterRolloverDuration = clock.wallTime() - this.lastMeterRolloverStartTime;
+        long allowableDelayDuration = (config.step().toMillis() / 2);
+        return lastMeterRolloverDuration > allowableDelayDuration;
     }
 
     /**
@@ -394,20 +455,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     // VisibleForTesting
-    static KeyValue createKeyValue(String key, String value) {
-        return KeyValue.newBuilder().setKey(key).setValue(AnyValue.newBuilder().setStringValue(value)).build();
+    Resource getResource() {
+        return this.resource;
     }
 
-    // VisibleForTesting
-    Iterable<KeyValue> getResourceAttributes() {
-        boolean serviceNameProvided = false;
-        List<KeyValue> attributes = new ArrayList<>();
-        attributes.add(createKeyValue(TELEMETRY_SDK_NAME, "io.micrometer"));
-        attributes.add(createKeyValue(TELEMETRY_SDK_LANGUAGE, "java"));
+    private Resource createResource() {
+        AttributesBuilder builder = Attributes.builder();
+        builder.put(TELEMETRY_SDK_NAME, "io.micrometer");
+        builder.put(TELEMETRY_SDK_LANGUAGE, "java");
         String micrometerCoreVersion = MeterRegistry.class.getPackage().getImplementationVersion();
         if (micrometerCoreVersion != null) {
-            attributes.add(createKeyValue(TELEMETRY_SDK_VERSION, micrometerCoreVersion));
+            builder.put(TELEMETRY_SDK_VERSION, micrometerCoreVersion);
         }
+        boolean serviceNameProvided = false;
         for (Map.Entry<String, String> keyValue : this.config.resourceAttributes().entrySet()) {
             if ("service.name".equals(keyValue.getKey())) {
                 serviceNameProvided = true;
@@ -416,90 +476,80 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 logger.warn("Resource attribute {} is reserved and will be ignored", keyValue.getKey());
                 continue;
             }
-            attributes.add(createKeyValue(keyValue.getKey(), keyValue.getValue()));
+            builder.put(keyValue.getKey(), keyValue.getValue());
         }
         if (!serviceNameProvided) {
-            attributes.add(createKeyValue("service.name", "unknown_service"));
+            builder.put("service.name", "unknown_service");
         }
-        return attributes;
+        return Resource.create(builder.build());
     }
 
-    private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+    private @Nullable Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         return getHistogram(id, distributionStatisticConfig, null);
     }
 
-    private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+    private @Nullable Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             @Nullable TimeUnit baseTimeUnit) {
-        // While publishing to OTLP, we export either Histogram datapoint (Explicit
-        // ExponentialBuckets
-        // or Exponential) / Summary
-        // datapoint. So, we will make the histogram either of them and not both.
-        // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
-        // exporting of histograms over percentiles is preferred in OTLP.
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            if (HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
-                .equals(histogramFlavor(id, config, distributionStatisticConfig))) {
-                Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
-                if (minimumExpectedValue == null) {
-                    minimumExpectedValue = 0.0;
-                }
-
-                return config.aggregationTemporality() == AggregationTemporality.DELTA
-                        ? new DeltaBase2ExponentialHistogram(config.maxScale(), getMaxBuckets(id), minimumExpectedValue,
-                                baseTimeUnit, clock, config.step().toMillis(), exemplarSamplerFactory)
-                        : new CumulativeBase2ExponentialHistogram(config.maxScale(), getMaxBuckets(id),
-                                minimumExpectedValue, baseTimeUnit, exemplarSamplerFactory);
+            HistogramFlavor flavor = this.histogramFlavorPerMeterLookup
+                .getHistogramFlavor(config.histogramFlavorPerMeter(), id);
+            if (flavor == null) {
+                flavor = config.histogramFlavor();
             }
 
-            Histogram explicitBucketHistogram = getExplicitBucketHistogram(clock, distributionStatisticConfig,
-                    config.aggregationTemporality(), config.step().toMillis(), baseTimeUnit, exemplarSamplerFactory);
-            if (explicitBucketHistogram != null) {
-                return explicitBucketHistogram;
+            if (flavor == HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM) {
+                return getStepBucketHistogram(distributionStatisticConfig, baseTimeUnit);
+            }
+
+            Integer maxBuckets = this.maxBucketsPerMeterLookup.getMaxBuckets(config.maxBucketsPerMeter(), id);
+            if (maxBuckets == null) {
+                maxBuckets = config.maxBucketCount();
+            }
+
+            double maxScale = Math.min(config.maxScale(), 20);
+
+            if (AggregationTemporality.isCumulative(aggregationTemporality)) {
+                return new CumulativeBase2ExponentialHistogram((int) maxScale, maxBuckets, 0.0, baseTimeUnit,
+                        exemplarSamplerFactory);
+            }
+
+            long stepMillis = config.step().toMillis();
+            if (stepMillis > 0) {
+                return new DeltaBase2ExponentialHistogram((int) maxScale, maxBuckets, 0.0, baseTimeUnit, clock,
+                        stepMillis, exemplarSamplerFactory);
             }
         }
 
         if (distributionStatisticConfig.isPublishingPercentiles()) {
             return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
         }
+
         return NoopHistogram.INSTANCE;
     }
 
-    private int getMaxBuckets(Meter.Id id) {
-        Integer maxBuckets = maxBucketsPerMeterLookup.getMaxBuckets(config.maxBucketsPerMeter(), id);
-        return (maxBuckets == null) ? config.maxBucketCount() : maxBuckets;
-    }
-
-    private HistogramFlavor histogramFlavor(Meter.Id id, OtlpConfig otlpConfig,
-            DistributionStatisticConfig distributionStatisticConfig) {
-        HistogramFlavor preferredHistogramFlavor = histogramFlavorPerMeterLookup
-            .getHistogramFlavor(otlpConfig.histogramFlavorPerMeter(), id);
-        preferredHistogramFlavor = preferredHistogramFlavor == null ? otlpConfig.histogramFlavor()
-                : preferredHistogramFlavor;
-        final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
-            .getServiceLevelObjectiveBoundaries();
-        if (distributionStatisticConfig.isPublishingHistogram()
-                && preferredHistogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
-                && (serviceLevelObjectiveBoundaries == null || serviceLevelObjectiveBoundaries.length == 0)) {
-            return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
-        }
-        return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
-    }
-
-    private static @Nullable Histogram getExplicitBucketHistogram(final Clock clock,
-            final DistributionStatisticConfig distributionStatisticConfig,
-            final AggregationTemporality aggregationTemporality, final long stepMillis,
-            final @Nullable TimeUnit baseTimeUnit, final @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
-
+    private @Nullable Histogram getStepBucketHistogram(DistributionStatisticConfig distributionStatisticConfig,
+            @Nullable TimeUnit baseTimeUnit) {
         double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
+        long stepMillis = config.step().toMillis();
         if (AggregationTemporality.isCumulative(aggregationTemporality)) {
-            return new OtlpCumulativeBucketHistogram(clock, DistributionStatisticConfig.builder()
-                // effectively never roll over
-                .expiry(Duration.ofDays(1825))
+            DistributionStatisticConfig merged = DistributionStatisticConfig.builder()
                 .serviceLevelObjectives(sloWithPositiveInf)
-                .percentiles()
                 .bufferLength(1)
                 .build()
-                .merge(distributionStatisticConfig), exemplarSamplerFactory, baseTimeUnit != null);
+                .merge(distributionStatisticConfig);
+
+            DistributionStatisticConfig cumulativeConfig = DistributionStatisticConfig.builder()
+                .percentiles(merged.getPercentiles())
+                .percentilePrecision(merged.getPercentilePrecision())
+                .minimumExpectedValue(merged.getMinimumExpectedValueAsDouble())
+                .maximumExpectedValue(merged.getMaximumExpectedValueAsDouble())
+                .expiry(java.time.Duration.ofDays(1825))
+                .bufferLength(1)
+                .serviceLevelObjectives(sloWithPositiveInf)
+                .build();
+
+            return new OtlpCumulativeBucketHistogram(clock, cumulativeConfig, exemplarSamplerFactory,
+                    baseTimeUnit != null);
         }
         if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
             return new OtlpStepBucketHistogram(clock, stepMillis,
@@ -516,6 +566,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     // VisibleForTesting
     static double[] getSloWithPositiveInf(DistributionStatisticConfig distributionStatisticConfig) {
         double[] sloBoundaries = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
+        if (sloBoundaries == null || sloBoundaries.length == 0) {
+            NavigableSet<Double> histogramBuckets = distributionStatisticConfig.getHistogramBuckets(false);
+            if (histogramBuckets != null && !histogramBuckets.isEmpty()) {
+                sloBoundaries = histogramBuckets.stream().mapToDouble(Double::doubleValue).toArray();
+            }
+        }
         if (sloBoundaries == null || sloBoundaries.length == 0) {
             // When there are no SLO's associated with DistributionStatisticConfig we will
             // add one with Positive
@@ -628,13 +684,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
-        private OtlpMetricsSender metricsSender;
+        private @Nullable OtlpMetricsSender metricsSender;
+
+        private @Nullable MetricExporter metricExporter;
 
         private @Nullable ExemplarContextProvider exemplarContextProvider;
 
         private Builder(OtlpConfig otlpConfig) {
             this.otlpConfig = otlpConfig;
-            this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender());
         }
 
         /** Override the default clock. */
@@ -650,13 +707,25 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
 
         /**
-         * Provide your own custom metrics sender. This can be used to send OTLP metrics
-         * from OtlpMeterRegistry using different transports or clients than the default
-         * (HTTP using the HttpUrlConnectionSender). Encoding is in OTLP protobuf format.
-         * @see OtlpHttpMetricsSender
+         * Provide your own custom metrics sender. This can be used to send OTLP protobuf
+         * format metrics to an OTLP receiver using different transports or senders.
+         * @param metricsSender custom metrics sender
+         * @return builder
+         * @since 1.15.0
          */
         public Builder metricsSender(OtlpMetricsSender metricsSender) {
             this.metricsSender = metricsSender;
+            return this;
+        }
+
+        /**
+         * Provide your own custom metric exporter. This can be used to export OTLP
+         * metrics from OtlpMeterRegistry using different transports or exporters.
+         * @param metricExporter custom metric exporter
+         * @return builder
+         */
+        public Builder metricExporter(MetricExporter metricExporter) {
+            this.metricExporter = metricExporter;
             return this;
         }
 
@@ -666,7 +735,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
 
         public OtlpMeterRegistry build() {
-            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, metricsSender, exemplarContextProvider);
+            if (this.metricExporter != null) {
+                return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, this.metricExporter,
+                        exemplarContextProvider);
+            }
+            OtlpMetricsSender sender = this.metricsSender != null ? this.metricsSender
+                    : createDefaultSender(otlpConfig);
+            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, sender, exemplarContextProvider);
         }
 
     }

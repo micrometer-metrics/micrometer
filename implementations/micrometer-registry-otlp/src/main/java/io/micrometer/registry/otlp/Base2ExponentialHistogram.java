@@ -18,7 +18,7 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
@@ -172,7 +172,7 @@ abstract class Base2ExponentialHistogram implements Histogram, OtlpExemplarsSupp
     }
 
     @Override
-    public List<Exemplar> exemplars() {
+    public List<DoubleExemplarData> exemplars() {
         return exemplarSampler != null ? exemplarSampler.collectExemplars() : Collections.emptyList();
     }
 

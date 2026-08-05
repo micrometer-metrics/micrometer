@@ -18,7 +18,7 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.Histogram;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
@@ -46,7 +46,8 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary
      * @param scale scale
      * @param otlpConfig config for registry
      */
-    OtlpStepDistributionSummary(Id id, Clock clock, double scale, Histogram histogram, OtlpConfig otlpConfig,
+    @SuppressWarnings("NullAway")
+    OtlpStepDistributionSummary(Id id, Clock clock, double scale, @Nullable Histogram histogram, OtlpConfig otlpConfig,
             @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, scale, histogram);
         this.countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0.0, count::sumThenReset,
@@ -71,7 +72,7 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary
     }
 
     @Override
-    public List<Exemplar> exemplars() {
+    public List<DoubleExemplarData> exemplars() {
         if (exemplarSampler != null) {
             return exemplarSampler.collectExemplars();
         }

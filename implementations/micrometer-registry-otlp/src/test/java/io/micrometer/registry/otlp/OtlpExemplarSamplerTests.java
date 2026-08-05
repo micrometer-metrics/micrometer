@@ -15,12 +15,12 @@
  */
 package io.micrometer.registry.otlp;
 
-import com.google.protobuf.ByteString;
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.MockClock;
-import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
-import org.apache.commons.codec.binary.Hex;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Nested;
@@ -28,7 +28,6 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,16 +73,16 @@ class OtlpExemplarSamplerTests {
         @Test
         void firstRecordingShouldBeAlwaysSampled() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            Exemplar expected = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
+            DoubleExemplarData expected = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
 
             assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
-                assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
-                assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
-                assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
-                assertThat(exemplar.getTimeUnixNano()).isEqualTo(expected.getTimeUnixNano());
-                assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+                assertThat(exemplar.getSpanContext().getTraceId()).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+                assertThat(exemplar.getSpanContext().getSpanId()).isEqualTo("00f067aa0ba902b7");
+                assertThat(((DoubleExemplarData) exemplar).getValue()).isEqualTo(42.0);
+                assertThat(exemplar.getEpochNanos()).isEqualTo(expected.getEpochNanos());
+                assertThat(exemplar.getFilteredAttributes().isEmpty()).isTrue();
             });
         }
 
@@ -91,58 +90,53 @@ class OtlpExemplarSamplerTests {
         void keyValuesShouldPresentIfSet() {
             assertThat(sampler.collectExemplars()).isEmpty();
             KeyValues kv = KeyValues.of("a", "b", "c", "d");
-            Exemplar expected = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", kv, 42.0);
+            DoubleExemplarData expected = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", kv,
+                    42.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
 
             assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
-                assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
-                assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
-                assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
-                assertThat(exemplar.getTimeUnixNano()).isEqualTo(expected.getTimeUnixNano());
-                List<KeyValue> filteredAttributes = exemplar.getFilteredAttributesList();
-                assertThat(filteredAttributes).hasSize(2);
-                assertThat(filteredAttributes.get(0).getKey()).isEqualTo("a");
-                assertThat(filteredAttributes.get(0).getValue().getStringValue()).isEqualTo("b");
-                assertThat(filteredAttributes.get(1).getKey()).isEqualTo("c");
-                assertThat(filteredAttributes.get(1).getValue().getStringValue()).isEqualTo("d");
+                assertThat(exemplar.getSpanContext().getTraceId()).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+                assertThat(exemplar.getSpanContext().getSpanId()).isEqualTo("00f067aa0ba902b7");
+                assertThat(((DoubleExemplarData) exemplar).getValue()).isEqualTo(42.0);
+                assertThat(exemplar.getEpochNanos()).isEqualTo(expected.getEpochNanos());
+                Attributes filteredAttributes = exemplar.getFilteredAttributes();
+                assertThat(filteredAttributes.size()).isEqualTo(2);
+                assertThat(filteredAttributes.get(AttributeKey.stringKey("a"))).isEqualTo("b");
+                assertThat(filteredAttributes.get(AttributeKey.stringKey("c"))).isEqualTo("d");
             });
         }
 
         @Test
         void traceIdAndSpanIdAreOptional() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            Exemplar expected = recorder.record(null, null, KeyValues.of("a", "b", "c", "d"), 42.0);
+            DoubleExemplarData expected = recorder.record(null, null, KeyValues.of("a", "b", "c", "d"), 42.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
 
             assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
-                assertThat(encodeHexString(exemplar.getTraceId())).isEmpty();
-                assertThat(encodeHexString(exemplar.getSpanId())).isEmpty();
-                assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
-                assertThat(exemplar.getTimeUnixNano()).isEqualTo(expected.getTimeUnixNano());
-                List<KeyValue> filteredAttributes = exemplar.getFilteredAttributesList();
-                assertThat(filteredAttributes).hasSize(2);
-                assertThat(filteredAttributes.get(0).getKey()).isEqualTo("a");
-                assertThat(filteredAttributes.get(0).getValue().getStringValue()).isEqualTo("b");
-                assertThat(filteredAttributes.get(1).getKey()).isEqualTo("c");
-                assertThat(filteredAttributes.get(1).getValue().getStringValue()).isEqualTo("d");
+                assertThat(exemplar.getSpanContext().isValid()).isFalse();
+                assertThat(((DoubleExemplarData) exemplar).getValue()).isEqualTo(42.0);
+                assertThat(exemplar.getEpochNanos()).isEqualTo(expected.getEpochNanos());
+                Attributes filteredAttributes = exemplar.getFilteredAttributes();
+                assertThat(filteredAttributes.size()).isEqualTo(2);
+                assertThat(filteredAttributes.get(AttributeKey.stringKey("a"))).isEqualTo("b");
+                assertThat(filteredAttributes.get(AttributeKey.stringKey("c"))).isEqualTo("d");
             });
         }
 
         @Test
         void emptyContextIsValid() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            Exemplar expected = recorder.record(null, null, KeyValues.empty(), 3.14);
+            DoubleExemplarData expected = recorder.record(null, null, KeyValues.empty(), 3.14);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
 
             assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
-                assertThat(encodeHexString(exemplar.getTraceId())).isEmpty();
-                assertThat(encodeHexString(exemplar.getSpanId())).isEmpty();
-                assertThat(exemplar.getAsDouble()).isEqualTo(3.14);
-                assertThat(exemplar.getTimeUnixNano()).isEqualTo(expected.getTimeUnixNano());
-                assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+                assertThat(exemplar.getSpanContext().isValid()).isFalse();
+                assertThat(((DoubleExemplarData) exemplar).getValue()).isEqualTo(3.14);
+                assertThat(exemplar.getEpochNanos()).isEqualTo(expected.getEpochNanos());
+                assertThat(exemplar.getFilteredAttributes().isEmpty()).isTrue();
             });
         }
 
@@ -166,10 +160,9 @@ class OtlpExemplarSamplerTests {
             clock.add(STEP);
 
             assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
-                assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("");
-                assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
-                assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
-                assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+                assertThat(exemplar.getSpanContext().isValid()).isFalse();
+                assertThat(((DoubleExemplarData) exemplar).getValue()).isEqualTo(42.0);
+                assertThat(exemplar.getFilteredAttributes().isEmpty()).isTrue();
             });
         }
 
@@ -183,10 +176,9 @@ class OtlpExemplarSamplerTests {
             clock.add(STEP);
 
             assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
-                assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
-                assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("");
-                assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
-                assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+                assertThat(exemplar.getSpanContext().isValid()).isFalse();
+                assertThat(((DoubleExemplarData) exemplar).getValue()).isEqualTo(42.0);
+                assertThat(exemplar.getFilteredAttributes().isEmpty()).isTrue();
             });
         }
 
@@ -202,7 +194,7 @@ class OtlpExemplarSamplerTests {
         @Test
         void samplerRespectsStepBoundaries() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            Exemplar first = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 41.0);
+            DoubleExemplarData first = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 41.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
             assertThat(sampler.collectExemplars()).singleElement().isEqualTo(first);
@@ -210,7 +202,7 @@ class OtlpExemplarSamplerTests {
 
             for (int i = 0; i < 1_000; i++) {
                 assertThat(sampler.collectExemplars()).isEmpty();
-                Exemplar current = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", i);
+                DoubleExemplarData current = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", i);
                 assertThat(sampler.collectExemplars()).isEmpty();
                 clock.add(STEP);
                 assertThat(sampler.collectExemplars()).singleElement().isEqualTo(current);
@@ -221,7 +213,7 @@ class OtlpExemplarSamplerTests {
         @Test
         void samplerRollsOverOnCloseBeforeFirstStep() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            Exemplar exemplar = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
+            DoubleExemplarData exemplar = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             sampler.close();
             assertThat(sampler.collectExemplars()).singleElement().isEqualTo(exemplar);
@@ -230,11 +222,13 @@ class OtlpExemplarSamplerTests {
         @Test
         void samplerRollsOverOnCloseAfterFirstStep() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
+            DoubleExemplarData exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7",
+                    42.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
             assertThat(sampler.collectExemplars()).singleElement().isEqualTo(exemplar1);
-            Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e0e4700", "00f067aa0ba90200", 3.14);
+            DoubleExemplarData exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e0e4700", "00f067aa0ba90200",
+                    3.14);
             assertThat(sampler.collectExemplars()).singleElement().isEqualTo(exemplar1);
             sampler.close();
             assertThat(sampler.collectExemplars()).singleElement().isEqualTo(exemplar2);
@@ -324,16 +318,16 @@ class OtlpExemplarSamplerTests {
         @Test
         void firstRecordingShouldBeAlwaysSampled() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            Exemplar expected = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
+            DoubleExemplarData expected = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
 
             assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
-                assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
-                assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
-                assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
-                assertThat(exemplar.getTimeUnixNano()).isEqualTo(expected.getTimeUnixNano());
-                assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+                assertThat(exemplar.getSpanContext().getTraceId()).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+                assertThat(exemplar.getSpanContext().getSpanId()).isEqualTo("00f067aa0ba902b7");
+                assertThat(((DoubleExemplarData) exemplar).getValue()).isEqualTo(42.0);
+                assertThat(exemplar.getEpochNanos()).isEqualTo(expected.getEpochNanos());
+                assertThat(exemplar.getFilteredAttributes().isEmpty()).isTrue();
             });
         }
 
@@ -433,9 +427,11 @@ class OtlpExemplarSamplerTests {
         @Test
         void recordingsShouldGoToTheRightBucket() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            Exemplar expected1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
-            Exemplar expected2 = recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", 11.0);
-            Exemplar expected3 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 21.0);
+            DoubleExemplarData expected1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
+            DoubleExemplarData expected2 = recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002",
+                    11.0);
+            DoubleExemplarData expected3 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                    21.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
 
@@ -446,7 +442,7 @@ class OtlpExemplarSamplerTests {
         void sameBucketCanBeOverwritten() {
             assertThat(sampler.collectExemplars()).isEmpty();
             recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
-            Exemplar expected = recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", 10.0);
+            DoubleExemplarData expected = recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", 10.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
             assertThat(sampler.collectExemplars()).singleElement().isEqualTo(expected);
@@ -458,21 +454,19 @@ class OtlpExemplarSamplerTests {
             clock.add(STEP);
             assertThat(sampler.collectExemplars()).isEmpty();
 
-            Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
+            DoubleExemplarData exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
             assertThat(sampler.collectExemplars()).singleElement().isEqualTo(exemplar1);
 
-            Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", 20.0);
-            Exemplar exemplar3 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 30.0);
+            DoubleExemplarData exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002",
+                    20.0);
+            DoubleExemplarData exemplar3 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                    30.0);
             clock.add(STEP);
             assertThat(sampler.collectExemplars()).containsExactly(exemplar2, exemplar3);
         }
 
-    }
-
-    private String encodeHexString(ByteString byteString) {
-        return Hex.encodeHexString(byteString.toByteArray());
     }
 
 }
