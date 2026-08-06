@@ -17,6 +17,7 @@ package io.micrometer.prometheusmetrics;
 
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -36,6 +37,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,8 +46,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * {@link MeterRegistry} for Prometheus.
@@ -105,12 +105,18 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         config().onMeterRemoved(this::onMeterRemoved);
     }
 
-    private List<String> tagKeys(Meter.Id id) {
-        return getConventionTags(id).stream().map(Tag::getKey).collect(toList());
-    }
-
-    private static List<String> tagValues(Meter.Id id) {
-        return stream(id.getTagsAsIterable().spliterator(), false).map(Tag::getValue).collect(toList());
+    private MeterContext createMeterContext(Meter.Id id) {
+        NamingConvention convention = config().namingConvention();
+        List<Tag> tags = id.getTags();
+        int size = tags.size();
+        List<String> tagKeys = new ArrayList<>(size);
+        List<String> tagValues = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            Tag tag = tags.get(i);
+            tagKeys.add(convention.tagKey(tag.getKey()));
+            tagValues.add(convention.tagValue(tag.getValue()));
+        }
+        return new MeterContext(id, tagKeys, tagValues, helpText(id.getDescription()), clock.wallTime());
     }
 
     /**
@@ -290,8 +296,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * that it does not have to be resolved again on every scrape.
      */
     private void applyToCollector(Meter.Id id, BiConsumer<MicrometerCollector, MeterContext> consumer) {
-        MeterContext context = new MeterContext(id, tagKeys(id), tagValues(id), helpText(id.getDescription()),
-                clock.wallTime());
+        MeterContext context = createMeterContext(id);
         collectorMap.compute(getConventionName(id), (name, existingCollector) -> {
             if (existingCollector == null) {
                 MicrometerCollector micrometerCollector = new MicrometerCollector(name, id);

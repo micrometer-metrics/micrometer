@@ -48,20 +48,8 @@ public class PrometheusRegistryBenchmark {
 
     public static final int CREATION_BATCH_SIZE = 500;
 
-    private static final String[] COUNTER_NAMES = {
-            "cache.gets", "executor.completed", "logback.events"
-    };
-
-    private static final String[] GAUGE_NAMES = {
-            "jvm.memory.used", "system.cpu.usage"
-    };
-
-    private static final String[] TIMER_NAMES = {
-            "http.server.requests", "http.client.requests", "db.statement"
-    };
-
-    private static final String[] SUMMARY_NAMES = {
-            "http.server.response.size", "kafka.producer.record.size"
+    private static final String[] URIS = {
+            "/api/v1/users", "/api/v1/orders/{id}", "/api/v1/products", "/health", "/api/v1/checkout"
     };
 
     private static final String[] METHODS = { "GET", "POST", "PUT", "DELETE" };
@@ -69,6 +57,16 @@ public class PrometheusRegistryBenchmark {
     private static final String[] STATUSES = { "200", "201", "400", "404", "500" };
 
     private static final String[] OUTCOMES = { "SUCCESS", "CLIENT_ERROR", "SERVER_ERROR" };
+
+    private static final String[] EXCEPTIONS = { "none", "IllegalArgumentException", "IllegalStateException" };
+
+    private static final String[] CLIENT_NAMES = { "inventory-service", "payment-gateway" };
+
+    private static final String[] DB_STATEMENTS = { "select-user", "insert-order", "update-stock" };
+
+    private static final String[] LOG_LEVELS = { "info", "warn", "error" };
+
+    private static final String[] CACHE_NAMES = { "users", "products", "orders" };
 
     @Param({ "500" })
     private int scrapeMeterCount;
@@ -82,39 +80,67 @@ public class PrometheusRegistryBenchmark {
         scrapeRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         gaugeValue = new AtomicInteger(42);
 
-        // Pre-register realistic meters for scrape benchmarks across 10 metric families with distinct types
-        for (int i = 0; i < scrapeMeterCount; i++) {
-            String uri = "/api/v1/endpoint_" + (i / 10);
-            String method = METHODS[i % METHODS.length];
-            String status = STATUSES[i % STATUSES.length];
-            String outcome = OUTCOMES[i % OUTCOMES.length];
+        // System gauges registered once during setup
+        Gauge.builder("jvm.memory.used", gaugeValue, AtomicInteger::get)
+                .tags("area", "heap", "id", "G1 Eden Space")
+                .register(scrapeRegistry);
+        Gauge.builder("jvm.memory.used", gaugeValue, AtomicInteger::get)
+                .tags("area", "heap", "id", "G1 Old Gen")
+                .register(scrapeRegistry);
+        Gauge.builder("system.cpu.usage", gaugeValue, AtomicInteger::get)
+                .register(scrapeRegistry);
 
-            if (i % 4 == 0) {
-                String name = COUNTER_NAMES[(i / 4) % COUNTER_NAMES.length];
-                Counter counter = scrapeRegistry.counter(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
-                counter.increment(i + 1);
-            } else if (i % 4 == 1) {
-                String name = GAUGE_NAMES[(i / 4) % GAUGE_NAMES.length];
-                Gauge.builder(name, gaugeValue, AtomicInteger::get)
-                        .tags("uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service")
-                        .register(scrapeRegistry);
-            } else if (i % 4 == 2) {
-                String name = TIMER_NAMES[(i / 4) % TIMER_NAMES.length];
-                Timer timer = scrapeRegistry.timer(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
-                timer.record(i + 10, TimeUnit.MILLISECONDS);
+        // Pre-register realistic meters for scrape benchmarks (~65% Timers, ~30% Counters, ~5% Summaries)
+        for (int i = 0; i < scrapeMeterCount; i++) {
+            int modulo = i % 20;
+            if (modulo < 13) {
+                // Timer: http.server.requests, http.client.requests, db.statement
+                if (modulo < 8) {
+                    scrapeRegistry.timer("http.server.requests",
+                            "uri", URIS[i % URIS.length],
+                            "method", METHODS[i % METHODS.length],
+                            "status", STATUSES[i % STATUSES.length],
+                            "outcome", OUTCOMES[i % OUTCOMES.length],
+                            "exception", EXCEPTIONS[i % EXCEPTIONS.length]
+                    ).record(i + 10, TimeUnit.MILLISECONDS);
+                } else if (modulo < 11) {
+                    scrapeRegistry.timer("http.client.requests",
+                            "clientName", CLIENT_NAMES[i % CLIENT_NAMES.length],
+                            "uri", URIS[i % URIS.length],
+                            "method", METHODS[i % METHODS.length],
+                            "status", STATUSES[i % STATUSES.length],
+                            "outcome", OUTCOMES[i % OUTCOMES.length]
+                    ).record(i + 5, TimeUnit.MILLISECONDS);
+                } else {
+                    scrapeRegistry.timer("db.statement",
+                            "name", DB_STATEMENTS[i % DB_STATEMENTS.length],
+                            "status", "success"
+                    ).record(i + 1, TimeUnit.MILLISECONDS);
+                }
+            } else if (modulo < 19) {
+                // Counter: logback.events, cache.gets
+                if (modulo < 16) {
+                    scrapeRegistry.counter("logback.events", "level", LOG_LEVELS[i % LOG_LEVELS.length]).increment();
+                } else {
+                    scrapeRegistry.counter("cache.gets",
+                            "cache", CACHE_NAMES[i % CACHE_NAMES.length],
+                            "result", (i % 2 == 0) ? "hit" : "miss"
+                    ).increment();
+                }
             } else {
-                String name = SUMMARY_NAMES[(i / 4) % SUMMARY_NAMES.length];
-                DistributionSummary summary = scrapeRegistry.summary(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
-                summary.record(i * 1.5);
+                // DistributionSummary: http.server.response.size
+                scrapeRegistry.summary("http.server.response.size",
+                        "method", METHODS[i % METHODS.length],
+                        "status", STATUSES[i % STATUSES.length]
+                ).record(i * 128.0);
             }
         }
     }
 
     /**
      * Benchmark scenario 1: Meter creation and registration. Uses batching
-     * (@OperationsPerInvocation) with 500 fresh meters per invocation across 10
-     * realistic metric family names to accurately quantify per-meter creation
-     * latency and heap allocations under realistic metric distributions.
+     * (@OperationsPerInvocation) with 500 fresh meters per invocation using a realistic
+     * mix of web instrumentation (65% Timers, 30% Counters, 5% Summaries) with matching tags.
      */
     @Benchmark
     @OperationsPerInvocation(CREATION_BATCH_SIZE)
@@ -123,29 +149,44 @@ public class PrometheusRegistryBenchmark {
         PrometheusMeterRegistry registry = state.getRegistry();
 
         for (int i = 0; i < CREATION_BATCH_SIZE; i++) {
-            String uri = "/api/v1/endpoint_" + (i / 10);
-            String method = METHODS[i % METHODS.length];
-            String status = STATUSES[i % STATUSES.length];
-            String outcome = OUTCOMES[i % OUTCOMES.length];
-
-            if (i % 4 == 0) {
-                String name = COUNTER_NAMES[(i / 4) % COUNTER_NAMES.length];
-                Counter counter = registry.counter(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
-                counter.increment();
-                bh.consume(counter);
-            } else if (i % 4 == 1) {
-                String name = GAUGE_NAMES[(i / 4) % GAUGE_NAMES.length];
-                Gauge gauge = Gauge.builder(name, gaugeValue, AtomicInteger::get)
-                        .tags("uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service")
-                        .register(registry);
-                bh.consume(gauge);
-            } else if (i % 4 == 2) {
-                String name = TIMER_NAMES[(i / 4) % TIMER_NAMES.length];
-                Timer timer = registry.timer(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
-                bh.consume(timer);
+            int modulo = i % 20;
+            if (modulo < 13) {
+                if (modulo < 8) {
+                    Timer timer = registry.timer("http.server.requests",
+                            "uri", URIS[i % URIS.length],
+                            "method", METHODS[i % METHODS.length],
+                            "status", STATUSES[i % STATUSES.length],
+                            "outcome", OUTCOMES[i % OUTCOMES.length],
+                            "exception", EXCEPTIONS[i % EXCEPTIONS.length]);
+                    bh.consume(timer);
+                } else if (modulo < 11) {
+                    Timer timer = registry.timer("http.client.requests",
+                            "clientName", CLIENT_NAMES[i % CLIENT_NAMES.length],
+                            "uri", URIS[i % URIS.length],
+                            "method", METHODS[i % METHODS.length],
+                            "status", STATUSES[i % STATUSES.length],
+                            "outcome", OUTCOMES[i % OUTCOMES.length]);
+                    bh.consume(timer);
+                } else {
+                    Timer timer = registry.timer("db.statement",
+                            "name", DB_STATEMENTS[i % DB_STATEMENTS.length],
+                            "status", "success");
+                    bh.consume(timer);
+                }
+            } else if (modulo < 19) {
+                if (modulo < 16) {
+                    Counter counter = registry.counter("logback.events", "level", LOG_LEVELS[i % LOG_LEVELS.length]);
+                    bh.consume(counter);
+                } else {
+                    Counter counter = registry.counter("cache.gets",
+                            "cache", CACHE_NAMES[i % CACHE_NAMES.length],
+                            "result", (i % 2 == 0) ? "hit" : "miss");
+                    bh.consume(counter);
+                }
             } else {
-                String name = SUMMARY_NAMES[(i / 4) % SUMMARY_NAMES.length];
-                DistributionSummary summary = registry.summary(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
+                DistributionSummary summary = registry.summary("http.server.response.size",
+                        "method", METHODS[i % METHODS.length],
+                        "status", STATUSES[i % STATUSES.length]);
                 bh.consume(summary);
             }
         }
