@@ -48,6 +48,28 @@ public class PrometheusRegistryBenchmark {
 
     public static final int CREATION_BATCH_SIZE = 500;
 
+    private static final String[] COUNTER_NAMES = {
+            "cache.gets", "executor.completed", "logback.events"
+    };
+
+    private static final String[] GAUGE_NAMES = {
+            "jvm.memory.used", "system.cpu.usage"
+    };
+
+    private static final String[] TIMER_NAMES = {
+            "http.server.requests", "http.client.requests", "db.statement"
+    };
+
+    private static final String[] SUMMARY_NAMES = {
+            "http.server.response.size", "kafka.producer.record.size"
+    };
+
+    private static final String[] METHODS = { "GET", "POST", "PUT", "DELETE" };
+
+    private static final String[] STATUSES = { "200", "201", "400", "404", "500" };
+
+    private static final String[] OUTCOMES = { "SUCCESS", "CLIENT_ERROR", "SERVER_ERROR" };
+
     @Param({ "500" })
     private int scrapeMeterCount;
 
@@ -60,32 +82,39 @@ public class PrometheusRegistryBenchmark {
         scrapeRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         gaugeValue = new AtomicInteger(42);
 
-        // Pre-register meters for the scrape benchmark (500 meter families with tags)
+        // Pre-register realistic meters for scrape benchmarks across 10 metric families with distinct types
         for (int i = 0; i < scrapeMeterCount; i++) {
-            String idSuffix = String.valueOf(i);
-            Counter counter = scrapeRegistry.counter("benchmark_counter_" + idSuffix, "region", "us-east-1", "env",
-                    "production", "service", "payment-service", "instance", idSuffix);
-            counter.increment(i + 1);
+            String uri = "/api/v1/endpoint_" + (i / 10);
+            String method = METHODS[i % METHODS.length];
+            String status = STATUSES[i % STATUSES.length];
+            String outcome = OUTCOMES[i % OUTCOMES.length];
 
-            Gauge.builder("benchmark_gauge_" + idSuffix, gaugeValue, AtomicInteger::get)
-                .tags("region", "us-east-1", "env", "production", "service", "payment-service", "instance", idSuffix)
-                .register(scrapeRegistry);
-
-            Timer timer = scrapeRegistry.timer("benchmark_timer_" + idSuffix, "region", "us-east-1", "env",
-                    "production", "service", "payment-service", "instance", idSuffix);
-            timer.record(i + 10, TimeUnit.MILLISECONDS);
-
-            DistributionSummary summary = scrapeRegistry.summary("benchmark_summary_" + idSuffix, "region", "us-east-1",
-                    "env", "production", "service", "payment-service", "instance", idSuffix);
-            summary.record(i * 1.5);
+            if (i % 4 == 0) {
+                String name = COUNTER_NAMES[(i / 4) % COUNTER_NAMES.length];
+                Counter counter = scrapeRegistry.counter(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
+                counter.increment(i + 1);
+            } else if (i % 4 == 1) {
+                String name = GAUGE_NAMES[(i / 4) % GAUGE_NAMES.length];
+                Gauge.builder(name, gaugeValue, AtomicInteger::get)
+                        .tags("uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service")
+                        .register(scrapeRegistry);
+            } else if (i % 4 == 2) {
+                String name = TIMER_NAMES[(i / 4) % TIMER_NAMES.length];
+                Timer timer = scrapeRegistry.timer(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
+                timer.record(i + 10, TimeUnit.MILLISECONDS);
+            } else {
+                String name = SUMMARY_NAMES[(i / 4) % SUMMARY_NAMES.length];
+                DistributionSummary summary = scrapeRegistry.summary(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
+                summary.record(i * 1.5);
+            }
         }
     }
 
     /**
      * Benchmark scenario 1: Meter creation and registration. Uses batching
-     * (@OperationsPerInvocation) with 500 fresh meters per invocation to accurately
-     * quantify per-meter creation latency and heap allocations while amortizing registry
-     * setup overhead.
+     * (@OperationsPerInvocation) with 500 fresh meters per invocation across 10
+     * realistic metric family names to accurately quantify per-meter creation
+     * latency and heap allocations under realistic metric distributions.
      */
     @Benchmark
     @OperationsPerInvocation(CREATION_BATCH_SIZE)
@@ -94,11 +123,31 @@ public class PrometheusRegistryBenchmark {
         PrometheusMeterRegistry registry = state.getRegistry();
 
         for (int i = 0; i < CREATION_BATCH_SIZE; i++) {
-            String idSuffix = String.valueOf(i);
-            Counter counter = registry.counter("created_counter_" + idSuffix, "region", "us-east-1", "env",
-                    "production", "service", "auth-service", "instance", idSuffix);
-            counter.increment();
-            bh.consume(counter);
+            String uri = "/api/v1/endpoint_" + (i / 10);
+            String method = METHODS[i % METHODS.length];
+            String status = STATUSES[i % STATUSES.length];
+            String outcome = OUTCOMES[i % OUTCOMES.length];
+
+            if (i % 4 == 0) {
+                String name = COUNTER_NAMES[(i / 4) % COUNTER_NAMES.length];
+                Counter counter = registry.counter(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
+                counter.increment();
+                bh.consume(counter);
+            } else if (i % 4 == 1) {
+                String name = GAUGE_NAMES[(i / 4) % GAUGE_NAMES.length];
+                Gauge gauge = Gauge.builder(name, gaugeValue, AtomicInteger::get)
+                        .tags("uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service")
+                        .register(registry);
+                bh.consume(gauge);
+            } else if (i % 4 == 2) {
+                String name = TIMER_NAMES[(i / 4) % TIMER_NAMES.length];
+                Timer timer = registry.timer(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
+                bh.consume(timer);
+            } else {
+                String name = SUMMARY_NAMES[(i / 4) % SUMMARY_NAMES.length];
+                DistributionSummary summary = registry.summary(name, "uri", uri, "method", method, "status", status, "outcome", outcome, "service", "payment-service");
+                bh.consume(summary);
+            }
         }
     }
 
