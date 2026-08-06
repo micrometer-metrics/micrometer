@@ -95,14 +95,14 @@ class MicrometerCollector implements MultiCollector {
     }
 
     void addCounter(MeterContext context, PrometheusCounter counter) {
-        MetricFamilyDescriptor family = familyDescriptor(MetricType.COUNTER, conventionName, context.tagKeys,
+        MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.COUNTER, conventionName, context.tagKeys,
                 context.help);
         addSingleDataPoint(context, family, () -> new CounterDataPointSnapshot(counter.count(), context.labels,
                 counter.exemplar(), context.createdTimestampMillis));
     }
 
     void addFunctionCounter(MeterContext context, FunctionCounter functionCounter) {
-        MetricFamilyDescriptor family = familyDescriptor(MetricType.COUNTER, conventionName, context.tagKeys,
+        MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.COUNTER, conventionName, context.tagKeys,
                 context.help);
         addSingleDataPoint(context, family, () -> new CounterDataPointSnapshot(functionCounter.count(), context.labels,
                 null, context.createdTimestampMillis));
@@ -110,19 +110,19 @@ class MicrometerCollector implements MultiCollector {
 
     void addGauge(MeterContext context, Gauge gauge) {
         if (context.id.getName().endsWith(".info")) {
-            MetricFamilyDescriptor family = familyDescriptor(MetricType.INFO, conventionName, context.tagKeys,
+            MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.INFO, conventionName, context.tagKeys,
                     context.help);
             addSingleDataPoint(context, family, () -> new InfoDataPointSnapshot(context.labels));
         }
         else {
-            MetricFamilyDescriptor family = familyDescriptor(MetricType.GAUGE, conventionName, context.tagKeys,
+            MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.GAUGE, conventionName, context.tagKeys,
                     context.help);
             addSingleDataPoint(context, family, () -> new GaugeDataPointSnapshot(gauge.value(), context.labels, null));
         }
     }
 
     void addFunctionTimer(MeterContext context, FunctionTimer functionTimer) {
-        MetricFamilyDescriptor family = familyDescriptor(MetricType.SUMMARY, conventionName, context.tagKeys,
+        MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.SUMMARY, conventionName, context.tagKeys,
                 context.help);
         addSingleDataPoint(context, family,
                 () -> new SummaryDataPointSnapshot((long) functionTimer.count(), functionTimer.totalTime(SECONDS),
@@ -154,9 +154,10 @@ class MicrometerCollector implements MultiCollector {
             Supplier<Exemplars> exemplarsSupplier, @Nullable TimeUnit timeUnit) {
         MetricType primaryType = histogramSupport.takeSnapshot().histogramCounts().length == 0 ? MetricType.SUMMARY
                 : MetricType.HISTOGRAM;
-        MetricFamilyDescriptor family = familyDescriptor(primaryType, conventionName, context.tagKeys, context.help);
-        MetricFamilyDescriptor maxFamily = familyDescriptor(MetricType.GAUGE, conventionName + "_max", context.tagKeys,
+        MetricFamilyDescriptor family = getOrCreateDescriptor(primaryType, conventionName, context.tagKeys,
                 context.help);
+        MetricFamilyDescriptor maxFamily = getOrCreateDescriptor(MetricType.GAUGE, conventionName + "_max",
+                context.tagKeys, context.help);
 
         add(context.id, samples -> {
             io.micrometer.core.instrument.distribution.HistogramSnapshot snapshot = histogramSupport.takeSnapshot();
@@ -229,18 +230,18 @@ class MicrometerCollector implements MultiCollector {
         switch (statistic) {
             case TOTAL:
             case TOTAL_TIME:
-                return familyDescriptor(MetricType.COUNTER, conventionName + "_sum", labelNames, help);
+                return getOrCreateDescriptor(MetricType.COUNTER, conventionName + "_sum", labelNames, help);
             case COUNT:
-                return familyDescriptor(MetricType.COUNTER, conventionName, labelNames, help);
+                return getOrCreateDescriptor(MetricType.COUNTER, conventionName, labelNames, help);
             case MAX:
-                return familyDescriptor(MetricType.GAUGE, conventionName + "_max", labelNames, help);
+                return getOrCreateDescriptor(MetricType.GAUGE, conventionName + "_max", labelNames, help);
             case VALUE:
             case UNKNOWN:
-                return familyDescriptor(MetricType.GAUGE, conventionName + "_value", labelNames, help);
+                return getOrCreateDescriptor(MetricType.GAUGE, conventionName + "_value", labelNames, help);
             case ACTIVE_TASKS:
-                return familyDescriptor(MetricType.GAUGE, conventionName + "_active_count", labelNames, help);
+                return getOrCreateDescriptor(MetricType.GAUGE, conventionName + "_active_count", labelNames, help);
             case DURATION:
-                return familyDescriptor(MetricType.GAUGE, conventionName + "_duration_sum", labelNames, help);
+                return getOrCreateDescriptor(MetricType.GAUGE, conventionName + "_duration_sum", labelNames, help);
             default:
                 throw new IllegalArgumentException("Unsupported meter statistic: " + statistic);
         }
@@ -282,8 +283,11 @@ class MicrometerCollector implements MultiCollector {
      * meters added to this collector afterwards.
      */
     MetricFamilyDescriptor getOrCreateDescriptor(MetricType metricType, String familyName,
-            Supplier<MetricFamilyDescriptor> factory) {
-        MetricFamilyDescriptor descriptor = descriptorsByFamilyName.computeIfAbsent(familyName, name -> factory.get());
+            Collection<String> labelNames, String help) {
+        MetricFamilyDescriptor descriptor = descriptorsByFamilyName.computeIfAbsent(familyName,
+                // Unit is intentionally not set, see:
+                // https://github.com/OpenObservability/OpenMetrics/blob/1386544931307dff279688f332890c31b6c5de36/specification/OpenMetrics.md#unit
+                name -> MetricFamilyDescriptor.of(metricType, name).help(help).labelNames(labelNames).build());
         if (descriptor.getType() != metricType) {
             throw new IllegalArgumentException(
                     "Meters with the same name must produce the same Prometheus metric family types. The family ("
@@ -292,14 +296,6 @@ class MicrometerCollector implements MultiCollector {
                             + " meters with the same name publish histogram buckets.");
         }
         return descriptor;
-    }
-
-    private MetricFamilyDescriptor familyDescriptor(MetricType metricType, String familyName,
-            Collection<String> labelNames, String help) {
-        // Unit is intentionally not set, see:
-        // https://github.com/OpenObservability/OpenMetrics/blob/1386544931307dff279688f332890c31b6c5de36/specification/OpenMetrics.md#unit
-        return getOrCreateDescriptor(metricType, familyName,
-                () -> MetricFamilyDescriptor.of(metricType, familyName).help(help).labelNames(labelNames).build());
     }
 
     @Override

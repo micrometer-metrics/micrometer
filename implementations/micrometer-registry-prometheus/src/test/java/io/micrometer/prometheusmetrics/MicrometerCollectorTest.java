@@ -30,6 +30,9 @@ import io.prometheus.metrics.model.snapshots.MetricFamilyDescriptor;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.List;
+
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -139,11 +142,9 @@ class MicrometerCollectorTest {
         MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
 
         MetricFamilyDescriptor descriptor = collector.getOrCreateDescriptor(MetricType.COUNTER,
-                collector.conventionName, () -> MetricFamilyDescriptor.counter(collector.conventionName).build());
+                collector.conventionName, Collections.singletonList("k"), " ");
         MetricFamilyDescriptor descriptor2 = collector.getOrCreateDescriptor(MetricType.COUNTER,
-                collector.conventionName, () -> {
-                    throw new AssertionError("descriptor should have been reused");
-                });
+                collector.conventionName, Collections.singletonList("k"), " ");
 
         assertThat(descriptor2).isSameAs(descriptor);
         assertThat(collector.getMetricFamilyDescriptors()).containsExactly(descriptor);
@@ -155,10 +156,10 @@ class MicrometerCollectorTest {
         MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
 
         MetricFamilyDescriptor summaryDescriptor = collector.getOrCreateDescriptor(MetricType.SUMMARY,
-                collector.conventionName, () -> MetricFamilyDescriptor.summary(collector.conventionName).build());
+                collector.conventionName, Collections.singletonList("k"), " ");
 
         assertThatThrownBy(() -> collector.getOrCreateDescriptor(MetricType.HISTOGRAM, collector.conventionName,
-                () -> MetricFamilyDescriptor.histogram(collector.conventionName).build()))
+                Collections.singletonList("k"), " "))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("same Prometheus metric family types");
 
@@ -200,8 +201,7 @@ class MicrometerCollectorTest {
     void registrationDescriptorUsesPrometheusFamilyName() {
         Meter.Id id = Metrics.counter("my.counter").getId();
         MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
-        collector.getOrCreateDescriptor(MetricType.COUNTER, "my_counter",
-                () -> MetricFamilyDescriptor.counter("my_counter").help("help").labelNames(asList("k")).build());
+        collector.getOrCreateDescriptor(MetricType.COUNTER, "my_counter", List.of("k"), "help");
 
         assertThat(collector.getMetricFamilyDescriptors()).singleElement().satisfies(d -> {
             assertThat(d.getPrometheusName()).isEqualTo("my_counter");
