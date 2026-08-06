@@ -100,8 +100,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final Duration refreshInterval;
 
-    private @Nullable Iterable<Tag> commonTags;
-
     /**
      * Keeps track of current set of metrics.
      */
@@ -144,18 +142,10 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     public void bindTo(MeterRegistry registry) {
         this.registry = registry;
 
-        commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
         checkAndBindMetrics(registry);
         scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), refreshInterval.toMillis(),
                 refreshInterval.toMillis(), TimeUnit.MILLISECONDS);
-    }
-
-    private Iterable<Tag> getCommonTags(MeterRegistry registry) {
-        // FIXME hack until we have proper API to retrieve common tags
-        Meter.Id dummyId = Meter.builder("delete.this", OTHER, Collections.emptyList()).register(registry).getId();
-        registry.remove(dummyId);
-        return dummyId.getTagsAsIterable();
     }
 
     /**
@@ -205,7 +195,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 .collect(Collectors.toSet());
 
             for (MetricName metricName : metricsToRemove) {
-                Meter.Id id = meterIdForComparison(metricName);
+                Meter.Id id = meterIdForComparison(registry, metricName);
                 registry.remove(id);
                 registeredMeterIds.remove(id);
             }
@@ -230,18 +220,18 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 // topic or partition tag)
                 // Remove meters with lower number of tags
                 boolean hasLessTags = false;
+                List<Tag> mappedTags = meterIdForComparison(registry, name).getTags();
                 for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
                     Meter.Id otherId = other.getId();
                     List<Tag> otherTags = otherId.getTags();
-                    List<Tag> meterTagsWithCommonTags = meterTags(name, true);
-                    if (otherTags.size() < meterTagsWithCommonTags.size()) {
+                    if (otherTags.size() < mappedTags.size()) {
                         registry.remove(otherId);
                         registeredMeterIds.remove(otherId);
                     }
                     // Check if already exists
-                    else if (otherTags.size() == meterTagsWithCommonTags.size()) {
+                    else if (otherTags.size() == mappedTags.size()) {
                         // https://www.jetbrains.com/help/inspectopedia/SlowListContainsAll.html
-                        if (new HashSet<>(otherTags).containsAll(meterTagsWithCommonTags))
+                        if (new HashSet<>(otherTags).containsAll(mappedTags))
                             return;
                     }
                     else
@@ -337,19 +327,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         return ((Number) metricValue).doubleValue();
     }
 
-    private List<Tag> meterTags(MetricName metricName, boolean includeCommonTags) {
+    private List<Tag> meterTags(MetricName metricName) {
         List<Tag> tags = new ArrayList<>();
         metricName.tags().forEach((key, value) -> tags.add(Tag.of(key.replace('-', '.'), value)));
         tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
-        if (includeCommonTags && commonTags != null) {
-            commonTags.forEach(tags::add);
-        }
         return tags;
-    }
-
-    private List<Tag> meterTags(MetricName metricName) {
-        return meterTags(metricName, false);
     }
 
     private String meterName(MetricName metricName) {
@@ -357,8 +340,9 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         return name.replaceAll("-metrics", "").replace('-', '.');
     }
 
-    private Meter.Id meterIdForComparison(MetricName metricName) {
-        return new Meter.Id(meterName(metricName), Tags.of(meterTags(metricName, true)), null, null, OTHER);
+    private Meter.Id meterIdForComparison(MeterRegistry registry, MetricName metricName) {
+        Meter.Id preFilteredId = new Meter.Id(meterName(metricName), Tags.of(meterTags(metricName)), null, null, OTHER);
+        return registry.getMappedId(preFilteredId);
     }
 
     @Override
