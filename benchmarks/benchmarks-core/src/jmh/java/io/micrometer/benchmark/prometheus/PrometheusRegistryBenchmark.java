@@ -48,9 +48,8 @@ public class PrometheusRegistryBenchmark {
 
     public static final int CREATION_BATCH_SIZE = 500;
 
-    private static final String[] URIS = {
-            "/api/v1/users", "/api/v1/orders/{id}", "/api/v1/products", "/health", "/api/v1/checkout"
-    };
+    private static final String[] URIS = { "/api/v1/users", "/api/v1/orders/{id}", "/api/v1/products", "/health",
+            "/api/v1/checkout" };
 
     private static final String[] METHODS = { "GET", "POST", "PUT", "DELETE" };
 
@@ -82,20 +81,21 @@ public class PrometheusRegistryBenchmark {
 
         // System gauges registered once during setup
         Gauge.builder("jvm.memory.used", gaugeValue, AtomicInteger::get)
-                .tags("area", "heap", "id", "G1 Eden Space")
-                .register(scrapeRegistry);
+            .tags("area", "heap", "id", "G1 Eden Space")
+            .register(scrapeRegistry);
         Gauge.builder("jvm.memory.used", gaugeValue, AtomicInteger::get)
-                .tags("area", "heap", "id", "G1 Old Gen")
-                .register(scrapeRegistry);
-        Gauge.builder("system.cpu.usage", gaugeValue, AtomicInteger::get)
-                .register(scrapeRegistry);
+            .tags("area", "heap", "id", "G1 Old Gen")
+            .register(scrapeRegistry);
+        Gauge.builder("system.cpu.usage", gaugeValue, AtomicInteger::get).register(scrapeRegistry);
 
-        // Pre-register realistic meters for scrape benchmarks (~65% Timers, ~30% Counters, ~5% Summaries)
+        // Pre-register realistic meters for scrape benchmarks (~65% Timers, ~30%
+        // Counters, ~5% Summaries)
         for (int i = 0; i < scrapeMeterCount; i++) {
             int modulo = i % 20;
             if (modulo < 13) {
                 // Timer: http.server.requests, http.client.requests, db.statement
                 if (modulo < 8) {
+                    // @formatter:off
                     scrapeRegistry.timer("http.server.requests",
                             "uri", URIS[i % URIS.length],
                             "method", METHODS[i % METHODS.length],
@@ -103,7 +103,10 @@ public class PrometheusRegistryBenchmark {
                             "outcome", OUTCOMES[i % OUTCOMES.length],
                             "exception", EXCEPTIONS[i % EXCEPTIONS.length]
                     ).record(i + 10, TimeUnit.MILLISECONDS);
-                } else if (modulo < 11) {
+                    // @formatter:on
+                }
+                else if (modulo < 11) {
+                    // @formatter:off
                     scrapeRegistry.timer("http.client.requests",
                             "clientName", CLIENT_NAMES[i % CLIENT_NAMES.length],
                             "uri", URIS[i % URIS.length],
@@ -111,28 +114,38 @@ public class PrometheusRegistryBenchmark {
                             "status", STATUSES[i % STATUSES.length],
                             "outcome", OUTCOMES[i % OUTCOMES.length]
                     ).record(i + 5, TimeUnit.MILLISECONDS);
-                } else {
+                    // @formatter:on
+                }
+                else {
+                    // @formatter:off
                     scrapeRegistry.timer("db.statement",
                             "name", DB_STATEMENTS[i % DB_STATEMENTS.length],
                             "status", "success"
                     ).record(i + 1, TimeUnit.MILLISECONDS);
+                    // @formatter:on
                 }
-            } else if (modulo < 19) {
+            }
+            else if (modulo < 19) {
                 // Counter: logback.events, cache.gets
                 if (modulo < 16) {
                     scrapeRegistry.counter("logback.events", "level", LOG_LEVELS[i % LOG_LEVELS.length]).increment();
-                } else {
+                }
+                else {
+                    // @formatter:off
                     scrapeRegistry.counter("cache.gets",
                             "cache", CACHE_NAMES[i % CACHE_NAMES.length],
                             "result", (i % 2 == 0) ? "hit" : "miss"
                     ).increment();
+                    // @formatter:on
                 }
-            } else {
-                // DistributionSummary: http.server.response.size
+            }
+            else {
+                // @formatter:off
                 scrapeRegistry.summary("http.server.response.size",
                         "method", METHODS[i % METHODS.length],
                         "status", STATUSES[i % STATUSES.length]
                 ).record(i * 128.0);
+                // @formatter:on
             }
         }
     }
@@ -140,7 +153,8 @@ public class PrometheusRegistryBenchmark {
     /**
      * Benchmark scenario 1: Meter creation and registration. Uses batching
      * (@OperationsPerInvocation) with 500 fresh meters per invocation using a realistic
-     * mix of web instrumentation (65% Timers, 30% Counters, 5% Summaries) with matching tags.
+     * mix of web instrumentation (65% Timers, 30% Counters, 5% Summaries) with matching
+     * tags.
      */
     @Benchmark
     @OperationsPerInvocation(CREATION_BATCH_SIZE)
@@ -152,41 +166,56 @@ public class PrometheusRegistryBenchmark {
             int modulo = i % 20;
             if (modulo < 13) {
                 if (modulo < 8) {
+                    // @formatter:off
                     Timer timer = registry.timer("http.server.requests",
                             "uri", URIS[i % URIS.length],
                             "method", METHODS[i % METHODS.length],
                             "status", STATUSES[i % STATUSES.length],
                             "outcome", OUTCOMES[i % OUTCOMES.length],
                             "exception", EXCEPTIONS[i % EXCEPTIONS.length]);
+                    // @formatter:on
                     bh.consume(timer);
-                } else if (modulo < 11) {
+                }
+                else if (modulo < 11) {
+                    // @formatter:off
                     Timer timer = registry.timer("http.client.requests",
                             "clientName", CLIENT_NAMES[i % CLIENT_NAMES.length],
                             "uri", URIS[i % URIS.length],
                             "method", METHODS[i % METHODS.length],
                             "status", STATUSES[i % STATUSES.length],
                             "outcome", OUTCOMES[i % OUTCOMES.length]);
+                    // @formatter:on
                     bh.consume(timer);
-                } else {
+                }
+                else {
+                    // @formatter:off
                     Timer timer = registry.timer("db.statement",
                             "name", DB_STATEMENTS[i % DB_STATEMENTS.length],
                             "status", "success");
+                    // @formatter:on
                     bh.consume(timer);
                 }
-            } else if (modulo < 19) {
+            }
+            else if (modulo < 19) {
                 if (modulo < 16) {
                     Counter counter = registry.counter("logback.events", "level", LOG_LEVELS[i % LOG_LEVELS.length]);
                     bh.consume(counter);
-                } else {
+                }
+                else {
+                    // @formatter:off
                     Counter counter = registry.counter("cache.gets",
                             "cache", CACHE_NAMES[i % CACHE_NAMES.length],
                             "result", (i % 2 == 0) ? "hit" : "miss");
+                    // @formatter:on
                     bh.consume(counter);
                 }
-            } else {
+            }
+            else {
+                // @formatter:off
                 DistributionSummary summary = registry.summary("http.server.response.size",
                         "method", METHODS[i % METHODS.length],
                         "status", STATUSES[i % STATUSES.length]);
+                // @formatter:on
                 bh.consume(summary);
             }
         }
