@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Michael Weirauch
  */
+@GcTest
 class JvmMemoryMetricsTest {
 
     MeterRegistry registry = new SimpleMeterRegistry();
@@ -79,6 +80,23 @@ class JvmMemoryMetricsTest {
 
         assertJvmMemoryMetrics("heap", extraTags, true);
         assertJvmMemoryMetrics("non_heap", extraTags, true);
+    }
+
+    @Test
+    void memoryUsedAfterLastGc() {
+        new JvmMemoryMetrics().bindTo(registry);
+
+        assertThat(registry.get("jvm.memory.used_after_last_gc").gauges()).isNotEmpty()
+            .allSatisfy(gauge -> assertThat(gauge.value()).isGreaterThanOrEqualTo(0));
+
+        System.gc();
+
+        assertThat(registry.get("jvm.memory.used_after_last_gc").gauges()).isNotEmpty()
+            .allSatisfy(gauge -> assertThat(gauge.value()).isGreaterThanOrEqualTo(0));
+
+        registry.get("jvm.memory.used_after_last_gc").gauges().forEach(gauge -> {
+            assertThat(gauge.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
+        });
     }
 
     private void assertJvmMemoryMetrics(String area) {
