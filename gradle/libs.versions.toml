@@ -7,7 +7,7 @@ aspectjweaver = "1.9.25.1"
 assertj = "3.27.7"
 awaitility = "4.3.0"
 caffeine = "2.9.3"
-cloudwatch2 = "2.49.5"
+cloudwatch2 = "2.50.2"
 colt = "1.2.0"
 dagger = "2.60.1"
 dropwizard-metrics = "4.2.39"
@@ -16,8 +16,8 @@ dynatrace-utils = "2.5.0"
 ehcache2 = "2.10.9.2"
 ehcache3 = "3.12.0"
 gmetric4j = "1.0.10"
-google-cloud-monitoring = "3.95.0"
-grpc = "1.83.0"
+google-cloud-monitoring = "3.96.0"
+grpc = "1.83.1"
 grpcKotlin = "1.4.3"
 guava = "32.1.3-jre"
 guice = "5.1.0"
@@ -28,7 +28,7 @@ hibernate = "5.6.15.Final"
 hsqldb = "2.7.4"
 httpcomponents-async = "4.1.5"
 httpcomponents-client = "4.5.14"
-httpcomponents-client5 = "5.6.2"
+httpcomponents-client5 = "5.6.3"
 # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
 # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
 # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
@@ -63,7 +63,7 @@ reactor = "2022.0.22"
 rest-assured = "5.5.7"
 signalfx = "1.0.49"
 slf4j = "1.7.36"
-spectator-atlas = "1.10.4"
+spectator-atlas = "1.10.5"
 spring5 = "5.3.39"
 spring6 = "6.2.19"
 spring-javaformat = "0.0.47"
@@ -101,9 +101,9 @@ errorprone = { module = "com.google.errorprone:error_prone_core", version = "2.5
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
 felixScr = "org.apache.felix:org.apache.felix.scr:2.2.18"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
-googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.85.1" }
+googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.86.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
-googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.49.0"}
+googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.50.0"}
 grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }
 grpcCore = { module = "io.grpc:grpc-core", version.ref = "grpc" }
 grpcInprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
@@ -143,7 +143,7 @@ jmhCore = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmhAnnotationProcessor = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
 jsonPath = { module = "com.jayway.jsonpath:json-path", version = "2.10.0" }
-jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
+jspecify = { module = "org.jspecify:jspecify", version = "1.0.1" }
 jsr107 = { module = "org.jsr107.ri:cache-ri-impl", version.ref = "jsr107" }
 jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
 junitBom = { module = "org.junit:junit-bom", version.ref = "junit" }
@@ -208,7 +208,6 @@ plugin-nebulaPublishing = { module = "com.netflix.nebula:nebula-publishing-plugi
 plugin-nebulaProject = { module = "com.netflix.nebula:nebula-project-plugin", version = "13.1.2" }
 plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version = "16.3.0" }
 plugin-noHttp = { module = "io.spring.nohttp:nohttp-gradle", version = "0.0.11" }
-plugin-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", version = "2.0.0" }
 plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "spring-javaformat" }
 plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.6" }
 plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.25.0" }
