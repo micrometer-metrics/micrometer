@@ -78,7 +78,7 @@ class MicrometerCollector implements MultiCollector {
 
     private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
 
-    private final Map<String, MetricFamilyDescriptor> descriptorsByFamilyName = new ConcurrentHashMap<>();
+    private final Map<String, MetricFamilyDescriptor> descriptorsByFamilyName = new HashMap<>(2);
 
     final String conventionName;
 
@@ -278,10 +278,13 @@ class MicrometerCollector implements MultiCollector {
      */
     MetricFamilyDescriptor getOrCreateDescriptor(MetricType metricType, String familyName,
             Collection<String> labelNames, String help) {
-        MetricFamilyDescriptor descriptor = descriptorsByFamilyName.computeIfAbsent(familyName,
-                // Unit is intentionally not set, see:
-                // https://github.com/OpenObservability/OpenMetrics/blob/1386544931307dff279688f332890c31b6c5de36/specification/OpenMetrics.md#unit
-                name -> MetricFamilyDescriptor.of(metricType, name).help(help).labelNames(labelNames).build());
+        MetricFamilyDescriptor descriptor = descriptorsByFamilyName.get(familyName);
+        if (descriptor == null) {
+            // Unit is intentionally not set, see:
+            // https://github.com/OpenObservability/OpenMetrics/blob/1386544931307dff279688f332890c31b6c5de36/specification/OpenMetrics.md#unit
+            descriptor = MetricFamilyDescriptor.of(metricType, familyName).help(help).labelNames(labelNames).build();
+            descriptorsByFamilyName.put(familyName, descriptor);
+        }
         if (descriptor.getType() != metricType) {
             throw new IllegalArgumentException(
                     "Meters with the same name must produce the same Prometheus metric family types. The family ("
@@ -299,9 +302,9 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public MetricSnapshots collect() {
+        int familyCount = descriptorsByFamilyName.size();
         // descriptors are canonical per family
-        Map<MetricFamilyDescriptor, List<DataPointSnapshot>> dataPointsByFamily = new IdentityHashMap<>(
-                descriptorsByFamilyName.size());
+        Map<MetricFamilyDescriptor, List<DataPointSnapshot>> dataPointsByFamily = new IdentityHashMap<>(familyCount);
 
         for (Child child : children.values()) {
             child.collect((family, dataPoint) -> dataPointsByFamily
@@ -309,7 +312,7 @@ class MicrometerCollector implements MultiCollector {
                 .add(dataPoint));
         }
 
-        List<MetricSnapshot> snapshots = new ArrayList<>(dataPointsByFamily.size());
+        List<MetricSnapshot> snapshots = new ArrayList<>(familyCount);
         dataPointsByFamily.forEach((family, dataPoints) -> snapshots.add(createSnapshot(family, dataPoints)));
         return new MetricSnapshots(snapshots);
     }
