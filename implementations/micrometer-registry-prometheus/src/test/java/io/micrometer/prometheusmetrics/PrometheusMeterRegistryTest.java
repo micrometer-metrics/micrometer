@@ -1235,6 +1235,22 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    void customMeterWithDynamicMeasurements() {
+        List<Measurement> measurements = new ArrayList<>();
+        // At registration time, the meter only returns a COUNT measurement
+        measurements.add(new Measurement(() -> 1.0, Statistic.COUNT));
+
+        Meter.builder("test.dynamic.custom", Meter.Type.OTHER, measurements).register(registry);
+
+        // Dynamically add a new MAX measurement after registration
+        measurements.add(new Measurement(() -> 5.0, Statistic.MAX));
+
+        String scraped = registry.scrape();
+        assertThat(scraped).contains("test_dynamic_custom_total{statistic=\"COUNT\"} 1")
+            .contains("test_dynamic_custom_max{statistic=\"MAX\"} 5");
+    }
+
+    @Test
     void gaugeWithTotalSuffixBehavior() {
         // A gauge ending in .total with a base unit (like DiskSpaceMetrics)
         // should retain '_total' in its Prometheus name (since it's followed by '_bytes')

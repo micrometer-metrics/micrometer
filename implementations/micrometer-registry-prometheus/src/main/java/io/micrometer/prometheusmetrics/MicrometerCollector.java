@@ -78,6 +78,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 class MicrometerCollector implements MultiCollector {
 
+    // avoid cloning each time we want to iterate the enum values
+    private static final Statistic[] STATISTICS = Statistic.values();
+
     private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
 
     private final Map<String, MetricFamilyDescriptor> descriptorsByFamilyName = new ConcurrentHashMap<>();
@@ -199,16 +202,14 @@ class MicrometerCollector implements MultiCollector {
         List<String> statKeys = new ArrayList<>(context.tagKeys);
         statKeys.add("statistic");
 
-        // precompute the family and labels per statistic; statistics that map to the
-        // same Prometheus name (e.g. TOTAL and TOTAL_TIME) get the same family
+        // Pre-populate all Statistic enum values at registration time so the EnumMap
+        // is read-only while supporting dynamic measurements.
         Map<Statistic, MeasurementFamily> familiesByStatistic = new EnumMap<>(Statistic.class);
-        for (Measurement measurement : measurements) {
-            familiesByStatistic.computeIfAbsent(measurement.getStatistic(), statistic -> {
-                List<String> statValues = new ArrayList<>(context.tagValues);
-                statValues.add(statistic.toString());
-                return new MeasurementFamily(customMeterFamily(statistic, statKeys, context.help),
-                        Labels.of(statKeys, statValues));
-            });
+        for (Statistic statistic : STATISTICS) {
+            List<String> statValues = new ArrayList<>(context.tagValues);
+            statValues.add(statistic.toString());
+            familiesByStatistic.put(statistic, new MeasurementFamily(
+                    customMeterFamily(statistic, statKeys, context.help), Labels.of(statKeys, statValues)));
         }
 
         add(context.id, samples -> {
