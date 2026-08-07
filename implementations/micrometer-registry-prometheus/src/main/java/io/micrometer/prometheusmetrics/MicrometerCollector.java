@@ -51,12 +51,7 @@ import io.prometheus.metrics.model.snapshots.SummarySnapshot;
 import io.prometheus.metrics.model.snapshots.SummarySnapshot.SummaryDataPointSnapshot;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -100,36 +95,39 @@ class MicrometerCollector implements MultiCollector {
     void addCounter(MeterContext context, PrometheusCounter counter) {
         MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.COUNTER, conventionName, context.tagKeys,
                 context.help);
-        addSingleDataPoint(context, family, () -> new CounterDataPointSnapshot(counter.count(), context.labels,
-                counter.exemplar(), context.createdTimestampMillis));
+        add(context.id, samples -> samples.accept(family, new CounterDataPointSnapshot(counter.count(), context.labels,
+                counter.exemplar(), context.createdTimestampMillis)));
     }
 
     void addFunctionCounter(MeterContext context, FunctionCounter functionCounter) {
         MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.COUNTER, conventionName, context.tagKeys,
                 context.help);
-        addSingleDataPoint(context, family, () -> new CounterDataPointSnapshot(functionCounter.count(), context.labels,
-                null, context.createdTimestampMillis));
+        add(context.id, samples -> samples.accept(family, new CounterDataPointSnapshot(functionCounter.count(),
+                context.labels, null, context.createdTimestampMillis)));
     }
 
     void addGauge(MeterContext context, Gauge gauge) {
         if (context.id.getName().endsWith(".info")) {
             MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.INFO, conventionName, context.tagKeys,
                     context.help);
-            addSingleDataPoint(context, family, () -> new InfoDataPointSnapshot(context.labels));
+            add(context.id, samples -> samples.accept(family, new InfoDataPointSnapshot(context.labels)));
         }
         else {
             MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.GAUGE, conventionName, context.tagKeys,
                     context.help);
-            addSingleDataPoint(context, family, () -> new GaugeDataPointSnapshot(gauge.value(), context.labels, null));
+            add(context.id,
+                    samples -> samples.accept(family, new GaugeDataPointSnapshot(gauge.value(), context.labels, null)));
         }
     }
 
     void addFunctionTimer(MeterContext context, FunctionTimer functionTimer) {
         MetricFamilyDescriptor family = getOrCreateDescriptor(MetricType.SUMMARY, conventionName, context.tagKeys,
                 context.help);
-        addSingleDataPoint(context, family,
-                () -> new SummaryDataPointSnapshot((long) functionTimer.count(), functionTimer.totalTime(SECONDS),
-                        Quantiles.EMPTY, context.labels, null, context.createdTimestampMillis));
+        add(context.id,
+                samples -> samples.accept(family,
+                        new SummaryDataPointSnapshot((long) functionTimer.count(),
+                                functionTimer.totalTime(TimeUnit.SECONDS), Quantiles.EMPTY, context.labels, null,
+                                context.createdTimestampMillis)));
     }
 
     void addTimer(MeterContext context, PrometheusTimer timer) {
@@ -248,11 +246,6 @@ class MicrometerCollector implements MultiCollector {
         }
     }
 
-    private void addSingleDataPoint(MeterContext context, MetricFamilyDescriptor family,
-            Supplier<DataPointSnapshot> dataPoint) {
-        add(context.id, samples -> samples.accept(family, dataPoint.get()));
-    }
-
     void add(Meter.Id id, Child child) {
         children.put(id, child);
     }
@@ -306,14 +299,14 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public MetricSnapshots collect() {
-        // descriptors are canonical per family, so grouping by descriptor groups by
-        // family
-        Map<MetricFamilyDescriptor, List<DataPointSnapshot>> dataPointsByFamily = new IdentityHashMap<>();
-        BiConsumer<MetricFamilyDescriptor, DataPointSnapshot> sink = (family,
-                dataPoint) -> dataPointsByFamily.computeIfAbsent(family, f -> new ArrayList<>()).add(dataPoint);
+        // descriptors are canonical per family
+        Map<MetricFamilyDescriptor, List<DataPointSnapshot>> dataPointsByFamily = new IdentityHashMap<>(
+                descriptorsByFamilyName.size());
 
         for (Child child : children.values()) {
-            child.collect(sink);
+            child.collect((family, dataPoint) -> dataPointsByFamily
+                .computeIfAbsent(family, f -> new ArrayList<>(children.size()))
+                .add(dataPoint));
         }
 
         List<MetricSnapshot> snapshots = new ArrayList<>(dataPointsByFamily.size());
