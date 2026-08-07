@@ -296,8 +296,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * that it does not have to be resolved again on every scrape.
      */
     private void applyToCollector(Meter.Id id, BiConsumer<MicrometerCollector, MeterContext> consumer) {
-        MeterContext context = createMeterContext(id);
         collectorMap.compute(getConventionName(id), (name, existingCollector) -> {
+            MeterContext context = createMeterContext(id);
             if (existingCollector == null) {
                 MicrometerCollector micrometerCollector = new MicrometerCollector(name, id);
                 consumer.accept(micrometerCollector, context);
