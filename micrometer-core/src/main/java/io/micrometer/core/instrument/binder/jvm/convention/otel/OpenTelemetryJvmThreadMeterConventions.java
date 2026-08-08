@@ -46,4 +46,27 @@ public class OpenTelemetryJvmThreadMeterConventions extends MicrometerJvmThreadM
         return new SimpleMeterConvention<>("jvm.thread.count", this::getThreadStateTags);
     }
 
+    /**
+     * OpenTelemetry recommends the {@code jvm.thread.daemon} attribute on
+     * {@code jvm.thread.count}.
+     * @return {@code true}
+     * @since 1.17.0
+     */
+    @Override
+    public boolean includeDaemonTag() {
+        return true;
+    }
+
+    /**
+     * {@code jvm.thread.daemon} boolean attribute as recommended by the OpenTelemetry
+     * semantic conventions.
+     * @param daemon whether the thread is a daemon thread
+     * @return tags for the daemon dimension
+     * @since 1.17.0
+     */
+    @Override
+    public Tags daemonTags(boolean daemon) {
+        return Tags.of("jvm.thread.daemon", Boolean.toString(daemon));
+    }
+
 }
