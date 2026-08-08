@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -59,6 +60,8 @@ public interface FunctionCounter extends Meter {
         private @Nullable String description;
 
         private @Nullable String baseUnit;
+
+        private @Nullable TimeUnit functionTimeUnit;
 
         private Builder(String name, T obj, ToDoubleFunction<T> f) {
             this.name = name;
@@ -104,11 +107,26 @@ public interface FunctionCounter extends Meter {
         }
 
         /**
+         * Use this if the unit is not time. Otherwise, use {@link #timeUnit(TimeUnit)}.
          * @param unit Base unit of the eventual counter.
          * @return The counter builder with added base unit.
          */
         public Builder<T> baseUnit(@Nullable String unit) {
             this.baseUnit = unit;
+            return this;
+        }
+
+        /**
+         * Only set this if this function counter is time-based. This will be used to
+         * convert from the time unit provided by the function to the base time unit for
+         * the {@link MeterRegistry}. If this is set, any {@link #baseUnit(String)} will
+         * be ignored and the registry's base time unit will be used instead.
+         * @param timeUnit time unit of the provided function return value.
+         * @return The counter builder with added time unit.
+         * @since 1.17.0
+         */
+        public Builder<T> timeUnit(@Nullable TimeUnit timeUnit) {
+            this.functionTimeUnit = timeUnit;
             return this;
         }
 
@@ -122,6 +140,11 @@ public interface FunctionCounter extends Meter {
          * @return A new or existing function counter.
          */
         public FunctionCounter register(MeterRegistry registry) {
+            if (functionTimeUnit != null) {
+                return registry.more()
+                    .functionTimeCounter(new Meter.Id(name, tags, null, description, Type.COUNTER), obj,
+                            functionTimeUnit, f);
+            }
             return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER), obj, f);
         }
 
