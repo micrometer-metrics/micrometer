@@ -13,28 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jvm.convention;
+package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMaxMeterConvention;
 
 import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
 
 /**
- * Get {@link MeterConvention} related to computer memory from the JVM metrics.
+ * Historical convention used in Micrometer instrumentation for JVM memory max metrics.
  *
  * @see io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
  * @since 1.16.0
- * @deprecated use individual convention types such as {@link JvmMemoryUsedMeterConvention},
- * {@link JvmMemoryCommittedMeterConvention}, and {@link JvmMemoryMaxMeterConvention} with
- * {@link io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics.Builder} instead
  */
-@Deprecated
-public interface JvmMemoryMeterConventions {
+public class MicrometerJvmMemoryMaxMeterConvention implements JvmMemoryMaxMeterConvention {
 
-    MeterConvention<MemoryPoolMXBean> getMemoryUsedConvention();
+    @Override
+    public String getName() {
+        return "jvm.memory.max";
+    }
 
-    MeterConvention<MemoryPoolMXBean> getMemoryCommittedConvention();
-
-    MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention();
+    @Override
+    public Tags getTags(MemoryPoolMXBean memoryPoolBean) {
+        return Tags.of("id", memoryPoolBean.getName(), "area",
+                MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap");
+    }
 
 }

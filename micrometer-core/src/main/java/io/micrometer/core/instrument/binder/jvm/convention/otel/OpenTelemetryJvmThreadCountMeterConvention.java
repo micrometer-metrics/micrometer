@@ -1,0 +1,44 @@
+/*
+ * Copyright 2025 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.core.instrument.binder.jvm.convention.otel;
+
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadCountMeterConvention;
+
+import java.util.Locale;
+
+/**
+ * Convention for JVM thread count metrics based on OpenTelemetry semantic conventions.
+ *
+ * @see <a href=
+ * "https://github.com/open-telemetry/semantic-conventions/blob/v1.37.0/docs/runtime/jvm-metrics.md">OpenTelemetry
+ * Semantic conventions for JVM metrics v1.37.0</a>
+ * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+ * @since 1.16.0
+ */
+public class OpenTelemetryJvmThreadCountMeterConvention implements JvmThreadCountMeterConvention {
+
+    @Override
+    public String getName() {
+        return "jvm.thread.count";
+    }
+
+    @Override
+    public Tags getTags(Thread.State state) {
+        return Tags.of("jvm.thread.state", state.name().toLowerCase(Locale.ROOT));
+    }
+
+}

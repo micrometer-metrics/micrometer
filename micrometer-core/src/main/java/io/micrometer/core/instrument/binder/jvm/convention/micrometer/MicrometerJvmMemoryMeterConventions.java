@@ -28,7 +28,13 @@ import java.lang.management.MemoryType;
  *
  * @see io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
  * @since 1.16.0
+ * @deprecated use individual convention types such as
+ * {@link MicrometerJvmMemoryUsedMeterConvention},
+ * {@link MicrometerJvmMemoryCommittedMeterConvention}, and
+ * {@link MicrometerJvmMemoryMaxMeterConvention} instead
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class MicrometerJvmMemoryMeterConventions implements JvmMemoryMeterConventions {
 
     protected final Tags extraTags;
