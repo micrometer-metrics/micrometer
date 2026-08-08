@@ -386,6 +386,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        // Capture at registration so custom counter `_created` timestamps match other
+        // meters (not recomputed on each scrape). See gh-7798.
+        long createdTimestampMillis = clock.wallTime();
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             collector.add(tagValues, (conventionName, tagKeys) -> {
@@ -399,11 +402,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         case TOTAL:
                         case TOTAL_TIME:
                             families.add(customCounterFamily(id, conventionName, "_sum",
-                                    Labels.of(statKeys, statValues), measurement.getValue()));
+                                    Labels.of(statKeys, statValues), measurement.getValue(), createdTimestampMillis));
                             break;
                         case COUNT:
                             families.add(customCounterFamily(id, conventionName, "", Labels.of(statKeys, statValues),
-                                    measurement.getValue()));
+                                    measurement.getValue(), createdTimestampMillis));
                             break;
                         case MAX:
                             families.add(customGaugeFamily(id, conventionName, "_max", Labels.of(statKeys, statValues),
@@ -432,8 +435,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private MicrometerCollector.Family<CounterDataPointSnapshot> customCounterFamily(Meter.Id id, String conventionName,
-            String suffix, Labels labels, double value) {
-        long createdTimestampMillis = clock.wallTime();
+            String suffix, Labels labels, double value, long createdTimestampMillis) {
         return new MicrometerCollector.Family<>(conventionName + suffix,
                 family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
                 getMetadata(conventionName + suffix, id.getDescription()),
