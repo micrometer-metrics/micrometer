@@ -412,6 +412,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        // Capture at registration so custom counter `_created` timestamps match other
+        // meters (not recomputed on each scrape). See gh-7798.
+        long createdTimestampMillis = clock.wallTime();
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             List<String> tagKeys = tagKeys(id);
@@ -442,7 +445,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     List<String> statValues = new ArrayList<>(tagValues);
                     statValues.add(measurement.getStatistic().toString());
                     families.add(customMeterFamily(id, collector.conventionName, measurement.getStatistic(),
-                            Labels.of(statKeys, statValues), measurement.getValue()));
+                            Labels.of(statKeys, statValues), measurement.getValue(), createdTimestampMillis));
                 }
                 return families.build();
             }, registrationDescriptors.toArray(new MetricFamilyDescriptor[0]));
@@ -458,10 +461,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private MicrometerCollector.Family<?> customMeterFamily(Meter.Id id, String conventionName, Statistic statistic,
-            Labels labels, double value) {
+            Labels labels, double value, long createdTimestampMillis) {
         CustomMeterMetric metric = customMeterMetric(conventionName, statistic);
         if (metric.metricType == MetricType.COUNTER) {
-            return customCounterFamily(id, metric, labels, value);
+            return customCounterFamily(id, metric, labels, value, createdTimestampMillis);
         }
         return customGaugeFamily(id, metric, labels, value);
     }
@@ -488,8 +491,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private MicrometerCollector.Family<CounterDataPointSnapshot> customCounterFamily(Meter.Id id,
-            CustomMeterMetric metric, Labels labels, double value) {
-        long createdTimestampMillis = clock.wallTime();
+            CustomMeterMetric metric, Labels labels, double value, long createdTimestampMillis) {
         return new MicrometerCollector.Family<>(metric.name,
                 family -> new CounterSnapshot(getMetadata(family.conventionName, id.getDescription()),
                         family.dataPointSnapshots),
