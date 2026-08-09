@@ -23,7 +23,6 @@ import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.TraceFlags;
 import io.opentelemetry.api.trace.TraceState;
 import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
-import io.opentelemetry.sdk.metrics.internal.data.ImmutableDoubleExemplarData;
 import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -120,8 +119,8 @@ class ExemplarTestRecorder {
                 ? SpanContext.create(traceId, spanId, TraceFlags.getDefault(), TraceState.getDefault())
                 : SpanContext.getInvalid();
 
-        return ImmutableDoubleExemplarData.create(builder.build(), TimeUnit.MILLISECONDS.toNanos(clock.wallTime()),
-                spanContext, value);
+        return DoubleExemplarData.create(builder.build(), TimeUnit.MILLISECONDS.toNanos(clock.wallTime()), spanContext,
+                value);
     }
 
     static class TestExemplarContextProvider implements ExemplarContextProvider {

@@ -188,10 +188,9 @@ class OtlpMetricConverter {
     }
 
     private void writeFunctionTimer(FunctionTimer functionTimer) {
-        HistogramPointData point = ImmutableHistogramPointData.create(getStartTimeNanos(functionTimer),
-                getTimeUnixNano(), getAttributesForId(functionTimer.getId()), functionTimer.totalTime(baseTimeUnit),
-                false, 0.0, false, 0.0, Collections.emptyList(),
-                Collections.singletonList((long) functionTimer.count()), Collections.emptyList());
+        HistogramPointData point = HistogramPointData.create(getStartTimeNanos(functionTimer), getTimeUnixNano(),
+                getAttributesForId(functionTimer.getId()), functionTimer.totalTime(baseTimeUnit), false, 0.0, false,
+                0.0, Collections.emptyList(), Collections.singletonList((long) functionTimer.count()));
         addHistogramPointData(functionTimer.getId(), point);
     }
 
@@ -218,13 +217,25 @@ class OtlpMetricConverter {
         }
 
         HistogramPointData point;
-        if (isDelta()) {
-            point = ImmutableHistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false, 0.0,
-                    true, max, explicitBounds, bucketCounts, exemplars);
+        if (exemplars.isEmpty()) {
+            if (isDelta()) {
+                point = HistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false, 0.0,
+                        true, max, explicitBounds, bucketCounts);
+            }
+            else {
+                point = HistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false, 0.0,
+                        false, 0.0, explicitBounds, bucketCounts);
+            }
         }
         else {
-            point = ImmutableHistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false, 0.0,
-                    false, 0.0, explicitBounds, bucketCounts, exemplars);
+            if (isDelta()) {
+                point = ImmutableHistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false,
+                        0.0, true, max, explicitBounds, bucketCounts, exemplars);
+            }
+            else {
+                point = ImmutableHistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false,
+                        0.0, false, 0.0, explicitBounds, bucketCounts, exemplars);
+            }
         }
 
         addHistogramPointData(histogramSupport.getId(), point);
