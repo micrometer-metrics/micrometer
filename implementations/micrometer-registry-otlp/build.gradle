@@ -10,7 +10,11 @@ dependencies {
     api project(':micrometer-core')
 
     implementation platform(libs.openTelemetry.bom)
-    implementation libs.openTelemetry.exporter.otlp
+    implementation(libs.openTelemetry.exporter.otlp) {
+        exclude group: 'io.opentelemetry', module: 'opentelemetry-exporter-sender-okhttp'
+        exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-trace'
+        exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-logs'
+    }
     implementation(libs.openTelemetry.exporter.otlp.common) {
         exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-extension-autoconfigure-spi'
     }

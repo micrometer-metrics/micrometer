@@ -32,8 +32,6 @@ import java.util.function.Supplier;
  */
 class OtlpMetricsSenderHttpSender implements HttpSender {
 
-    private static final ThreadLocal<Supplier<String>> READABLE_METRICS_DATA_SUPPLIER = new ThreadLocal<>();
-
     private final OtlpMetricsSender otlpMetricsSender;
 
     private final Supplier<String> urlSupplier;
@@ -41,14 +39,6 @@ class OtlpMetricsSenderHttpSender implements HttpSender {
     private final Supplier<Map<String, String>> headersSupplier;
 
     private final Supplier<CompressionMode> compressionModeSupplier;
-
-    static void setReadableMetricsDataSupplier(Supplier<String> supplier) {
-        READABLE_METRICS_DATA_SUPPLIER.set(supplier);
-    }
-
-    static void clearReadableMetricsDataSupplier() {
-        READABLE_METRICS_DATA_SUPPLIER.remove();
-    }
 
     OtlpMetricsSenderHttpSender(OtlpMetricsSender otlpMetricsSender, Supplier<String> urlSupplier,
             Supplier<Map<String, String>> headersSupplier, Supplier<CompressionMode> compressionModeSupplier) {
@@ -66,17 +56,11 @@ class OtlpMetricsSenderHttpSender implements HttpSender {
             messageWriter.writeMessage(baos);
             byte[] metricsData = baos.toByteArray();
 
-            OtlpMetricsSender.Request.Builder builder = OtlpMetricsSender.Request.builder(metricsData)
+            OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(metricsData)
                 .address(urlSupplier.get())
                 .headers(headersSupplier.get())
-                .compressionMode(compressionModeSupplier.get());
-
-            Supplier<String> readableSupplier = READABLE_METRICS_DATA_SUPPLIER.get();
-            if (readableSupplier != null) {
-                builder.readableMetricsData(readableSupplier);
-            }
-
-            OtlpMetricsSender.Request request = builder.build();
+                .compressionMode(compressionModeSupplier.get())
+                .build();
 
             otlpMetricsSender.send(request);
 

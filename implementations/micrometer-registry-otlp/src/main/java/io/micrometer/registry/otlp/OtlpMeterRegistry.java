@@ -38,7 +38,6 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.common.ComponentLoader;
-import io.opentelemetry.exporter.internal.otlp.metrics.MetricsRequestMarshaler;
 import io.opentelemetry.exporter.otlp.http.metrics.OtlpHttpMetricExporter;
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.common.export.HttpSender;
@@ -47,8 +46,6 @@ import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.resources.Resource;
 import org.jspecify.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -209,18 +206,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             Collection<MetricData> metrics = otlpMetricConverter.getAllMetrics();
             if (!metrics.isEmpty()) {
                 try {
-                    OtlpMetricsSenderHttpSender.setReadableMetricsDataSupplier(() -> {
-                        try {
-                            MetricsRequestMarshaler marshaler = MetricsRequestMarshaler.create(metrics);
-                            ByteArrayOutputStream jsonOs = new ByteArrayOutputStream();
-                            marshaler.writeJsonTo(jsonOs);
-                            return new String(jsonOs.toByteArray(), StandardCharsets.UTF_8);
-                        }
-                        catch (Throwable t) {
-                            return metrics.toString();
-                        }
-                    });
-
                     CompletableResultCode result = this.otlpHttpMetricExporter.export(metrics);
                     result.join(config.step().toMillis(), TimeUnit.MILLISECONDS);
                     if (!result.isSuccess()) {
@@ -232,10 +217,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
                             getConfigurationContext()), e);
                 }
-                finally {
-                    OtlpMetricsSenderHttpSender.clearReadableMetricsDataSupplier();
-                }
-            }
             }
         }
     }
