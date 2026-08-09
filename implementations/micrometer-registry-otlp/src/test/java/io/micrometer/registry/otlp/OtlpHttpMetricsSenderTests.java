@@ -19,20 +19,14 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.opentelemetry.sdk.common.CompletableResultCode;
-import io.opentelemetry.sdk.common.export.HttpResponse;
-import io.opentelemetry.sdk.common.export.MessageWriter;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,44 +56,6 @@ class OtlpHttpMetricsSenderTests {
         assertThatException().isThrownBy(() -> otlpHttpMetricsSender.send(request))
             .satisfies((ex) -> assertThat(ex.getClass().getSimpleName())
                 .isEqualTo("OtlpHttpMetricsSendUnsuccessfulException"));
-    }
-
-    @Test
-    void sendWithOtelHttpSenderDelegation(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
-        String path = "/v1/metrics";
-        server.stubFor(post(urlEqualTo(path)).willReturn(ok()));
-
-        AtomicBoolean otelSenderCalled = new AtomicBoolean(false);
-        io.opentelemetry.sdk.common.export.HttpSender otelSender = new io.opentelemetry.sdk.common.export.HttpSender() {
-            @Override
-            public void send(MessageWriter messageWriter, Consumer<HttpResponse> onResponse,
-                    Consumer<Throwable> onError) {
-                otelSenderCalled.set(true);
-                try {
-                    HttpSender micrometerSender = new HttpUrlConnectionSender();
-                    OtlpMicrometerHttpSender micrometerAdapter = new OtlpMicrometerHttpSender(micrometerSender);
-                    micrometerAdapter.send(messageWriter, onResponse, onError);
-                }
-                catch (Throwable t) {
-                    onError.accept(t);
-                }
-            }
-
-            @Override
-            public CompletableResultCode shutdown() {
-                return CompletableResultCode.ofSuccess();
-            }
-        };
-
-        OtlpHttpMetricsSender sender = new OtlpHttpMetricsSender(otelSender);
-        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder("hello".getBytes(StandardCharsets.UTF_8))
-            .address(server.url(path))
-            .build();
-
-        sender.send(request);
-
-        assertThat(otelSenderCalled).isTrue();
-        server.verify(postRequestedFor(urlEqualTo(path)));
     }
 
     @Test

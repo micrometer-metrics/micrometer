@@ -38,11 +38,11 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.exporter.internal.otlp.metrics.MetricsRequestMarshaler;
+import io.opentelemetry.sdk.common.export.HttpResponse;
+import io.opentelemetry.sdk.common.export.HttpSender;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.resources.Resource;
 import org.jspecify.annotations.Nullable;
-
-import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
@@ -50,6 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
@@ -80,7 +81,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpConfig config;
 
-    private final OtlpMetricsSender metricsSender;
+    private final HttpSender otelHttpSender;
 
     private final HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup;
 
@@ -124,7 +125,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
-        this.metricsSender = metricsSender;
+        this.otelHttpSender = new OtlpMetricsSenderHttpSender(metricsSender, config::url, config::headers,
+                config::compressionMode);
         this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
         this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         this.resource = createResource();
@@ -187,26 +189,33 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 Collection<MetricData> metrics = otlpMetricConverter.getAllMetrics();
                 if (!metrics.isEmpty()) {
                     MetricsRequestMarshaler marshaler = MetricsRequestMarshaler.create(metrics);
-                    ByteArrayOutputStream os = new ByteArrayOutputStream(marshaler.getBinarySerializedSize());
-                    marshaler.writeBinaryTo(os);
+                    OtlpMetricsSenderHttpSender.MarshalerMessageWriter messageWriter = new OtlpMetricsSenderHttpSender.MarshalerMessageWriter(
+                            marshaler);
 
-                    OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(os.toByteArray())
-                        .address(config.url())
-                        .headers(config.headers())
-                        .compressionMode(config.compressionMode())
-                        .readableMetricsData(() -> {
-                            try {
-                                ByteArrayOutputStream jsonOs = new ByteArrayOutputStream();
-                                marshaler.writeJsonTo(jsonOs);
-                                return new String(jsonOs.toByteArray(), StandardCharsets.UTF_8);
-                            }
-                            catch (Throwable t) {
-                                return metrics.toString();
-                            }
-                        })
-                        .build();
+                    AtomicReference<Throwable> errorRef = new AtomicReference<>();
+                    AtomicReference<HttpResponse> responseRef = new AtomicReference<>();
 
-                    this.metricsSender.send(request);
+                    this.otelHttpSender.send(messageWriter, responseRef::set, errorRef::set);
+
+                    if (errorRef.get() != null) {
+                        Throwable cause = errorRef.get();
+                        if (cause instanceof Exception) {
+                            throw (Exception) cause;
+                        }
+                        throw new Exception(cause);
+                    }
+
+                    HttpResponse response = responseRef.get();
+                    if (response != null && (response.getStatusCode() < 200 || response.getStatusCode() >= 300)) {
+                        String body = "";
+                        byte[] responseBody = response.getResponseBody();
+                        if (responseBody != null) {
+                            body = new String(responseBody, StandardCharsets.UTF_8);
+                        }
+                        throw new RuntimeException(
+                                String.format("Server responded with HTTP status code %d and body %s",
+                                        response.getStatusCode(), body));
+                    }
                 }
             }
             catch (Exception e) {
