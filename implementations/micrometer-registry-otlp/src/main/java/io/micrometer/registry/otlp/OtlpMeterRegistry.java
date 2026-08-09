@@ -463,8 +463,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                                 minimumExpectedValue, baseTimeUnit, exemplarSamplerFactory);
             }
 
-            return getExplicitBucketHistogram(clock, distributionStatisticConfig,
-                    config.aggregationTemporality(), config.step().toMillis(), baseTimeUnit, exemplarSamplerFactory);
+            return getExplicitBucketHistogram(clock, distributionStatisticConfig, config.aggregationTemporality(),
+                    config.step().toMillis(), baseTimeUnit, exemplarSamplerFactory);
         }
 
         if (distributionStatisticConfig.isPublishingPercentiles()) {

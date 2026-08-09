@@ -803,14 +803,18 @@ abstract class OtlpMeterRegistryTest {
             .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM));
         assertMaxGaugeMetrics(dsMetrics);
         List<MetricData> timerExpoMetrics = writeToMetrics(timer.register(registryWithExponentialHistogram));
-        assertThat(timerExpoMetrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM).singleElement().satisfies(metric -> {
-            assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM);
-        });
+        assertThat(timerExpoMetrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> {
+                assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM);
+            });
         assertMaxGaugeMetrics(timerExpoMetrics);
         List<MetricData> dsExpoMetrics = writeToMetrics(ds.register(registryWithExponentialHistogram));
-        assertThat(dsExpoMetrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM).singleElement().satisfies(metric -> {
-            assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM);
-        });
+        assertThat(dsExpoMetrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> {
+                assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM);
+            });
         assertMaxGaugeMetrics(dsExpoMetrics);
     }
 
@@ -831,7 +835,8 @@ abstract class OtlpMeterRegistryTest {
 
         clock.add(exponentialHistogramOtlpConfig().step());
 
-        assertThat(writeToMetrics(timerWithZero1ms)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+        assertThat(writeToMetrics(timerWithZero1ms))
+            .filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
             .singleElement()
             .satisfies(exponentialHistogram -> {
                 ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
@@ -844,7 +849,8 @@ abstract class OtlpMeterRegistryTest {
                 assertThat(exponentialHistogram.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM);
             });
 
-        assertThat(writeToMetrics(timerWithZero1ns)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+        assertThat(writeToMetrics(timerWithZero1ns))
+            .filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
             .singleElement()
             .satisfies(exponentialHistogram -> {
                 ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
@@ -1156,7 +1162,8 @@ abstract class OtlpMeterRegistryTest {
                     .next();
                 assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(15);
             });
-        assertThat(writeToMetrics(lowVariationOther)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+        assertThat(writeToMetrics(lowVariationOther))
+            .filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
             .singleElement()
             .satisfies(exponentialHistogram -> {
                 ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
@@ -1200,7 +1207,8 @@ abstract class OtlpMeterRegistryTest {
                     .next();
                 assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(15);
             });
-        assertThat(writeToMetrics(lowVariationOther2)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+        assertThat(writeToMetrics(lowVariationOther2))
+            .filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
             .singleElement()
             .satisfies(exponentialHistogram -> {
                 ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
