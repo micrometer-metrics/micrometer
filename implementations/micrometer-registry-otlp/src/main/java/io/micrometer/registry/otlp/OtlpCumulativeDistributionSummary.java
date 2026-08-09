@@ -32,9 +32,8 @@ class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary
 
     private final @Nullable ExemplarSampler exemplarSampler;
 
-    @SuppressWarnings("NullAway")
     OtlpCumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, @Nullable Histogram histogram, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
+            double scale, Histogram histogram, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock, distributionStatisticConfig, scale, histogram);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
         if (histogram instanceof OtlpExemplarsSupport) {

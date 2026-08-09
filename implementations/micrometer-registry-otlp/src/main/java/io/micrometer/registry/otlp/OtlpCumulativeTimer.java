@@ -33,9 +33,8 @@ class OtlpCumulativeTimer extends CumulativeTimer
 
     private final @Nullable ExemplarSampler exemplarSampler;
 
-    @SuppressWarnings("NullAway")
     OtlpCumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            PauseDetector pauseDetector, TimeUnit baseTimeUnit, @Nullable Histogram histogram,
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit, Histogram histogram,
             @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, histogram);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());

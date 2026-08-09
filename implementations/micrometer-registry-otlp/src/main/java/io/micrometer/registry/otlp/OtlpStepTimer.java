@@ -47,8 +47,7 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport, OtlpE
      * @param pauseDetector pause detector
      * @param otlpConfig config of the registry
      */
-    @SuppressWarnings("NullAway")
-    OtlpStepTimer(Id id, Clock clock, PauseDetector pauseDetector, @Nullable Histogram histogram, OtlpConfig otlpConfig,
+    OtlpStepTimer(Id id, Clock clock, PauseDetector pauseDetector, Histogram histogram, OtlpConfig otlpConfig,
             @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock, pauseDetector, otlpConfig.baseTimeUnit(), histogram);
         countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0L, count::sumThenReset,

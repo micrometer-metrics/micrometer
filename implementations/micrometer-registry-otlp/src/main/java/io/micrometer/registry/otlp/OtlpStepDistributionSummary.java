@@ -46,8 +46,7 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary
      * @param scale scale
      * @param otlpConfig config for registry
      */
-    @SuppressWarnings("NullAway")
-    OtlpStepDistributionSummary(Id id, Clock clock, double scale, @Nullable Histogram histogram, OtlpConfig otlpConfig,
+    OtlpStepDistributionSummary(Id id, Clock clock, double scale, Histogram histogram, OtlpConfig otlpConfig,
             @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, scale, histogram);
         this.countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0.0, count::sumThenReset,

@@ -449,11 +449,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return Resource.create(builder.build());
     }
 
-    private @Nullable Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+    private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         return getHistogram(id, distributionStatisticConfig, null);
     }
 
-    private @Nullable Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+    private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             @Nullable TimeUnit baseTimeUnit) {
         if (distributionStatisticConfig.isPublishingHistogram()) {
             HistogramFlavor flavor = this.histogramFlavorPerMeterLookup
@@ -492,7 +492,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return NoopHistogram.INSTANCE;
     }
 
-    private @Nullable Histogram getStepBucketHistogram(DistributionStatisticConfig distributionStatisticConfig,
+    private Histogram getStepBucketHistogram(DistributionStatisticConfig distributionStatisticConfig,
             @Nullable TimeUnit baseTimeUnit) {
         double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
         long stepMillis = config.step().toMillis();
@@ -525,7 +525,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     exemplarSamplerFactory, baseTimeUnit != null);
         }
 
-        return null;
+        return NoopHistogram.INSTANCE;
     }
 
     // VisibleForTesting
