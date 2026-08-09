@@ -38,9 +38,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.exporter.internal.otlp.metrics.MetricsRequestMarshaler;
-import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.metrics.data.MetricData;
-import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import io.opentelemetry.sdk.resources.Resource;
 import org.jspecify.annotations.Nullable;
 
@@ -81,9 +79,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpConfig config;
 
-    private final @Nullable OtlpMetricsSender metricsSender;
-
-    private final @Nullable MetricExporter metricExporter;
+    private final OtlpMetricsSender metricsSender;
 
     private final HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup;
 
@@ -128,24 +124,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
         this.metricsSender = metricsSender;
-        this.metricExporter = null;
-        this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
-        this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
-        this.resource = createResource();
-        this.aggregationTemporality = config.aggregationTemporality();
-        this.exemplarSamplerFactory = exemplarContextProvider != null
-                ? new OtlpExemplarSamplerFactory(exemplarContextProvider, clock, config) : null;
-        config().namingConvention(NamingConvention.dot);
-        start(threadFactory);
-    }
-
-    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, MetricExporter metricExporter,
-            @Nullable ExemplarContextProvider exemplarContextProvider) {
-        super(config, clock);
-        this.config = config;
-        this.baseTimeUnit = config.baseTimeUnit();
-        this.metricsSender = null;
-        this.metricExporter = metricExporter;
         this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
         this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         this.resource = createResource();
@@ -207,38 +185,28 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             Collection<MetricData> metrics = otlpMetricConverter.getAllMetrics();
             if (!metrics.isEmpty()) {
                 try {
-                    if (this.metricsSender != null) {
-                        MetricsRequestMarshaler marshaler = MetricsRequestMarshaler.create(metrics);
-                        ByteArrayOutputStream os = new ByteArrayOutputStream(marshaler.getBinarySerializedSize());
-                        marshaler.writeBinaryTo(os);
+                    MetricsRequestMarshaler marshaler = MetricsRequestMarshaler.create(metrics);
+                    ByteArrayOutputStream os = new ByteArrayOutputStream(marshaler.getBinarySerializedSize());
+                    marshaler.writeBinaryTo(os);
 
-                        String readableData;
-                        try {
-                            ByteArrayOutputStream jsonOs = new ByteArrayOutputStream();
-                            marshaler.writeJsonTo(jsonOs);
-                            readableData = new String(jsonOs.toByteArray(), StandardCharsets.UTF_8);
-                        }
-                        catch (Throwable t) {
-                            readableData = metrics.toString();
-                        }
-
-                        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(os.toByteArray())
-                            .address(config.url())
-                            .headers(config.headers())
-                            .compressionMode(config.compressionMode())
-                            .readableMetricsData(readableData)
-                            .build();
-
-                        this.metricsSender.send(request);
+                    String readableData;
+                    try {
+                        ByteArrayOutputStream jsonOs = new ByteArrayOutputStream();
+                        marshaler.writeJsonTo(jsonOs);
+                        readableData = new String(jsonOs.toByteArray(), StandardCharsets.UTF_8);
                     }
-                    else if (this.metricExporter != null) {
-                        CompletableResultCode resultCode = this.metricExporter.export(metrics);
-                        resultCode.join(config.readTimeout().toMillis(), TimeUnit.MILLISECONDS);
-                        if (!resultCode.isSuccess()) {
-                            logger.warn("Failed to publish metrics to OTLP receiver (context: {})",
-                                    getConfigurationContext());
-                        }
+                    catch (Throwable t) {
+                        readableData = metrics.toString();
                     }
+
+                    OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(os.toByteArray())
+                        .address(config.url())
+                        .headers(config.headers())
+                        .compressionMode(config.compressionMode())
+                        .readableMetricsData(readableData)
+                        .build();
+
+                    this.metricsSender.send(request);
                 }
                 catch (Exception e) {
                     logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
@@ -362,9 +330,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .forEach(OtlpExemplarsSupport::closingExemplarsRollover);
         }
 
-        if (this.metricExporter != null) {
-            this.metricExporter.close();
-        }
         super.close();
     }
 
@@ -686,8 +651,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         private @Nullable OtlpMetricsSender metricsSender;
 
-        private @Nullable MetricExporter metricExporter;
-
         private @Nullable ExemplarContextProvider exemplarContextProvider;
 
         private Builder(OtlpConfig otlpConfig) {
@@ -718,27 +681,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             return this;
         }
 
-        /**
-         * Provide your own custom metric exporter. This can be used to export OTLP
-         * metrics from OtlpMeterRegistry using different transports or exporters.
-         * @param metricExporter custom metric exporter
-         * @return builder
-         */
-        public Builder metricExporter(MetricExporter metricExporter) {
-            this.metricExporter = metricExporter;
-            return this;
-        }
-
         public Builder exemplarContextProvider(ExemplarContextProvider exemplarContextProvider) {
             this.exemplarContextProvider = exemplarContextProvider;
             return this;
         }
 
         public OtlpMeterRegistry build() {
-            if (this.metricExporter != null) {
-                return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, this.metricExporter,
-                        exemplarContextProvider);
-            }
             OtlpMetricsSender sender = this.metricsSender != null ? this.metricsSender
                     : createDefaultSender(otlpConfig);
             return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, sender, exemplarContextProvider);

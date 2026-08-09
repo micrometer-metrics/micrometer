@@ -20,13 +20,12 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Timer;
 import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.metrics.data.*;
-import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -60,7 +59,7 @@ abstract class OtlpMeterRegistryTest {
 
     protected ExemplarTestRecorder recorder;
 
-    protected MetricExporter mockMetricExporter;
+    protected OtlpMetricsSender mockMetricsSender;
 
     OtlpMeterRegistry registry;
 
@@ -74,18 +73,17 @@ abstract class OtlpMeterRegistryTest {
     void setUp() {
         this.clock = new MockClock();
         OtlpConfig config = otlpConfig();
-        this.mockMetricExporter = mock(MetricExporter.class);
-        when(mockMetricExporter.export(any())).thenReturn(CompletableResultCode.ofSuccess());
+        this.mockMetricsSender = mock(OtlpMetricsSender.class);
         this.contextProvider = new ExemplarTestRecorder.TestExemplarContextProvider();
         this.recorder = new ExemplarTestRecorder(contextProvider, clock);
         this.registry = OtlpMeterRegistry.builder(config)
             .clock(clock)
-            .metricExporter(mockMetricExporter)
+            .metricsSender(mockMetricsSender)
             .exemplarContextProvider(contextProvider)
             .build();
         this.registryWithExponentialHistogram = OtlpMeterRegistry.builder(exponentialHistogramOtlpConfig())
             .clock(clock)
-            .metricExporter(mockMetricExporter)
+            .metricsSender(mockMetricsSender)
             .exemplarContextProvider(contextProvider)
             .build();
     }
@@ -174,7 +172,7 @@ abstract class OtlpMeterRegistryTest {
         writeToMetric(TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry));
         registry.publish();
 
-        verify(this.mockMetricExporter).export(any());
+        verify(this.mockMetricsSender).send(any());
     }
 
     @Test
@@ -191,17 +189,19 @@ abstract class OtlpMeterRegistryTest {
             }
         };
 
-        MetricExporter mockExporter = mock(MetricExporter.class);
-        when(mockExporter.export(any())).thenReturn(CompletableResultCode.ofSuccess());
+        OtlpMetricsSender mockSender = mock(OtlpMetricsSender.class);
         OtlpMeterRegistry registryWithCompression = OtlpMeterRegistry.builder(configWithCompressionOn)
             .clock(clock)
-            .metricExporter(mockExporter)
+            .metricsSender(mockSender)
             .build();
 
         Counter.builder("test.counter").register(registryWithCompression).increment();
         registryWithCompression.publish();
 
-        verify(mockExporter).export(any());
+        ArgumentCaptor<OtlpMetricsSender.Request> requestCaptor = ArgumentCaptor
+            .forClass(OtlpMetricsSender.Request.class);
+        verify(mockSender).send(requestCaptor.capture());
+        assertThat(requestCaptor.getValue().getCompressionMode()).isEqualTo(CompressionMode.GZIP);
     }
 
     @Test
