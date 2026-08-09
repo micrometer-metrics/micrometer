@@ -11,10 +11,7 @@ dependencies {
 
     implementation platform(libs.openTelemetry.bom)
     implementation('io.opentelemetry:opentelemetry-exporter-otlp-common') {
-        exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-trace'
-        exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-logs'
         exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-extension-autoconfigure-spi'
-        exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk'
     }
     implementation libs.openTelemetry.sdk.metrics
 
