@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.sdk.metrics.data.*;
 import org.jspecify.annotations.Nullable;
