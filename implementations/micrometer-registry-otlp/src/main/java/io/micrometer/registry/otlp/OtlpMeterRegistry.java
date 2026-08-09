@@ -333,46 +333,32 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         super.close();
     }
 
+    private boolean shouldPublishDataForLastStep() {
+        if (this.lastMeterRolloverStartTime < 0) {
+            return false;
+        }
+
+        final long lastPublishedStep = getLastScheduledPublishStartTime() / config.step().toMillis();
+        final long lastPolledStep = this.lastMeterRolloverStartTime / config.step().toMillis();
+        return lastPublishedStep < lastPolledStep;
+    }
+
     private void closingRollover(Meter meter) {
-        if (isCumulative() && meter instanceof OtlpExemplarsSupport) {
-            ((OtlpExemplarsSupport) meter).closingExemplarsRollover();
+        if (meter instanceof StepCounter) {
+            ((StepCounter) meter)._closingRollover();
         }
-        meter.match(gauge -> null, this::rollover, this::rollover, this::rollover, meter1 -> null, meter1 -> null,
-                functionCounter -> null, functionTimer -> null, meter1 -> null);
-    }
-
-    private double rollover(Counter counter) {
-        if (counter instanceof StepCounter) {
-            ((StepCounter) counter)._closingRollover();
+        else if (meter instanceof StepFunctionCounter) {
+            ((StepFunctionCounter<?>) meter)._closingRollover();
         }
-
-        return counter.count();
-    }
-
-    private HistogramSnapshot rollover(HistogramSupport histogramSupport) {
-        if (histogramSupport instanceof OtlpStepTimer) {
-            ((OtlpStepTimer) histogramSupport)._closingRollover();
+        else if (meter instanceof StepFunctionTimer) {
+            ((StepFunctionTimer<?>) meter)._closingRollover();
         }
-        else if (histogramSupport instanceof OtlpStepDistributionSummary) {
-            ((OtlpStepDistributionSummary) histogramSupport)._closingRollover();
+        else if (meter instanceof OtlpStepTimer) {
+            ((OtlpStepTimer) meter)._closingRollover();
         }
-
-        return histogramSupport.takeSnapshot();
-    }
-
-    /**
-     * Determine if data for the last step should be published during close. The decision
-     * is made based on when the last scheduled rollover started.
-     */
-    // VisibleForTesting
-    boolean shouldPublishDataForLastStep() {
-        if (this.lastMeterRolloverStartTime == -1) {
-            return true;
+        else if (meter instanceof OtlpStepDistributionSummary) {
+            ((OtlpStepDistributionSummary) meter)._closingRollover();
         }
-
-        long lastMeterRolloverDuration = clock.wallTime() - this.lastMeterRolloverStartTime;
-        long allowableDelayDuration = (config.step().toMillis() / 2);
-        return lastMeterRolloverDuration > allowableDelayDuration;
     }
 
     /**
@@ -449,6 +435,22 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return Resource.create(builder.build());
     }
 
+    private HistogramFlavor histogramFlavor(Meter.Id id, OtlpConfig otlpConfig,
+            DistributionStatisticConfig distributionStatisticConfig) {
+        HistogramFlavor preferredHistogramFlavor = histogramFlavorPerMeterLookup
+            .getHistogramFlavor(otlpConfig.histogramFlavorPerMeter(), id);
+        preferredHistogramFlavor = preferredHistogramFlavor == null ? otlpConfig.histogramFlavor()
+                : preferredHistogramFlavor;
+        final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
+            .getServiceLevelObjectiveBoundaries();
+        if (distributionStatisticConfig.isPublishingHistogram()
+                && preferredHistogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+                && (serviceLevelObjectiveBoundaries == null || serviceLevelObjectiveBoundaries.length == 0)) {
+            return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+        }
+        return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
+    }
+
     private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         return getHistogram(id, distributionStatisticConfig, null);
     }
@@ -456,11 +458,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             @Nullable TimeUnit baseTimeUnit) {
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            HistogramFlavor flavor = this.histogramFlavorPerMeterLookup
-                .getHistogramFlavor(config.histogramFlavorPerMeter(), id);
-            if (flavor == null) {
-                flavor = config.histogramFlavor();
-            }
+            HistogramFlavor flavor = histogramFlavor(id, config, distributionStatisticConfig);
 
             if (flavor == HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM) {
                 return getStepBucketHistogram(distributionStatisticConfig, baseTimeUnit);
@@ -473,15 +471,20 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
             double maxScale = Math.min(config.maxScale(), 20);
 
+            Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
+            if (minimumExpectedValue == null) {
+                minimumExpectedValue = 0.0;
+            }
+
             if (AggregationTemporality.isCumulative(aggregationTemporality)) {
-                return new CumulativeBase2ExponentialHistogram((int) maxScale, maxBuckets, 0.0, baseTimeUnit,
-                        exemplarSamplerFactory);
+                return new CumulativeBase2ExponentialHistogram((int) maxScale, maxBuckets, minimumExpectedValue,
+                        baseTimeUnit, exemplarSamplerFactory);
             }
 
             long stepMillis = config.step().toMillis();
             if (stepMillis > 0) {
-                return new DeltaBase2ExponentialHistogram((int) maxScale, maxBuckets, 0.0, baseTimeUnit, clock,
-                        stepMillis, exemplarSamplerFactory);
+                return new DeltaBase2ExponentialHistogram((int) maxScale, maxBuckets, minimumExpectedValue,
+                        baseTimeUnit, clock, stepMillis, exemplarSamplerFactory);
             }
         }
 
@@ -521,12 +524,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     // VisibleForTesting
     static double[] getSloWithPositiveInf(DistributionStatisticConfig distributionStatisticConfig) {
         double[] sloBoundaries = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
-        if (sloBoundaries == null || sloBoundaries.length == 0) {
-            NavigableSet<Double> histogramBuckets = distributionStatisticConfig.getHistogramBuckets(true);
-            if (histogramBuckets != null && !histogramBuckets.isEmpty()) {
-                sloBoundaries = histogramBuckets.stream().mapToDouble(Double::doubleValue).toArray();
-            }
-        }
         if (sloBoundaries == null || sloBoundaries.length == 0) {
             // When there are no SLO's associated with DistributionStatisticConfig we will
             // add one with Positive

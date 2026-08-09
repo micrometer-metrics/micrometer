@@ -19,6 +19,8 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.sdk.metrics.data.*;
 import org.jspecify.annotations.Nullable;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import static io.micrometer.registry.otlp.HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
 import static io.micrometer.registry.otlp.HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
@@ -775,6 +778,445 @@ abstract class OtlpMeterRegistryTest {
                 assertThat(metric.getHistogramData().getPoints()).hasSize(1);
                 assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars()).singleElement()
                     .isEqualTo(exemplar2);
+            });
+    }
+
+    @Test
+    void distributionWithSLOShouldWriteHistogramDataPoint() {
+        Timer.Builder timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .serviceLevelObjectives(Duration.ofMillis(1));
+        DistributionSummary.Builder ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .serviceLevelObjectives(1.0);
+
+        List<MetricData> timerMetrics = writeToMetrics(timer.register(registry));
+        assertThat(timerMetrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM));
+        assertMaxGaugeMetrics(timerMetrics);
+        List<MetricData> dsMetrics = writeToMetrics(ds.register(registry));
+        assertThat(dsMetrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM));
+        assertMaxGaugeMetrics(dsMetrics);
+        List<MetricData> timerExpoMetrics = writeToMetrics(timer.register(registryWithExponentialHistogram));
+        assertThat(timerExpoMetrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM).singleElement().satisfies(metric -> {
+            assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM);
+        });
+        assertMaxGaugeMetrics(timerExpoMetrics);
+        List<MetricData> dsExpoMetrics = writeToMetrics(ds.register(registryWithExponentialHistogram));
+        assertThat(dsExpoMetrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM).singleElement().satisfies(metric -> {
+            assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM);
+        });
+        assertMaxGaugeMetrics(dsExpoMetrics);
+    }
+
+    @Test
+    void testZeroCountForExponentialHistogram() {
+        Timer timerWithZero1ms = Timer.builder("zero_count_1ms")
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        Timer timerWithZero1ns = Timer.builder("zero_count_1ns")
+            .publishPercentileHistogram()
+            .minimumExpectedValue(Duration.ofNanos(1))
+            .register(registryWithExponentialHistogram);
+
+        timerWithZero1ms.record(Duration.ofNanos(1));
+        timerWithZero1ms.record(Duration.ofMillis(1));
+        timerWithZero1ns.record(Duration.ofNanos(1));
+        timerWithZero1ns.record(Duration.ofMillis(1));
+
+        clock.add(exponentialHistogramOtlpConfig().step());
+
+        assertThat(writeToMetrics(timerWithZero1ms)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                assertThat(dataPoint.getZeroCount()).isEqualTo(1);
+                assertThat(dataPoint.getCount()).isEqualTo(2);
+                assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(1);
+                assertThat(exponentialHistogram.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM);
+            });
+
+        assertThat(writeToMetrics(timerWithZero1ns)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                assertThat(dataPoint.getZeroCount()).isZero();
+                assertThat(dataPoint.getCount()).isEqualTo(2);
+                assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSizeGreaterThan(1);
+            });
+    }
+
+    @Test
+    void timerShouldRecordInBaseUnitForExponentialHistogram() {
+        Timer timer = Timer.builder("timer_with_different_units")
+            .minimumExpectedValue(Duration.ofNanos(1))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+
+        timer.record(Duration.ofNanos(1000)); // 0.001 Milliseconds
+        timer.record(Duration.ofMillis(1));
+        timer.record(Duration.ofSeconds(1)); // 1000 Milliseconds
+
+        clock.add(exponentialHistogramOtlpConfig().step());
+        List<MetricData> metrics = writeToMetrics(timer);
+        if (otlpConfig().publishMaxGaugeForHistograms()) {
+            assertThat(metrics).hasSize(2);
+        }
+        else {
+            assertThat(metrics).hasSize(1);
+        }
+
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+
+                assertThat(dataPoint.getCount()).isEqualTo(3);
+                assertThat(dataPoint.getSum()).isEqualTo(1001.001);
+
+                ExponentialHistogramBuckets buckets = dataPoint.getPositiveBuckets();
+                assertThat(buckets.getOffset()).isEqualTo(-80);
+                assertThat(buckets.getBucketCounts()).hasSize(160);
+                assertThat(buckets.getBucketCounts().get(0)).isEqualTo(1);
+                assertThat(buckets.getBucketCounts().get(79)).isEqualTo(1);
+                assertThat(buckets.getBucketCounts().get(159)).isEqualTo(1);
+                assertThat(buckets.getBucketCounts()).filteredOn(v -> v == 0).hasSize(157);
+            });
+    }
+
+    @Test
+    void testGetSloWithPositiveInf() {
+        DistributionStatisticConfig distributionStatisticConfig = DistributionStatisticConfig.builder()
+            .percentilesHistogram(true)
+            .build();
+
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfig))
+            .containsExactly(Double.POSITIVE_INFINITY);
+
+        DistributionStatisticConfig distributionStatisticConfigWithSlo = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(1, 10, 100)
+            .build();
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfigWithSlo))
+            .contains(Double.POSITIVE_INFINITY);
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfigWithSlo)).hasSize(4);
+
+        DistributionStatisticConfig distributionStatisticConfigWithInf = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(1, 10, 100, Double.POSITIVE_INFINITY)
+            .build();
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfigWithInf))
+            .contains(Double.POSITIVE_INFINITY);
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfigWithInf)).hasSize(4);
+    }
+
+    @Test
+    void defaultHistogramFlavorShouldBeUsedIfNoOverrides() {
+        OtlpConfig config = new OtlpConfig() {
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public AggregationTemporality aggregationTemporality() {
+                return otlpConfig().aggregationTemporality();
+            }
+        };
+        OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config).clock(clock).build();
+
+        Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(meterRegistry);
+        DistributionSummary ds = DistributionSummary.builder("test.ds")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+
+        assertThat(writeToMetrics(timer)).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM));
+        assertThat(writeToMetrics(ds)).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM));
+    }
+
+    @Test
+    void globalHistogramFlavorShouldBeUsedIfNoPerMeterConfig() {
+        OtlpConfig config = new OtlpConfig() {
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public AggregationTemporality aggregationTemporality() {
+                return otlpConfig().aggregationTemporality();
+            }
+
+            @Override
+            public HistogramFlavor histogramFlavor() {
+                return BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            }
+        };
+        OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config).clock(clock).build();
+
+        Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(meterRegistry);
+        DistributionSummary ds = DistributionSummary.builder("test.ds")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+
+        assertThat(writeToMetrics(timer)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM));
+        assertThat(writeToMetrics(ds)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM));
+    }
+
+    @Test
+    void perMeterHistogramFlavorShouldBeUsedFromConfigIfNoLookupOverrides() {
+        OtlpConfig config = new OtlpConfig() {
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public AggregationTemporality aggregationTemporality() {
+                return otlpConfig().aggregationTemporality();
+            }
+
+            @Override
+            public HistogramFlavor histogramFlavor() {
+                return EXPLICIT_BUCKET_HISTOGRAM;
+            }
+
+            @Override
+            public Map<String, HistogramFlavor> histogramFlavorPerMeter() {
+                Map<String, HistogramFlavor> histogramFlavors = new HashMap<>();
+                histogramFlavors.put("expo", BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+                return histogramFlavors;
+            }
+        };
+        OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config).clock(clock).build();
+
+        Timer expo = Timer.builder("expo").publishPercentileHistogram().register(meterRegistry);
+        Timer expoOther = Timer.builder("expo.other").publishPercentileHistogram().register(meterRegistry);
+        Timer other = Timer.builder("other").publishPercentileHistogram().register(meterRegistry);
+        assertThat(writeToMetrics(expo)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM));
+        assertThat(writeToMetrics(expoOther)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM));
+        assertThat(writeToMetrics(other)).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM));
+
+        meterRegistry.clear();
+
+        DistributionSummary expo2 = DistributionSummary.builder("expo")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+        DistributionSummary expoOther2 = DistributionSummary.builder("expo.other")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+        DistributionSummary other2 = DistributionSummary.builder("other")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+        assertThat(writeToMetrics(expo2)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM));
+        assertThat(writeToMetrics(expoOther2)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM));
+        assertThat(writeToMetrics(other2)).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM));
+    }
+
+    @Test
+    void globalMaxBucketsShouldBeUsedIfNoPerMeterConfig() {
+        OtlpConfig config = new OtlpConfig() {
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public AggregationTemporality aggregationTemporality() {
+                return otlpConfig().aggregationTemporality();
+            }
+
+            @Override
+            public HistogramFlavor histogramFlavor() {
+                return BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            }
+
+            @Override
+            public int maxBucketCount() {
+                return 56;
+            }
+        };
+        OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config).clock(clock).build();
+        Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(meterRegistry);
+        IntStream.range(1, 111).forEach(i -> timer.record(i, TimeUnit.MILLISECONDS));
+
+        clock.add(config.step());
+
+        assertThat(writeToMetrics(timer)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                assertThat(exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next()
+                    .getPositiveBuckets()
+                    .getBucketCounts()).hasSize(56);
+            });
+
+        meterRegistry.clear();
+
+        DistributionSummary ds = DistributionSummary.builder("test.ds")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+        IntStream.range(1, 111).forEach(ds::record);
+
+        clock.add(config.step());
+
+        assertThat(writeToMetrics(ds)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(56);
+            });
+    }
+
+    @Test
+    void perMeterMaxBucketsShouldBeUsedFromConfigIfNoLookupOverrides() {
+        OtlpConfig config = new OtlpConfig() {
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public AggregationTemporality aggregationTemporality() {
+                return otlpConfig().aggregationTemporality();
+            }
+
+            @Override
+            public HistogramFlavor histogramFlavor() {
+                return BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            }
+
+            @Override
+            public int maxBucketCount() {
+                return 56;
+            }
+
+            @Override
+            public Map<String, Integer> maxBucketsPerMeter() {
+                Map<String, Integer> maxBuckets = new HashMap<>();
+                maxBuckets.put("low.variation", 15);
+                return maxBuckets;
+            }
+        };
+        OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config).clock(clock).build();
+
+        Timer lowVariation = Timer.builder("low.variation").publishPercentileHistogram().register(meterRegistry);
+        Timer lowVariationOther = Timer.builder("low.variation.other")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+        Timer other = Timer.builder("other").publishPercentileHistogram().register(meterRegistry);
+
+        List.of(lowVariation, lowVariationOther, other)
+            .forEach(t -> IntStream.range(1, 111).forEach(i -> t.record(i, TimeUnit.MILLISECONDS)));
+        clock.add(config.step());
+
+        assertThat(writeToMetrics(lowVariation)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(15);
+            });
+        assertThat(writeToMetrics(lowVariationOther)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(15);
+            });
+
+        assertThat(writeToMetrics(other)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(56);
+            });
+
+        meterRegistry.clear();
+
+        DistributionSummary lowVariation2 = DistributionSummary.builder("low.variation")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+        DistributionSummary lowVariationOther2 = DistributionSummary.builder("low.variation.other")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+        DistributionSummary other2 = DistributionSummary.builder("other")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+
+        List.of(lowVariation2, lowVariationOther2, other2).forEach(t -> IntStream.range(1, 111).forEach(t::record));
+        clock.add(config.step());
+
+        assertThat(writeToMetrics(lowVariation2)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(15);
+            });
+        assertThat(writeToMetrics(lowVariationOther2)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(15);
+            });
+        assertThat(writeToMetrics(other2)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramPointData dataPoint = exponentialHistogram.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                assertThat(dataPoint.getPositiveBuckets().getBucketCounts()).hasSize(56);
             });
     }
 
