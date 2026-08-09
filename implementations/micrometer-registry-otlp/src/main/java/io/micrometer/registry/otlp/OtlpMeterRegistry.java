@@ -108,17 +108,17 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     /**
-     * Create an {@code OtlpMeterRegistry} instance with an HTTP metrics exporter.
+     * Create an {@code OtlpMeterRegistry} instance with an HTTP metrics sender.
      * @param config config
      * @param clock clock
      * @param threadFactory thread factory
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, createDefaultSender(config), null);
+        this(config, clock, threadFactory, createDefaultSender(), null);
     }
 
-    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
+    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
             OtlpMetricsSender metricsSender, @Nullable ExemplarContextProvider exemplarContextProvider) {
         super(config, clock);
         this.config = config;
@@ -134,8 +134,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         start(threadFactory);
     }
 
-    private static OtlpMetricsSender createDefaultSender(OtlpConfig config) {
-        return new OtlpHttpMetricsSender(new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+    private static OtlpMetricsSender createDefaultSender() {
+        return new OtlpHttpMetricsSender(new HttpUrlConnectionSender());
     }
 
     /**
@@ -677,8 +677,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
 
         public OtlpMeterRegistry build() {
-            OtlpMetricsSender sender = this.metricsSender != null ? this.metricsSender
-                    : createDefaultSender(otlpConfig);
+            OtlpMetricsSender sender = this.metricsSender != null ? this.metricsSender : createDefaultSender();
             return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, sender, exemplarContextProvider);
         }
 
