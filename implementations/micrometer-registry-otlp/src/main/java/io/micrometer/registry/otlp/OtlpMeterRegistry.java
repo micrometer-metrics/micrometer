@@ -44,6 +44,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -498,7 +499,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         if (AggregationTemporality.isCumulative(aggregationTemporality)) {
             return new OtlpCumulativeBucketHistogram(clock, DistributionStatisticConfig.builder()
                 // effectively never roll over
-                .expiry(java.time.Duration.ofDays(1825))
+                .expiry(Duration.ofDays(1825))
                 .serviceLevelObjectives(sloWithPositiveInf)
                 .percentiles()
                 .bufferLength(1)
@@ -543,27 +544,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         double[] sloWithPositiveInf = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
         sloWithPositiveInf[sloWithPositiveInf.length - 1] = Double.POSITIVE_INFINITY;
         return sloWithPositiveInf;
-    }
-
-    private static <T> @Nullable T lookup(Map<String, T> values, Meter.Id id) {
-        if (values.isEmpty()) {
-            return null;
-        }
-        return doLookup(values, id);
-    }
-
-    private static <T> @Nullable T doLookup(Map<String, T> values, Meter.Id id) {
-        String name = id.getName();
-        while (StringUtils.isNotEmpty(name)) {
-            T result = values.get(name);
-            if (result != null) {
-                return result;
-            }
-            int lastDot = name.lastIndexOf('.');
-            name = (lastDot != -1) ? name.substring(0, lastDot) : "";
-        }
-
-        return null;
     }
 
     /**
@@ -624,6 +604,27 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
          */
         @Nullable Integer getMaxBuckets(Map<String, Integer> perMeterMapping, Meter.Id id);
 
+    }
+
+    private static <T> @Nullable T lookup(Map<String, T> values, Meter.Id id) {
+        if (values.isEmpty()) {
+            return null;
+        }
+        return doLookup(values, id);
+    }
+
+    private static <T> @Nullable T doLookup(Map<String, T> values, Meter.Id id) {
+        String name = id.getName();
+        while (StringUtils.isNotEmpty(name)) {
+            T result = values.get(name);
+            if (result != null) {
+                return result;
+            }
+            int lastDot = name.lastIndexOf('.');
+            name = (lastDot != -1) ? name.substring(0, lastDot) : "";
+        }
+
+        return null;
     }
 
     /**

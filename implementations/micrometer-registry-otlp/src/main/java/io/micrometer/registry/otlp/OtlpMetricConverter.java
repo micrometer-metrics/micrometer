@@ -144,13 +144,16 @@ class OtlpMetricConverter {
             addMaxGaugeForHistogramSupport(id, attributes, max);
         }
 
-        Optional<ExponentialHistogramSnapShot> exponentialHistogramSnapShot = getExponentialHistogramSnapShot(
-                histogramSupport);
+        // if percentiles configured, use summary
         if (histogramSnapshot.percentileValues().length != 0) {
             buildSummaryDataPoint(histogramSupport, attributes, startTimeNanos, total, count, isTimeBased,
                     histogramSnapshot);
+            return;
         }
-        else if (exponentialHistogramSnapShot.isPresent()) {
+
+        Optional<ExponentialHistogramSnapShot> exponentialHistogramSnapShot = getExponentialHistogramSnapShot(
+                histogramSupport);
+        if (exponentialHistogramSnapShot.isPresent()) {
             buildExponentialHistogramDataPoint(histogramSupport, attributes, startTimeNanos, total, max,
                     exponentialHistogramSnapShot.get(), exemplars);
         }
