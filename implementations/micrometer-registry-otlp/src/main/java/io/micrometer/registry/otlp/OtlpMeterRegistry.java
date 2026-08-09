@@ -37,12 +37,17 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.common.ComponentLoader;
 import io.opentelemetry.exporter.internal.otlp.metrics.MetricsRequestMarshaler;
-import io.opentelemetry.sdk.common.export.HttpResponse;
+import io.opentelemetry.exporter.otlp.http.metrics.OtlpHttpMetricExporter;
+import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.common.export.HttpSender;
+import io.opentelemetry.sdk.common.export.HttpSenderProvider;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.resources.Resource;
 import org.jspecify.annotations.Nullable;
+
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
@@ -50,7 +55,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
@@ -81,7 +85,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpConfig config;
 
-    private final HttpSender otelHttpSender;
+    private final OtlpHttpMetricExporter otlpHttpMetricExporter;
 
     private final HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup;
 
@@ -125,14 +129,31 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
-        this.otelHttpSender = new OtlpMetricsSenderHttpSender(metricsSender, config::url, config::headers,
-                config::compressionMode);
         this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
         this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         this.resource = createResource();
         this.aggregationTemporality = config.aggregationTemporality();
         this.exemplarSamplerFactory = exemplarContextProvider != null
                 ? new OtlpExemplarSamplerFactory(exemplarContextProvider, clock, config) : null;
+
+        HttpSender otelHttpSender = new OtlpMetricsSenderHttpSender(metricsSender, config::url, config::headers,
+                config::compressionMode);
+        ComponentLoader componentLoader = new ComponentLoader() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> Iterable<T> load(Class<T> type) {
+                if (type.equals(HttpSenderProvider.class)) {
+                    return Collections.singletonList((T) (HttpSenderProvider) httpSenderConfig -> otelHttpSender);
+                }
+                return Collections.emptyList();
+            }
+        };
+
+        this.otlpHttpMetricExporter = OtlpHttpMetricExporter.builder()
+            .setEndpoint(config.url())
+            .setComponentLoader(componentLoader)
+            .build();
+
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }
@@ -185,42 +206,36 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     this.resource);
             otlpMetricConverter.addMeters(batch);
 
-            try {
-                Collection<MetricData> metrics = otlpMetricConverter.getAllMetrics();
-                if (!metrics.isEmpty()) {
-                    MetricsRequestMarshaler marshaler = MetricsRequestMarshaler.create(metrics);
-                    OtlpMetricsSenderHttpSender.MarshalerMessageWriter messageWriter = new OtlpMetricsSenderHttpSender.MarshalerMessageWriter(
-                            marshaler);
-
-                    AtomicReference<Throwable> errorRef = new AtomicReference<>();
-                    AtomicReference<HttpResponse> responseRef = new AtomicReference<>();
-
-                    this.otelHttpSender.send(messageWriter, responseRef::set, errorRef::set);
-
-                    if (errorRef.get() != null) {
-                        Throwable cause = errorRef.get();
-                        if (cause instanceof Exception) {
-                            throw (Exception) cause;
+            Collection<MetricData> metrics = otlpMetricConverter.getAllMetrics();
+            if (!metrics.isEmpty()) {
+                try {
+                    OtlpMetricsSenderHttpSender.setReadableMetricsDataSupplier(() -> {
+                        try {
+                            MetricsRequestMarshaler marshaler = MetricsRequestMarshaler.create(metrics);
+                            ByteArrayOutputStream jsonOs = new ByteArrayOutputStream();
+                            marshaler.writeJsonTo(jsonOs);
+                            return new String(jsonOs.toByteArray(), StandardCharsets.UTF_8);
                         }
-                        throw new Exception(cause);
-                    }
-
-                    HttpResponse response = responseRef.get();
-                    if (response != null && (response.getStatusCode() < 200 || response.getStatusCode() >= 300)) {
-                        String body = "";
-                        byte[] responseBody = response.getResponseBody();
-                        if (responseBody != null) {
-                            body = new String(responseBody, StandardCharsets.UTF_8);
+                        catch (Throwable t) {
+                            return metrics.toString();
                         }
-                        throw new RuntimeException(
-                                String.format("Server responded with HTTP status code %d and body %s",
-                                        response.getStatusCode(), body));
+                    });
+
+                    CompletableResultCode result = this.otlpHttpMetricExporter.export(metrics);
+                    result.join(config.step().toMillis(), TimeUnit.MILLISECONDS);
+                    if (!result.isSuccess()) {
+                        logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
+                                getConfigurationContext()));
                     }
                 }
+                catch (Exception e) {
+                    logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
+                            getConfigurationContext()), e);
+                }
+                finally {
+                    OtlpMetricsSenderHttpSender.clearReadableMetricsDataSupplier();
+                }
             }
-            catch (Exception e) {
-                logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
-                        getConfigurationContext()), e);
             }
         }
     }

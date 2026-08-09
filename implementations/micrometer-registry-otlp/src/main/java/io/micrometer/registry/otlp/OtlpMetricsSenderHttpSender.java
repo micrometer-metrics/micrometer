@@ -15,16 +15,12 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.opentelemetry.exporter.internal.otlp.metrics.MetricsRequestMarshaler;
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.common.export.HttpResponse;
 import io.opentelemetry.sdk.common.export.HttpSender;
 import io.opentelemetry.sdk.common.export.MessageWriter;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -36,6 +32,8 @@ import java.util.function.Supplier;
  */
 class OtlpMetricsSenderHttpSender implements HttpSender {
 
+    private static final ThreadLocal<Supplier<String>> READABLE_METRICS_DATA_SUPPLIER = new ThreadLocal<>();
+
     private final OtlpMetricsSender otlpMetricsSender;
 
     private final Supplier<String> urlSupplier;
@@ -43,6 +41,14 @@ class OtlpMetricsSenderHttpSender implements HttpSender {
     private final Supplier<Map<String, String>> headersSupplier;
 
     private final Supplier<CompressionMode> compressionModeSupplier;
+
+    static void setReadableMetricsDataSupplier(Supplier<String> supplier) {
+        READABLE_METRICS_DATA_SUPPLIER.set(supplier);
+    }
+
+    static void clearReadableMetricsDataSupplier() {
+        READABLE_METRICS_DATA_SUPPLIER.remove();
+    }
 
     OtlpMetricsSenderHttpSender(OtlpMetricsSender otlpMetricsSender, Supplier<String> urlSupplier,
             Supplier<Map<String, String>> headersSupplier, Supplier<CompressionMode> compressionModeSupplier) {
@@ -65,21 +71,13 @@ class OtlpMetricsSenderHttpSender implements HttpSender {
                 .headers(headersSupplier.get())
                 .compressionMode(compressionModeSupplier.get());
 
-            if (messageWriter instanceof MarshalerMessageWriter) {
-                MetricsRequestMarshaler marshaler = ((MarshalerMessageWriter) messageWriter).getMarshaler();
-                builder.readableMetricsData(() -> {
-                    try {
-                        ByteArrayOutputStream jsonOs = new ByteArrayOutputStream();
-                        marshaler.writeJsonTo(jsonOs);
-                        return new String(jsonOs.toByteArray(), StandardCharsets.UTF_8);
-                    }
-                    catch (Throwable t) {
-                        return "<failed to serialize json>";
-                    }
-                });
+            Supplier<String> readableSupplier = READABLE_METRICS_DATA_SUPPLIER.get();
+            if (readableSupplier != null) {
+                builder.readableMetricsData(readableSupplier);
             }
 
             OtlpMetricsSender.Request request = builder.build();
+
             otlpMetricsSender.send(request);
 
             onResponse.accept(new HttpResponse() {
@@ -107,30 +105,6 @@ class OtlpMetricsSenderHttpSender implements HttpSender {
     @Override
     public CompletableResultCode shutdown() {
         return CompletableResultCode.ofSuccess();
-    }
-
-    static class MarshalerMessageWriter implements MessageWriter {
-
-        private final MetricsRequestMarshaler marshaler;
-
-        MarshalerMessageWriter(MetricsRequestMarshaler marshaler) {
-            this.marshaler = Objects.requireNonNull(marshaler, "marshaler");
-        }
-
-        MetricsRequestMarshaler getMarshaler() {
-            return marshaler;
-        }
-
-        @Override
-        public void writeMessage(OutputStream outputStream) throws IOException {
-            marshaler.writeBinaryTo(outputStream);
-        }
-
-        @Override
-        public int getContentLength() {
-            return marshaler.getBinarySerializedSize();
-        }
-
     }
 
 }

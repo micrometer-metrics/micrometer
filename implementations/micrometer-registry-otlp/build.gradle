@@ -10,6 +10,7 @@ dependencies {
     api project(':micrometer-core')
 
     implementation platform(libs.openTelemetry.bom)
+    implementation libs.openTelemetry.exporter.otlp
     implementation(libs.openTelemetry.exporter.otlp.common) {
         exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-extension-autoconfigure-spi'
     }
@@ -56,7 +57,7 @@ publishing {
                 asNode()
                     .dependencies
                     .dependency
-                    .findAll { ['opentelemetry-exporter-otlp-common', 'opentelemetry-sdk-metrics'].contains(it.artifactId.text()) }
+                    .findAll { ['opentelemetry-exporter-otlp', 'opentelemetry-exporter-otlp-common', 'opentelemetry-sdk-metrics'].contains(it.artifactId.text()) }
                     .each { it.parent().remove(it) }
             }
         }
