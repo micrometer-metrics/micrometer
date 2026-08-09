@@ -37,7 +37,7 @@ def shadowJar = tasks.named('shadowJar', ShadowJar) {
         include(dependency('io.opentelemetry:.*'))
     }
     exclude("META-INF/maven/**")
-    relocate 'io.opentelemetry', 'io.micrometer.shaded.io.opentelemetry'
+    relocate 'io.opentelemetry', 'io.micrometer.registry.otlp.shaded.io.opentelemetry'
     metaInf {
         from "$rootDir/LICENSE"
         from "$rootDir/NOTICE"
