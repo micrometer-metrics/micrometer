@@ -497,24 +497,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
         long stepMillis = config.step().toMillis();
         if (AggregationTemporality.isCumulative(aggregationTemporality)) {
-            DistributionStatisticConfig merged = DistributionStatisticConfig.builder()
+            return new OtlpCumulativeBucketHistogram(clock, DistributionStatisticConfig.builder()
+                // effectively never roll over
+                .expiry(java.time.Duration.ofDays(1825))
                 .serviceLevelObjectives(sloWithPositiveInf)
+                .percentiles()
                 .bufferLength(1)
                 .build()
-                .merge(distributionStatisticConfig);
-
-            DistributionStatisticConfig cumulativeConfig = DistributionStatisticConfig.builder()
-                .percentiles(merged.getPercentiles())
-                .percentilePrecision(merged.getPercentilePrecision())
-                .minimumExpectedValue(merged.getMinimumExpectedValueAsDouble())
-                .maximumExpectedValue(merged.getMaximumExpectedValueAsDouble())
-                .expiry(java.time.Duration.ofDays(1825))
-                .bufferLength(1)
-                .serviceLevelObjectives(sloWithPositiveInf)
-                .build();
-
-            return new OtlpCumulativeBucketHistogram(clock, cumulativeConfig, exemplarSamplerFactory,
-                    baseTimeUnit != null);
+                .merge(distributionStatisticConfig), exemplarSamplerFactory, baseTimeUnit != null);
         }
         if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
             return new OtlpStepBucketHistogram(clock, stepMillis,
@@ -532,7 +522,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     static double[] getSloWithPositiveInf(DistributionStatisticConfig distributionStatisticConfig) {
         double[] sloBoundaries = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
         if (sloBoundaries == null || sloBoundaries.length == 0) {
-            NavigableSet<Double> histogramBuckets = distributionStatisticConfig.getHistogramBuckets(false);
+            NavigableSet<Double> histogramBuckets = distributionStatisticConfig.getHistogramBuckets(true);
             if (histogramBuckets != null && !histogramBuckets.isEmpty()) {
                 sloBoundaries = histogramBuckets.stream().mapToDouble(Double::doubleValue).toArray();
             }
@@ -547,12 +537,34 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
 
         boolean containsPositiveInf = Arrays.stream(sloBoundaries).anyMatch(value -> value == Double.POSITIVE_INFINITY);
-        if (containsPositiveInf)
+        if (containsPositiveInf) {
             return sloBoundaries;
+        }
 
         double[] sloWithPositiveInf = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
         sloWithPositiveInf[sloWithPositiveInf.length - 1] = Double.POSITIVE_INFINITY;
         return sloWithPositiveInf;
+    }
+
+    private static <T> @Nullable T lookup(Map<String, T> values, Meter.Id id) {
+        if (values.isEmpty()) {
+            return null;
+        }
+        return doLookup(values, id);
+    }
+
+    private static <T> @Nullable T doLookup(Map<String, T> values, Meter.Id id) {
+        String name = id.getName();
+        while (StringUtils.isNotEmpty(name)) {
+            T result = values.get(name);
+            if (result != null) {
+                return result;
+            }
+            int lastDot = name.lastIndexOf('.');
+            name = (lastDot != -1) ? name.substring(0, lastDot) : "";
+        }
+
+        return null;
     }
 
     /**
@@ -613,27 +625,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
          */
         @Nullable Integer getMaxBuckets(Map<String, Integer> perMeterMapping, Meter.Id id);
 
-    }
-
-    private static <T> @Nullable T lookup(Map<String, T> values, Meter.Id id) {
-        if (values.isEmpty()) {
-            return null;
-        }
-        return doLookup(values, id);
-    }
-
-    private static <T> @Nullable T doLookup(Map<String, T> values, Meter.Id id) {
-        String name = id.getName();
-        while (StringUtils.isNotEmpty(name)) {
-            T result = values.get(name);
-            if (result != null) {
-                return result;
-            }
-            int lastDot = name.lastIndexOf('.');
-            name = (lastDot != -1) ? name.substring(0, lastDot) : "";
-        }
-
-        return null;
     }
 
     /**

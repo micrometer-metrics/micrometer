@@ -207,6 +207,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             assertThat(point.getEpochNanos()).isEqualTo(60001000000L);
             assertThat(point.getCount()).isEqualTo(5);
             assertThat(point.getSum()).isEqualTo(60202.0);
+            assertThat(point.getCounts()).allSatisfy(c -> assertThat(c).isGreaterThanOrEqualTo(0L));
             assertThat(point.getCounts().stream().mapToLong(Long::longValue).sum()).isEqualTo(5);
         });
     }
@@ -309,7 +310,56 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             assertThat(point.getEpochNanos()).isEqualTo(60001000000L);
             assertThat(point.getCount()).isEqualTo(4);
             assertThat(point.getSum()).isEqualTo(2552.0);
+            assertThat(point.getCounts()).allSatisfy(c -> assertThat(c).isGreaterThanOrEqualTo(0L));
             assertThat(point.getCounts().stream().mapToLong(Long::longValue).sum()).isEqualTo(4);
+        });
+    }
+
+    @Test
+    void timerExplicitBucketHistogramCountsAreIndividualBucketCounts() {
+        Timer timer = Timer.builder("explicit.timer")
+            .serviceLevelObjectives(Duration.ofMillis(10), Duration.ofMillis(50), Duration.ofMillis(100))
+            .register(registry);
+
+        timer.record(5, TimeUnit.MILLISECONDS);
+        timer.record(20, TimeUnit.MILLISECONDS);
+        timer.record(60, TimeUnit.MILLISECONDS);
+
+        List<MetricData> metrics = writeToMetrics(timer);
+        MetricData metric = metrics.stream()
+            .filter(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(metric.getHistogramData().getPoints()).singleElement().satisfies(point -> {
+            // OTLP explicit bucket counts are individual bucket counts per interval
+            // (bounds[i-1], bounds[i]]
+            assertThat(point.getCounts()).containsExactly(1L, 1L, 1L, 0L);
+            assertThat(point.getCounts()).allSatisfy(c -> assertThat(c).isGreaterThanOrEqualTo(0L));
+        });
+    }
+
+    @Test
+    void distributionSummaryExplicitBucketHistogramCountsAreIndividualBucketCounts() {
+        DistributionSummary ds = DistributionSummary.builder("explicit.ds")
+            .serviceLevelObjectives(10, 50, 100)
+            .register(registry);
+
+        ds.record(5);
+        ds.record(20);
+        ds.record(60);
+
+        List<MetricData> metrics = writeToMetrics(ds);
+        MetricData metric = metrics.stream()
+            .filter(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(metric.getHistogramData().getPoints()).singleElement().satisfies(point -> {
+            // OTLP explicit bucket counts are individual bucket counts per interval
+            // (bounds[i-1], bounds[i]]
+            assertThat(point.getCounts()).containsExactly(1L, 1L, 1L, 0L);
+            assertThat(point.getCounts()).allSatisfy(c -> assertThat(c).isGreaterThanOrEqualTo(0L));
         });
     }
 

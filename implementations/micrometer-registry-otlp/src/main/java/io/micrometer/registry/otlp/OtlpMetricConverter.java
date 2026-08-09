@@ -145,17 +145,13 @@ class OtlpMetricConverter {
 
         Optional<ExponentialHistogramSnapShot> exponentialHistogramSnapShot = getExponentialHistogramSnapShot(
                 histogramSupport);
-        if (exponentialHistogramSnapShot.isPresent()) {
-            buildExponentialHistogramDataPoint(histogramSupport, attributes, startTimeNanos, total, max,
-                    exponentialHistogramSnapShot.get(), exemplars);
-        }
-        else if (histogramSnapshot.histogramCounts().length != 0) {
-            buildHistogramDataPoint(histogramSupport, attributes, startTimeNanos, total, max, isTimeBased,
-                    histogramSnapshot, exemplars);
-        }
-        else if (histogramSnapshot.percentileValues().length != 0) {
+        if (histogramSnapshot.percentileValues().length != 0) {
             buildSummaryDataPoint(histogramSupport, attributes, startTimeNanos, total, count, isTimeBased,
                     histogramSnapshot);
+        }
+        else if (exponentialHistogramSnapShot.isPresent()) {
+            buildExponentialHistogramDataPoint(histogramSupport, attributes, startTimeNanos, total, max,
+                    exponentialHistogramSnapShot.get(), exemplars);
         }
         else {
             buildHistogramDataPoint(histogramSupport, attributes, startTimeNanos, total, max, isTimeBased,
@@ -212,19 +208,11 @@ class OtlpMetricConverter {
             bucketCounts.add(histogramSnapshot.count());
         }
         else {
-            double previousCount = 0;
             for (CountAtBucket countAtBucket : histogramSnapshot.histogramCounts()) {
                 if (countAtBucket.bucket() != Double.POSITIVE_INFINITY) {
                     explicitBounds.add(isTimeBased ? countAtBucket.bucket(baseTimeUnit) : countAtBucket.bucket());
                 }
-                double currentCount = countAtBucket.count();
-                if (isDelta()) {
-                    bucketCounts.add((long) currentCount);
-                }
-                else {
-                    bucketCounts.add((long) (currentCount - previousCount));
-                    previousCount = currentCount;
-                }
+                bucketCounts.add((long) countAtBucket.count());
             }
         }
 
