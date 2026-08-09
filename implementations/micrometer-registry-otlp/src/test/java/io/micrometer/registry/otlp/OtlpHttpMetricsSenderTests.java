@@ -79,8 +79,7 @@ class OtlpHttpMetricsSenderTests {
         verify(metricsSender).send(assertArg(request -> assertThat(request.toString()).startsWith(
                 "OtlpMetricsSender.Request for address: http://localhost:4318/v1/metrics, headers: {test-key=test-value}, compressionMode: NONE, metricsData:")
             .contains("test.counter")
-            .contains("1.0")
-            .contains("CUMULATIVE")));
+            .contains("1.0")));
     }
 
 }

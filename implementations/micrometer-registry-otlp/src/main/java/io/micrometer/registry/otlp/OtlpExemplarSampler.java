@@ -24,7 +24,6 @@ import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.TraceFlags;
 import io.opentelemetry.api.trace.TraceState;
 import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
-import io.opentelemetry.sdk.metrics.internal.data.ImmutableDoubleExemplarData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -162,7 +161,7 @@ class OtlpExemplarSampler implements ExemplarSampler {
                     ? SpanContext.create(traceId, spanId, TraceFlags.getDefault(), TraceState.getDefault())
                     : SpanContext.getInvalid();
 
-            return ImmutableDoubleExemplarData.create(builder.build(), TimeUnit.MILLISECONDS.toNanos(clock.wallTime()),
+            return DoubleExemplarData.create(builder.build(), TimeUnit.MILLISECONDS.toNanos(clock.wallTime()),
                     spanContext, converter.applyAsDouble(measurement));
         }
 

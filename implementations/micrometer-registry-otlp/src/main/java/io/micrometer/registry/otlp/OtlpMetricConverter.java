@@ -26,7 +26,8 @@ import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.sdk.common.InstrumentationScopeInfo;
 import io.opentelemetry.sdk.metrics.data.*;
-import io.opentelemetry.sdk.metrics.internal.data.*;
+import io.opentelemetry.sdk.metrics.internal.data.ImmutableHistogramPointData;
+import io.opentelemetry.sdk.metrics.internal.data.ImmutableMetricData;
 import io.opentelemetry.sdk.resources.Resource;
 import org.jspecify.annotations.Nullable;
 
@@ -114,7 +115,7 @@ class OtlpMetricConverter {
     }
 
     private void writeGauge(Gauge gauge) {
-        DoublePointData point = ImmutableDoublePointData.create(0, TimeUnit.MILLISECONDS.toNanos(clock.wallTime()),
+        DoublePointData point = DoublePointData.create(0, TimeUnit.MILLISECONDS.toNanos(clock.wallTime()),
                 getAttributesForId(gauge.getId()), gauge.value(), Collections.emptyList());
         addDoublePointData(gauge.getId(), MetricType.DOUBLE_GAUGE, point);
     }
@@ -181,8 +182,8 @@ class OtlpMetricConverter {
     private void addMaxGaugeForHistogramSupport(Meter.Id id, Attributes attributes, double max) {
         String metricName = id.getName() + ".max";
         Meter.Id maxId = id.withName(metricName);
-        DoublePointData point = ImmutableDoublePointData.create(0, TimeUnit.MILLISECONDS.toNanos(clock.wallTime()),
-                attributes, max, Collections.emptyList());
+        DoublePointData point = DoublePointData.create(0, TimeUnit.MILLISECONDS.toNanos(clock.wallTime()), attributes,
+                max, Collections.emptyList());
         addDoublePointData(maxId, MetricType.DOUBLE_GAUGE, point);
     }
 
@@ -234,25 +235,26 @@ class OtlpMetricConverter {
             List<DoubleExemplarData> exemplars) {
         ExponentialHistogramBuckets positiveBuckets;
         if (!exponentialHistogramSnapShot.positive().isEmpty()) {
-            positiveBuckets = ImmutableExponentialHistogramBuckets.create(exponentialHistogramSnapShot.scale(),
+            positiveBuckets = ExponentialHistogramBuckets.create(exponentialHistogramSnapShot.scale(),
                     exponentialHistogramSnapShot.positive().offset(),
                     exponentialHistogramSnapShot.positive().bucketCounts());
         }
         else {
-            positiveBuckets = EmptyExponentialHistogramBuckets.get(exponentialHistogramSnapShot.scale());
+            positiveBuckets = ExponentialHistogramBuckets.create(exponentialHistogramSnapShot.scale(), 0,
+                    Collections.emptyList());
         }
 
-        ExponentialHistogramBuckets negativeBuckets = EmptyExponentialHistogramBuckets
-            .get(exponentialHistogramSnapShot.scale());
+        ExponentialHistogramBuckets negativeBuckets = ExponentialHistogramBuckets
+            .create(exponentialHistogramSnapShot.scale(), 0, Collections.emptyList());
 
         ExponentialHistogramPointData point;
         if (isDelta()) {
-            point = ImmutableExponentialHistogramPointData.create(exponentialHistogramSnapShot.scale(), total,
+            point = ExponentialHistogramPointData.create(exponentialHistogramSnapShot.scale(), total,
                     exponentialHistogramSnapShot.zeroCount(), false, 0.0, true, max, positiveBuckets, negativeBuckets,
                     startTimeNanos, getTimeUnixNano(), attributes, exemplars);
         }
         else {
-            point = ImmutableExponentialHistogramPointData.create(exponentialHistogramSnapShot.scale(), total,
+            point = ExponentialHistogramPointData.create(exponentialHistogramSnapShot.scale(), total,
                     exponentialHistogramSnapShot.zeroCount(), false, 0.0, false, 0.0, positiveBuckets, negativeBuckets,
                     startTimeNanos, getTimeUnixNano(), attributes, exemplars);
         }
@@ -265,18 +267,18 @@ class OtlpMetricConverter {
         List<ValueAtQuantile> valueAtQuantiles = new ArrayList<>();
         for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
             double value = percentile.value(isTimeBased ? baseTimeUnit : TimeUnit.NANOSECONDS);
-            valueAtQuantiles.add(ImmutableValueAtQuantile.create(percentile.percentile(), value));
+            valueAtQuantiles.add(ValueAtQuantile.create(percentile.percentile(), value));
         }
 
-        SummaryPointData point = ImmutableSummaryPointData.create(startTimeNanos, getTimeUnixNano(), attributes, count,
-                total, valueAtQuantiles);
+        SummaryPointData point = SummaryPointData.create(startTimeNanos, getTimeUnixNano(), attributes, count, total,
+                valueAtQuantiles);
 
         addSummaryPointData(histogramSupport.getId(), point);
     }
 
     private void setSumDataPoint(Meter meter, DoubleSupplier countSupplier,
             Supplier<List<DoubleExemplarData>> exemplarsSupplier) {
-        DoublePointData point = ImmutableDoublePointData.create(getStartTimeNanos(meter), getTimeUnixNano(),
+        DoublePointData point = DoublePointData.create(getStartTimeNanos(meter), getTimeUnixNano(),
                 getAttributesForId(meter.getId()), countSupplier.getAsDouble(), exemplarsSupplier.get());
         addDoublePointData(meter.getId(), MetricType.DOUBLE_SUM, point);
     }
@@ -380,27 +382,27 @@ class OtlpMetricConverter {
                     if (doublePoints.isEmpty())
                         return null;
                     return ImmutableMetricData.createDoubleGauge(resource, scope, meta.name, description, unit,
-                            ImmutableGaugeData.create(doublePoints));
+                            GaugeData.createDoubleGaugeData(doublePoints));
                 case DOUBLE_SUM:
                     if (doublePoints.isEmpty())
                         return null;
                     return ImmutableMetricData.createDoubleSum(resource, scope, meta.name, description, unit,
-                            ImmutableSumData.create(true, temporality, doublePoints));
+                            SumData.createDoubleSumData(true, temporality, doublePoints));
                 case HISTOGRAM:
                     if (histogramPoints.isEmpty())
                         return null;
                     return ImmutableMetricData.createDoubleHistogram(resource, scope, meta.name, description, unit,
-                            ImmutableHistogramData.create(temporality, histogramPoints));
+                            HistogramData.create(temporality, histogramPoints));
                 case EXPONENTIAL_HISTOGRAM:
                     if (exponentialHistogramPoints.isEmpty())
                         return null;
                     return ImmutableMetricData.createExponentialHistogram(resource, scope, meta.name, description, unit,
-                            ImmutableExponentialHistogramData.create(temporality, exponentialHistogramPoints));
+                            ExponentialHistogramData.create(temporality, exponentialHistogramPoints));
                 case SUMMARY:
                     if (summaryPoints.isEmpty())
                         return null;
                     return ImmutableMetricData.createDoubleSummary(resource, scope, meta.name, description, unit,
-                            ImmutableSummaryData.create(summaryPoints));
+                            SummaryData.create(summaryPoints));
                 default:
                     return null;
             }
