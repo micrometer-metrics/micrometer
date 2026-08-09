@@ -189,21 +189,20 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     ByteArrayOutputStream os = new ByteArrayOutputStream(marshaler.getBinarySerializedSize());
                     marshaler.writeBinaryTo(os);
 
-                    String readableData;
-                    try {
-                        ByteArrayOutputStream jsonOs = new ByteArrayOutputStream();
-                        marshaler.writeJsonTo(jsonOs);
-                        readableData = new String(jsonOs.toByteArray(), StandardCharsets.UTF_8);
-                    }
-                    catch (Throwable t) {
-                        readableData = metrics.toString();
-                    }
-
                     OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(os.toByteArray())
                         .address(config.url())
                         .headers(config.headers())
                         .compressionMode(config.compressionMode())
-                        .readableMetricsData(readableData)
+                        .readableMetricsData(() -> {
+                            try {
+                                ByteArrayOutputStream jsonOs = new ByteArrayOutputStream();
+                                marshaler.writeJsonTo(jsonOs);
+                                return new String(jsonOs.toByteArray(), StandardCharsets.UTF_8);
+                            }
+                            catch (Throwable t) {
+                                return metrics.toString();
+                            }
+                        })
                         .build();
 
                     this.metricsSender.send(request);

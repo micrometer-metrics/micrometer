@@ -15,6 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepValue;
 import io.opentelemetry.api.common.Attributes;
@@ -153,7 +154,7 @@ class OtlpExemplarSampler implements ExemplarSampler {
             String spanId = exemplarContext.getSpanId();
 
             AttributesBuilder builder = Attributes.builder();
-            for (io.micrometer.common.KeyValue keyValue : exemplarContext.getKeyValues()) {
+            for (KeyValue keyValue : exemplarContext.getKeyValues()) {
                 builder.put(keyValue.getKey(), keyValue.getValue());
             }
 
