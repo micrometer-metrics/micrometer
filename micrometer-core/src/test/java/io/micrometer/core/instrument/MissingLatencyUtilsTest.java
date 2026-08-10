@@ -64,4 +64,16 @@ class MissingLatencyUtilsTest {
         assertThat(output).contains("LatencyUtils is not on the runtime classpath");
     }
 
+    @Test
+    @Issue("7815")
+    void abstractTimerFieldsAreIntrospectableWithoutLatencyUtils() {
+        assertThatCode(() -> {
+            for (java.lang.reflect.Field field : AbstractTimer.class.getDeclaredFields()) {
+                // Force resolution of each field type, matching Spring ReflectionUtils
+                // introspection.
+                field.getType();
+            }
+        }).doesNotThrowAnyException();
+    }
+
 }

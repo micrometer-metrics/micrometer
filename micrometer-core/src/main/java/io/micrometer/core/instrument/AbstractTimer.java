@@ -52,7 +52,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     // Only used when pause detection is enabled
     private @Nullable Object intervalEstimator;
 
-    private org.LatencyUtils.@Nullable PauseDetector pauseDetector;
+    // Object so field resolution does not require optional LatencyUtils on the classpath
+    private @Nullable Object pauseDetector;
 
     /**
      * Creates a new timer.
@@ -158,9 +159,11 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
                 });
 
         if (pauseDetector instanceof SimplePauseDetector) {
-            this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128, 10000000000L, pauseDetector);
+            org.LatencyUtils.PauseDetector latencyPauseDetector = (org.LatencyUtils.PauseDetector) pauseDetector;
+            this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128, 10000000000L,
+                    latencyPauseDetector);
 
-            pauseDetector.addListener((pauseLength, pauseEndTime) -> {
+            latencyPauseDetector.addListener((pauseLength, pauseEndTime) -> {
                 if (intervalEstimator != null) {
                     long estimatedInterval = ((IntervalEstimator) intervalEstimator).getEstimatedInterval(pauseEndTime);
                     long observedLatencyMinbar = pauseLength - estimatedInterval;
@@ -300,7 +303,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     public void close() {
         histogram.close();
         if (pauseDetector != null) {
-            pauseDetector.shutdown();
+            ((org.LatencyUtils.PauseDetector) pauseDetector).shutdown();
         }
     }
 
