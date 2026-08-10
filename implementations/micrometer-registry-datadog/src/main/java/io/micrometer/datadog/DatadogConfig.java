@@ -71,7 +71,9 @@ public interface DatadogConfig extends StepRegistryConfig {
     }
 
     /**
+     * Defaults to true if not overridden.
      * @return {@code true} if payload should be compressed.
+     * @since 1.18.0
      */
     default boolean compress() {
         return getBoolean(this, "compress").orElse(true);
