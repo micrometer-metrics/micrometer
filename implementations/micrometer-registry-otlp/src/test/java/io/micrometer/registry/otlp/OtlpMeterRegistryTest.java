@@ -888,8 +888,7 @@ abstract class OtlpMeterRegistryTest {
             .singleElement()
             .satisfies(metric -> {
                 assertThat(metric.getHistogramData().getPoints()).hasSize(1);
-                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars())
-                    .singleElement()
+                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars()).singleElement()
                     .isEqualTo(exemplar1);
             });
 
@@ -897,8 +896,7 @@ abstract class OtlpMeterRegistryTest {
             .singleElement()
             .satisfies(metric -> {
                 assertThat(metric.getHistogramData().getPoints()).hasSize(1);
-                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars())
-                    .singleElement()
+                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars()).singleElement()
                     .isEqualTo(exemplar2);
             });
     }
@@ -929,8 +927,7 @@ abstract class OtlpMeterRegistryTest {
             .singleElement()
             .satisfies(metric -> {
                 assertThat(metric.getHistogramData().getPoints()).hasSize(1);
-                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars())
-                    .singleElement()
+                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars()).singleElement()
                     .isEqualTo(exemplar1);
             });
 
@@ -938,8 +935,7 @@ abstract class OtlpMeterRegistryTest {
             .singleElement()
             .satisfies(metric -> {
                 assertThat(metric.getHistogramData().getPoints()).hasSize(1);
-                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars())
-                    .singleElement()
+                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars()).singleElement()
                     .isEqualTo(exemplar2);
             });
     }
@@ -993,8 +989,7 @@ abstract class OtlpMeterRegistryTest {
             .singleElement()
             .satisfies(metric -> {
                 assertThat(metric.getHistogramData().getPoints()).hasSize(1);
-                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars())
-                    .hasSize(4)
+                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars()).hasSize(4)
                     .containsExactly(exemplar1, exemplar2, exemplar3, exemplar4);
             });
 
@@ -1002,8 +997,7 @@ abstract class OtlpMeterRegistryTest {
             .singleElement()
             .satisfies(metric -> {
                 assertThat(metric.getHistogramData().getPoints()).hasSize(1);
-                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars())
-                    .hasSize(4)
+                assertThat(metric.getHistogramData().getPoints().iterator().next().getExemplars()).hasSize(4)
                     .containsExactly(exemplar5, exemplar6, exemplar7, exemplar8);
             });
     }
