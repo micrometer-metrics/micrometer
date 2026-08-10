@@ -224,13 +224,34 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(point.getBoundaries()).containsExactly(10.0, 50.0, 100.0, 500.0);
         assertThat(point.getCounts()).containsExactly(1L, 0L, 1L, 1L, 0L);
 
-        stepOverNStep(1);
         timer.record(4, MILLISECONDS);
+        stepOverNStep(1);
+
         metric = writeToMetric(timer);
         assertHistogram(metric, TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), UNIT_MILLISECONDS, 1, 4, 4);
 
         point = metric.getHistogramData().getPoints().iterator().next();
         assertThat(point.getCounts()).containsExactly(1L, 0L, 0L, 0L, 0L);
+
+        timer.record(4, MILLISECONDS);
+        stepOverNStep(2);
+        point = writeToMetric(timer).getHistogramData().getPoints().iterator().next();
+        assertThat(point.getCounts()).containsExactly(0L, 0L, 0L, 0L, 0L);
+    }
+
+    @Test
+    void functionTimer() {
+        FunctionTimer functionTimer = FunctionTimer.builder(METER_NAME, this, o -> 5, o -> 127, MILLISECONDS)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
+        assertHistogram(writeToMetric(functionTimer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_MILLISECONDS, 0, 0, 0);
+        stepOverNStep(1);
+        assertHistogram(writeToMetric(functionTimer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+                UNIT_MILLISECONDS, 5, 127, 0);
+        stepOverNStep(1);
+        assertHistogram(writeToMetric(functionTimer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
+                UNIT_MILLISECONDS, 0, 0, 0);
     }
 
     @Test
@@ -530,10 +551,29 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(exponentialHistogramDataPoint.getEpochNanos() - exponentialHistogramDataPoint.getStartEpochNanos())
             .isEqualTo(otlpConfig().step().toNanos());
 
+        // Note the difference here, if it cumulative we had gone to a lower scale to
+        // accommodate 1, 100, 1000,
+        // 10000 but since the first 3 values are reset after the step. We will still be
+        // able to record 10000 in the
+        // same scale.
         assertExponentialHistogram(metric, 1, 10000, 10000.0, 0, 5);
 
         buckets = exponentialHistogramDataPoint.getPositiveBuckets();
         assertThat(buckets.getOffset()).isEqualTo(425);
+        assertThat(buckets.getBucketCounts()).hasSize(1);
+        assertThat(buckets.getBucketCounts().get(0)).isEqualTo(1);
+
+        timer.record(Duration.ofMillis(10001));
+        clock.add(exponentialHistogramOtlpConfig().step());
+        metric = writeToMetric(timer);
+        exponentialHistogramDataPoint = metric.getExponentialHistogramData().getPoints().iterator().next();
+
+        // Since, the range of recorded values in the last step is low, the histogram
+        // would have been rescaled to Max
+        // scale.
+        assertExponentialHistogram(metric, 1, 10001, 10001.0, 0, 20);
+        buckets = exponentialHistogramDataPoint.getPositiveBuckets();
+        assertThat(buckets.getOffset()).isEqualTo(13933327);
         assertThat(buckets.getBucketCounts()).hasSize(1);
         assertThat(buckets.getBucketCounts().get(0)).isEqualTo(1);
     }
@@ -572,10 +612,29 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(exponentialHistogramDataPoint.getEpochNanos() - exponentialHistogramDataPoint.getStartEpochNanos())
             .isEqualTo(otlpConfig().step().toNanos());
 
+        // Note the difference here, if it cumulative we had gone to a lower scale to
+        // accommodate 1, 100, 1000,
+        // 10000 but since the first 3 values are reset after the step. We will still be
+        // able to record 10000 in the
+        // same scale.
         assertExponentialHistogram(metric, 1, 10000, 10000.0, 0, 5);
 
         buckets = exponentialHistogramDataPoint.getPositiveBuckets();
         assertThat(buckets.getOffset()).isEqualTo(425);
+        assertThat(buckets.getBucketCounts()).hasSize(1);
+        assertThat(buckets.getBucketCounts().get(0)).isEqualTo(1);
+
+        ds.record(10001);
+        clock.add(exponentialHistogramOtlpConfig().step());
+        metric = writeToMetric(ds);
+        exponentialHistogramDataPoint = metric.getExponentialHistogramData().getPoints().iterator().next();
+
+        // Since, the range of recorded values in the last step is low, the histogram
+        // would have been rescaled to Max
+        // scale.
+        assertExponentialHistogram(metric, 1, 10001, 10001.0, 0, 20);
+        buckets = exponentialHistogramDataPoint.getPositiveBuckets();
+        assertThat(buckets.getOffset()).isEqualTo(13933327);
         assertThat(buckets.getBucketCounts()).hasSize(1);
         assertThat(buckets.getBucketCounts().get(0)).isEqualTo(1);
     }
