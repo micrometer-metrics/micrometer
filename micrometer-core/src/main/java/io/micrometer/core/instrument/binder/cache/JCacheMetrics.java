@@ -15,12 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import org.jspecify.annotations.Nullable;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import javax.cache.configuration.CompleteConfiguration;
 import javax.management.*;
 import java.util.List;
 
@@ -36,10 +39,14 @@ import java.util.List;
  */
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(JCacheMetrics.class);
+
     // VisibleForTesting
     @Nullable ObjectName objectName;
 
     private final boolean registerCacheRemovalsAsFunctionCounter;
+
+    private final boolean statisticsEnabled;
 
     /**
      * Record metrics on a JCache cache.
@@ -107,6 +114,12 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
     public JCacheMetrics(C cache, Iterable<Tag> tags, boolean registerCacheRemovalsAsFunctionCounter) {
         super(cache, cache.getName(), tags);
         this.registerCacheRemovalsAsFunctionCounter = registerCacheRemovalsAsFunctionCounter;
+        this.statisticsEnabled = isStatisticsEnabled(cache);
+        if (!statisticsEnabled) {
+            log.warn(
+                    "The cache '{}' is not recording statistics. No meters that require statistics will be registered. Enable statistics for this cache (for example by calling 'MutableConfiguration#setStatisticsEnabled(true)' when building the cache) before binding metrics.",
+                    cache.getName());
+        }
         try {
             CacheManager cacheManager = cache.getCacheManager();
             if (cacheManager != null) {
@@ -131,26 +144,41 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
 
     @Override
     protected long hitCount() {
+        if (!statisticsEnabled) {
+            return UNSUPPORTED;
+        }
         return lookupStatistic("CacheHits");
     }
 
     @Override
-    protected Long missCount() {
+    protected @Nullable Long missCount() {
+        if (!statisticsEnabled) {
+            return null;
+        }
         return lookupStatistic("CacheMisses");
     }
 
     @Override
-    protected Long evictionCount() {
+    protected @Nullable Long evictionCount() {
+        if (!statisticsEnabled) {
+            return null;
+        }
         return lookupStatistic("CacheEvictions");
     }
 
     @Override
     protected long putCount() {
+        if (!statisticsEnabled) {
+            return UNSUPPORTED;
+        }
         return lookupStatistic("CachePuts");
     }
 
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
+        if (!statisticsEnabled) {
+            return;
+        }
         if (objectName != null) {
             if (registerCacheRemovalsAsFunctionCounter) {
                 FunctionCounter.builder("cache.removals", objectName, objectName -> lookupStatistic("CacheRemovals"))
@@ -164,6 +192,22 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
                     .description("Cache removals")
                     .register(registry);
             }
+        }
+    }
+
+    // Captured once at construction; runtime toggles via
+    // CacheManager#enableStatistics(...) are not tracked.
+    // Rebind the metrics if statistics are enabled later.
+    private static boolean isStatisticsEnabled(Cache<?, ?> cache) {
+        try {
+            CompleteConfiguration<?, ?> config = cache.getConfiguration(CompleteConfiguration.class);
+            // When the provider does not expose CompleteConfiguration (or the
+            // configuration cannot be resolved), assume statistics are enabled
+            // to avoid a false positive warning and avoid skipping meters.
+            return config == null || config.isStatisticsEnabled();
+        }
+        catch (IllegalArgumentException ignored) {
+            return true;
         }
     }
 
