@@ -1189,6 +1189,35 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    void customCounterCreationTimestampNotUpdatedOnScrape() {
+        PrometheusConfig config = new PrometheusConfig() {
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Properties prometheusProperties() {
+                Properties properties = new Properties();
+                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                properties.setProperty("io.prometheus.exporter.includeCreatedTimestamps", "true");
+                return properties;
+            }
+        };
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, prometheusRegistry, clock);
+        clock.addSeconds(1);
+        registry.newMeter(new Meter.Id("custom.counter", Tags.empty(), null, null, Meter.Type.OTHER), Meter.Type.OTHER,
+                List.of(new Measurement(() -> 11, Statistic.COUNT)));
+
+        String scrape1 = registry.scrape(OpenMetricsTextFormatWriter.CONTENT_TYPE);
+        clock.addSeconds(5);
+        String scrape2 = registry.scrape(OpenMetricsTextFormatWriter.CONTENT_TYPE);
+
+        assertThat(scrape1).contains("custom_counter_created{statistic=\"COUNT\"} 1.001");
+        assertThat(scrape2).contains("custom_counter_created{statistic=\"COUNT\"} 1.001");
+    }
+
+    @Test
     void customMeterWithAllStatistics() {
         List<Measurement> measurements = new ArrayList<>();
         int i = 0;
