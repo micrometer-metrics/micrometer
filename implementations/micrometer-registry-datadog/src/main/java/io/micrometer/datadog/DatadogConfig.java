@@ -70,6 +70,13 @@ public interface DatadogConfig extends StepRegistryConfig {
         return getBoolean(this, "descriptions").orElse(true);
     }
 
+    /**
+     * @return {@code true} if payload should be compressed.
+     */
+    default boolean compress() {
+        return getBoolean(this, "compress").orElse(true);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("apiKey", DatadogConfig::apiKey),
