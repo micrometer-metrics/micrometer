@@ -219,26 +219,15 @@ class OtlpMetricConverter {
             }
         }
 
+        boolean isDelta = isDelta();
         HistogramPointData point;
         if (exemplars.isEmpty()) {
-            if (isDelta()) {
-                point = HistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false, 0.0,
-                        true, max, explicitBounds, bucketCounts);
-            }
-            else {
-                point = HistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false, 0.0,
-                        false, 0.0, explicitBounds, bucketCounts);
-            }
+            point = HistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false, 0.0, isDelta,
+                    isDelta ? max : 0.0, explicitBounds, bucketCounts);
         }
         else {
-            if (isDelta()) {
-                point = ImmutableHistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false,
-                        0.0, true, max, explicitBounds, bucketCounts, exemplars);
-            }
-            else {
-                point = ImmutableHistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false,
-                        0.0, false, 0.0, explicitBounds, bucketCounts, exemplars);
-            }
+            point = ImmutableHistogramPointData.create(startTimeNanos, getTimeUnixNano(), attributes, total, false, 0.0,
+                    isDelta, isDelta ? max : 0.0, explicitBounds, bucketCounts, exemplars);
         }
 
         addHistogramPointData(histogramSupport.getId(), point);
@@ -247,31 +236,20 @@ class OtlpMetricConverter {
     private void buildExponentialHistogramDataPoint(HistogramSupport histogramSupport, Attributes attributes,
             long startTimeNanos, double total, double max, ExponentialHistogramSnapShot exponentialHistogramSnapShot,
             List<DoubleExemplarData> exemplars) {
-        ExponentialHistogramBuckets positiveBuckets;
-        if (!exponentialHistogramSnapShot.positive().isEmpty()) {
-            positiveBuckets = ExponentialHistogramBuckets.create(exponentialHistogramSnapShot.scale(),
-                    exponentialHistogramSnapShot.positive().offset(),
-                    exponentialHistogramSnapShot.positive().bucketCounts());
-        }
-        else {
-            positiveBuckets = ExponentialHistogramBuckets.create(exponentialHistogramSnapShot.scale(), 0,
-                    Collections.emptyList());
-        }
+        ExponentialHistogramBuckets positiveBuckets = !exponentialHistogramSnapShot.positive().isEmpty()
+                ? ExponentialHistogramBuckets.create(exponentialHistogramSnapShot.scale(),
+                        exponentialHistogramSnapShot.positive().offset(),
+                        exponentialHistogramSnapShot.positive().bucketCounts())
+                : ExponentialHistogramBuckets.create(exponentialHistogramSnapShot.scale(), 0, Collections.emptyList());
 
+        // Micrometer does not record negative values; empty buckets
         ExponentialHistogramBuckets negativeBuckets = ExponentialHistogramBuckets
             .create(exponentialHistogramSnapShot.scale(), 0, Collections.emptyList());
 
-        ExponentialHistogramPointData point;
-        if (isDelta()) {
-            point = ExponentialHistogramPointData.create(exponentialHistogramSnapShot.scale(), total,
-                    exponentialHistogramSnapShot.zeroCount(), false, 0.0, true, max, positiveBuckets, negativeBuckets,
-                    startTimeNanos, getTimeUnixNano(), attributes, exemplars);
-        }
-        else {
-            point = ExponentialHistogramPointData.create(exponentialHistogramSnapShot.scale(), total,
-                    exponentialHistogramSnapShot.zeroCount(), false, 0.0, false, 0.0, positiveBuckets, negativeBuckets,
-                    startTimeNanos, getTimeUnixNano(), attributes, exemplars);
-        }
+        boolean isDelta = isDelta();
+        ExponentialHistogramPointData point = ExponentialHistogramPointData.create(exponentialHistogramSnapShot.scale(),
+                total, exponentialHistogramSnapShot.zeroCount(), false, 0.0, isDelta, isDelta ? max : 0.0,
+                positiveBuckets, negativeBuckets, startTimeNanos, getTimeUnixNano(), attributes, exemplars);
 
         addExponentialHistogramPointData(histogramSupport.getId(), point);
     }
