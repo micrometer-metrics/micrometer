@@ -163,19 +163,19 @@ public interface FunctionCounter extends Meter {
      * @param <T> The type of the state object from which the counter value is extracted.
      * @since 1.18.0
      */
-    class TimeBasedBuilder<T> {
+    final class TimeBasedBuilder<T> {
 
         private final String name;
 
+        private final T obj;
+
         private final ToDoubleFunction<T> objToCountFunction;
+
+        private final TimeUnit sourceUnit;
 
         private Tags tags = Tags.empty();
 
-        private final T obj;
-
         private @Nullable String description;
-
-        private final TimeUnit sourceUnit;
 
         private TimeBasedBuilder(String name, T obj, ToDoubleFunction<T> objToCountFunction, TimeUnit sourceUnit) {
             this.name = name;
