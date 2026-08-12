@@ -7,21 +7,21 @@ executors:
       GRADLE_OPTS: '-Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:25.0.1
+      - image: cimg/openjdk:25.0.4
   jdk21-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:21.0.12
   jdk17-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:17.0.17
+      - image: cimg/openjdk:17.0.20
   # JCStress spawns multiple test JVMs; use larger instance to avoid daemon OOM
   concurrency-tests-executor:
     working_directory: ~/micrometer
@@ -29,11 +29,11 @@ executors:
       GRADLE_OPTS: '-Dorg.gradle.workers.max=2'
     resource_class: large
     docker:
-      - image: cimg/openjdk:25.0.1
+      - image: cimg/openjdk:25.0.4
   machine-executor:
     working_directory: ~/micrometer
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
 
 commands:
   gradlew-build:
