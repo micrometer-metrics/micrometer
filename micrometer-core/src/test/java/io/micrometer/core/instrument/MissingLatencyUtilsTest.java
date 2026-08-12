@@ -66,12 +66,11 @@ class MissingLatencyUtilsTest {
 
     @Test
     @Issue("7815")
-    void abstractTimerFieldsAreIntrospectableWithoutLatencyUtils() {
+    void abstractTimerFieldsAreReflectivelyAccessibleWithoutLatencyUtils() {
         assertThatCode(() -> {
             for (java.lang.reflect.Field field : AbstractTimer.class.getDeclaredFields()) {
-                // Force resolution of each field type, matching Spring ReflectionUtils
-                // introspection.
-                field.getType();
+                // Triggers loading the class of the field
+                Class<?> ignored = field.getType();
             }
         }).doesNotThrowAnyException();
     }
