@@ -52,7 +52,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     // Only used when pause detection is enabled
     private @Nullable Object intervalEstimator;
 
-    // Object so field resolution does not require optional LatencyUtils on the classpath
+    // Object so reflective access does not require LatencyUtils being on the classpath
     private @Nullable Object pauseDetector;
 
     /**
@@ -148,22 +148,20 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
                 return;
             }
         }
-        pauseDetector = (org.LatencyUtils.PauseDetector) pauseDetectorCache.computeIfAbsent(pauseDetectorType,
-                detector -> {
-                    if (detector instanceof ClockDriftPauseDetector) {
-                        ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
-                        return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
-                                clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
-                    }
-                    return null;
-                });
+        pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
+            if (detector instanceof ClockDriftPauseDetector) {
+                ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
+                return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
+                        clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
+            }
+            return null;
+        });
 
         if (pauseDetector instanceof SimplePauseDetector) {
-            org.LatencyUtils.PauseDetector latencyPauseDetector = (org.LatencyUtils.PauseDetector) pauseDetector;
-            this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128, 10000000000L,
-                    latencyPauseDetector);
+            org.LatencyUtils.PauseDetector pauseDetector = (org.LatencyUtils.PauseDetector) this.pauseDetector;
+            this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128, 10000000000L, pauseDetector);
 
-            latencyPauseDetector.addListener((pauseLength, pauseEndTime) -> {
+            pauseDetector.addListener((pauseLength, pauseEndTime) -> {
                 if (intervalEstimator != null) {
                     long estimatedInterval = ((IntervalEstimator) intervalEstimator).getEstimatedInterval(pauseEndTime);
                     long observedLatencyMinbar = pauseLength - estimatedInterval;
