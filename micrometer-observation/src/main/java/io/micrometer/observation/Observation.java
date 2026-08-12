@@ -1444,7 +1444,8 @@ public interface Observation extends ObservationView {
          * @return event
          */
         default Event format(Object... dynamicEntriesForContextualName) {
-            return Event.of(getName(), String.format(getContextualName(), dynamicEntriesForContextualName));
+            return Event.of(getName(), String.format(getContextualName(), dynamicEntriesForContextualName),
+                    getWallTime(), getKeyValues());
         }
 
     }
