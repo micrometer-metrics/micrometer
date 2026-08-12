@@ -154,14 +154,13 @@ FunctionCounter counter = FunctionCounter
     .register(registry);
 ----
 
-If the function tracks a time value, you can use `timeUnit` on the builder to create a `FunctionCounter` that scales its value to the registry's base time unit. This is analogous to how `TimeGauge` works, and provides a way to register monotonically increasing time values (like `jvm.gc.cpu.time` or `process.cpu.time`) in a way that automatically scales to the preferred time unit of the metrics backend.
+If the function tracks a time value, you can specify the time unit of the value returned by the function when calling `FunctionCounter.builder(...)`. This creates a `FunctionCounter` that automatically scales its time-based count to the registry's base time unit. This is analogous to how `TimeGauge` works, and provides a way to register monotonically increasing time values (e.g. `RuntimeMXBean::getUptime`) in a way that automatically scales to the preferred time unit of the metrics backend.
 
 [source, java]
 ----
 MyCounterState state = ...;
 
-FunctionCounter.builder("counter.time", state, state -> state.totalTime())
-    .timeUnit(TimeUnit.NANOSECONDS) // optional, scales the value to the registry's base time unit
+FunctionCounter.builder("counter.time", state, state -> state.totalTime(), TimeUnit.NANOSECONDS)
     .description("a description of what this counter does") // optional
     .tags("region", "test") // optional
     .register(registry);

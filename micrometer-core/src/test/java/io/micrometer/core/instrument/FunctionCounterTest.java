@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.util.TimeUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -30,29 +31,28 @@ class FunctionCounterTest {
 
     @Test
     void convertsCountUsingTimeUnit() {
-        AtomicLong n = new AtomicLong(1000);
-        FunctionCounter c = FunctionCounter.builder("my.time.counter", n, AtomicLong::doubleValue)
-            .timeUnit(TimeUnit.MILLISECONDS)
+        long countInMs = 1000;
+        AtomicLong n = new AtomicLong(countInMs);
+        FunctionCounter c = FunctionCounter
+            .builder("my.time.counter", n, AtomicLong::doubleValue, TimeUnit.MILLISECONDS)
             .register(registry);
 
-        assertThat(c.getId().getBaseUnit()).isEqualTo("seconds");
-        assertThat(c.count()).isEqualTo(1.0);
+        double countInSeconds = TimeUtils.convert((double) countInMs, TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+        assertThat(c.count()).describedAs("SimpleMeterRegistry has baseTimeUnit of seconds").isEqualTo(countInSeconds);
     }
 
     @Test
-    void timeUnitTakesPrecedenceOverBaseUnit() {
+    void registryBaseTimeUnitIsUsed() {
         FunctionCounter functionCounter = FunctionCounter
-            .builder("my.time.counter", new AtomicInteger(), AtomicInteger::doubleValue)
-            .timeUnit(TimeUnit.MILLISECONDS)
-            .baseUnit("milliseconds")
+            .builder("my.time.counter", new AtomicInteger(), AtomicInteger::doubleValue, TimeUnit.MILLISECONDS)
             .register(registry);
 
-        // SimpleMeterRegistry has baseTimeUnit of seconds
-        assertThat(functionCounter.getId().getBaseUnit()).isEqualTo("seconds");
+        assertThat(functionCounter.getId().getBaseUnit()).describedAs("SimpleMeterRegistry has baseTimeUnit of seconds")
+            .isEqualTo("seconds");
     }
 
     @Test
-    void baseUnitNotIgnoredWhenTimeUnitIsNull() {
+    void baseUnitNotIgnoredWhenNotTimeBased() {
         FunctionCounter functionCounter = FunctionCounter
             .builder("jdbc.connections.created", new AtomicInteger(), AtomicInteger::doubleValue)
             .baseUnit("connections")
