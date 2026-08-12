@@ -1373,7 +1373,7 @@ public interface Observation extends ObservationView {
          * @since 1.12.0
          */
         static Event of(String name, String contextualName, long wallTime) {
-            return new SimpleEvent(name, contextualName, wallTime, KeyValues.empty());
+            return of(name, contextualName, wallTime, KeyValues.empty());
         }
 
         /**
@@ -1385,7 +1385,7 @@ public interface Observation extends ObservationView {
          * epoch
          * @param keyValues metadata specific to the event
          * @return event
-         * @since 1.15.0
+         * @since 1.18.0
          */
         static Event of(String name, String contextualName, long wallTime, Iterable<KeyValue> keyValues) {
             return new SimpleEvent(name, contextualName, wallTime, keyValues);
@@ -1428,12 +1428,12 @@ public interface Observation extends ObservationView {
         }
 
         /**
-         * Metadata about the event in the form of {@link KeyValue}. It may be empty if
+         * Metadata about the event in the form of {@link KeyValues}. It may be empty if
          * there is no metadata specific to the event.
          * @return key values associated with this event
-         * @since 1.15.0
+         * @since 1.18.0
          */
-        default Iterable<KeyValue> getKeyValues() {
+        default KeyValues getKeyValues() {
             return KeyValues.empty();
         }
 
