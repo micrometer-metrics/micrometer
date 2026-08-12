@@ -1076,6 +1076,7 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    @Issue("gh-7798")
     void createdTimestampEnabled() {
         PrometheusConfig config = new PrometheusConfig() {
             @Override
@@ -1101,7 +1102,12 @@ class PrometheusMeterRegistryTest {
         clock.addSeconds(1);
         registry.summary("s").record(4);
         registry.newMeter(new Meter.Id("custom.meter", Tags.empty(), null, null, Meter.Type.OTHER), Meter.Type.OTHER,
-                List.of(new Measurement(() -> 11, Statistic.COUNT)));
+                List.of(new Measurement(() -> 11, Statistic.COUNT), new Measurement(() -> 22, Statistic.TOTAL)));
+
+        // Advance the clock after registration so scrapes would report a different
+        // `_created` value if it were recomputed per scrape (the previous custom-meter
+        // bug).
+        clock.addSeconds(10);
 
         String openMetricsScrape = registry.scrape(OpenMetricsTextFormatWriter.CONTENT_TYPE);
         String prometheusTextScrape = registry.scrape(PrometheusTextFormatWriter.CONTENT_TYPE);
@@ -1111,7 +1117,10 @@ class PrometheusMeterRegistryTest {
                 .contains("t_seconds_created 4.001")
                 .contains("ft_seconds_created 4.001")
                 .contains("s_created 5.001")
-                .contains("custom_meter_created{statistic=\"COUNT\"} 5.001"));
+                .contains("custom_meter_created{statistic=\"COUNT\"} 5.001")
+                .contains("custom_meter_sum_created{statistic=\"TOTAL\"} 5.001")
+                .doesNotContain("custom_meter_created{statistic=\"COUNT\"} 15.001")
+                .doesNotContain("custom_meter_sum_created{statistic=\"TOTAL\"} 15.001"));
     }
 
     @Test
