@@ -1377,18 +1377,36 @@ public interface Observation extends ObservationView {
         }
 
         /**
-         * Creates an {@link Event}.
+         * Creates an {@link Event} with high-cardinality key-values.
          * @param name The name of the event (should have low cardinality).
          * @param contextualName The contextual name of the event (can have high
          * cardinality).
          * @param wallTime Wall time when the event happened in milliseconds since the
          * epoch
-         * @param keyValues metadata specific to the event
+         * @param highCardinalityKeyValues high-cardinality metadata specific to the event
          * @return event
          * @since 1.18.0
          */
-        static Event of(String name, String contextualName, long wallTime, Iterable<KeyValue> keyValues) {
-            return new SimpleEvent(name, contextualName, wallTime, keyValues);
+        static Event of(String name, String contextualName, long wallTime,
+                Iterable<KeyValue> highCardinalityKeyValues) {
+            return of(name, contextualName, wallTime, highCardinalityKeyValues, KeyValues.empty());
+        }
+
+        /**
+         * Creates an {@link Event} with high- and low-cardinality key-values.
+         * @param name The name of the event (should have low cardinality).
+         * @param contextualName The contextual name of the event (can have high
+         * cardinality).
+         * @param wallTime Wall time when the event happened in milliseconds since the
+         * epoch
+         * @param highCardinalityKeyValues high-cardinality metadata specific to the event
+         * @param lowCardinalityKeyValues low-cardinality metadata specific to the event
+         * @return event
+         * @since 1.18.0
+         */
+        static Event of(String name, String contextualName, long wallTime,
+                Iterable<KeyValue> highCardinalityKeyValues, Iterable<KeyValue> lowCardinalityKeyValues) {
+            return new SimpleEvent(name, contextualName, wallTime, highCardinalityKeyValues, lowCardinalityKeyValues);
         }
 
         /**
@@ -1428,13 +1446,33 @@ public interface Observation extends ObservationView {
         }
 
         /**
-         * Metadata about the event in the form of {@link KeyValues}. It may be empty if
+         * Low-cardinality metadata about the event in the form of {@link KeyValues}. It may
+         * be empty if there is no low-cardinality metadata specific to the event.
+         * @return low-cardinality key values associated with this event
+         * @since 1.18.0
+         */
+        default KeyValues getLowCardinalityKeyValues() {
+            return KeyValues.empty();
+        }
+
+        /**
+         * High-cardinality metadata about the event in the form of {@link KeyValues}. It
+         * may be empty if there is no high-cardinality metadata specific to the event.
+         * @return high-cardinality key values associated with this event
+         * @since 1.18.0
+         */
+        default KeyValues getHighCardinalityKeyValues() {
+            return KeyValues.empty();
+        }
+
+        /**
+         * All metadata about the event in the form of {@link KeyValues}. It may be empty if
          * there is no metadata specific to the event.
          * @return key values associated with this event
          * @since 1.18.0
          */
         default KeyValues getKeyValues() {
-            return KeyValues.empty();
+            return getLowCardinalityKeyValues().and(getHighCardinalityKeyValues());
         }
 
         /**
@@ -1445,7 +1483,7 @@ public interface Observation extends ObservationView {
          */
         default Event format(Object... dynamicEntriesForContextualName) {
             return Event.of(getName(), String.format(getContextualName(), dynamicEntriesForContextualName),
-                    getWallTime(), getKeyValues());
+                    getWallTime(), getHighCardinalityKeyValues(), getLowCardinalityKeyValues());
         }
 
     }

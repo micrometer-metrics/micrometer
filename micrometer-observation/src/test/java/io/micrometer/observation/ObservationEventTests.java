@@ -32,6 +32,8 @@ class ObservationEventTests {
     @Test
     void defaultGetKeyValuesReturnsEmptyKeyValues() {
         Observation.Event customEvent = new CustomEvent("test");
+        assertThat(customEvent.getLowCardinalityKeyValues()).isSameAs(KeyValues.empty());
+        assertThat(customEvent.getHighCardinalityKeyValues()).isSameAs(KeyValues.empty());
         assertThat(customEvent.getKeyValues()).isSameAs(KeyValues.empty());
     }
 
@@ -44,6 +46,8 @@ class ObservationEventTests {
         assertThat(event.getName()).isEqualTo("myEvent");
         assertThat(event.getContextualName()).isEqualTo("myEvent");
         assertThat(event.getWallTime()).isBetween(before, after);
+        assertThat(event.getLowCardinalityKeyValues()).isEmpty();
+        assertThat(event.getHighCardinalityKeyValues()).isEmpty();
         assertThat(event.getKeyValues()).isEmpty();
     }
 
@@ -56,6 +60,8 @@ class ObservationEventTests {
         assertThat(event.getName()).isEqualTo("myEvent");
         assertThat(event.getContextualName()).isEqualTo("contextual %s");
         assertThat(event.getWallTime()).isBetween(before, after);
+        assertThat(event.getLowCardinalityKeyValues()).isEmpty();
+        assertThat(event.getHighCardinalityKeyValues()).isEmpty();
         assertThat(event.getKeyValues()).isEmpty();
     }
 
@@ -66,18 +72,36 @@ class ObservationEventTests {
         assertThat(event.getName()).isEqualTo("myEvent");
         assertThat(event.getContextualName()).isEqualTo("contextual");
         assertThat(event.getWallTime()).isEqualTo(123456L);
+        assertThat(event.getLowCardinalityKeyValues()).isEmpty();
+        assertThat(event.getHighCardinalityKeyValues()).isEmpty();
         assertThat(event.getKeyValues()).isEmpty();
     }
 
     @Test
-    void eventWithKeyValues() {
-        KeyValues keyValues = KeyValues.of("k1", "v1", "k2", "v2");
-        Observation.Event event = Observation.Event.of("myEvent", "contextual", 123456L, keyValues);
+    void eventWithHighCardinalityKeyValues() {
+        KeyValues highKeyValues = KeyValues.of("hk1", "hv1", "hk2", "hv2");
+        Observation.Event event = Observation.Event.of("myEvent", "contextual", 123456L, highKeyValues);
 
         assertThat(event.getName()).isEqualTo("myEvent");
         assertThat(event.getContextualName()).isEqualTo("contextual");
         assertThat(event.getWallTime()).isEqualTo(123456L);
-        assertThat(event.getKeyValues()).containsExactlyElementsOf(keyValues);
+        assertThat(event.getLowCardinalityKeyValues()).isEmpty();
+        assertThat(event.getHighCardinalityKeyValues()).containsExactlyElementsOf(highKeyValues);
+        assertThat(event.getKeyValues()).containsExactlyElementsOf(highKeyValues);
+    }
+
+    @Test
+    void eventWithHighAndLowCardinalityKeyValues() {
+        KeyValues highKeyValues = KeyValues.of("hk1", "hv1");
+        KeyValues lowKeyValues = KeyValues.of("lk1", "lv1");
+        Observation.Event event = Observation.Event.of("myEvent", "contextual", 123456L, highKeyValues, lowKeyValues);
+
+        assertThat(event.getName()).isEqualTo("myEvent");
+        assertThat(event.getContextualName()).isEqualTo("contextual");
+        assertThat(event.getWallTime()).isEqualTo(123456L);
+        assertThat(event.getHighCardinalityKeyValues()).containsExactlyElementsOf(highKeyValues);
+        assertThat(event.getLowCardinalityKeyValues()).containsExactlyElementsOf(lowKeyValues);
+        assertThat(event.getKeyValues()).containsExactly(KeyValue.of("hk1", "hv1"), KeyValue.of("lk1", "lv1"));
     }
 
     @Test
@@ -85,20 +109,25 @@ class ObservationEventTests {
         Iterable<KeyValue> keyValues = Collections.singletonList(KeyValue.of("k1", "v1"));
         Observation.Event event = Observation.Event.of("myEvent", "contextual", 123456L, keyValues);
 
+        assertThat(event.getHighCardinalityKeyValues()).containsExactly(KeyValue.of("k1", "v1"));
         assertThat(event.getKeyValues()).containsExactly(KeyValue.of("k1", "v1"));
     }
 
     @Test
     void formatPreservesWallTimeAndKeyValues() {
-        KeyValues keyValues = KeyValues.of("retryCount", "3");
-        Observation.Event event = Observation.Event.of("retry", "attempt %s failed", 9999L, keyValues);
+        KeyValues highKeyValues = KeyValues.of("detail", "timeout");
+        KeyValues lowKeyValues = KeyValues.of("attempt", "2");
+        Observation.Event event = Observation.Event.of("retry", "attempt %s failed", 9999L, highKeyValues,
+                lowKeyValues);
 
         Observation.Event formatted = event.format(2);
 
         assertThat(formatted.getName()).isEqualTo("retry");
         assertThat(formatted.getContextualName()).isEqualTo("attempt 2 failed");
         assertThat(formatted.getWallTime()).isEqualTo(9999L);
-        assertThat(formatted.getKeyValues()).containsExactlyElementsOf(keyValues);
+        assertThat(formatted.getHighCardinalityKeyValues()).containsExactlyElementsOf(highKeyValues);
+        assertThat(formatted.getLowCardinalityKeyValues()).containsExactlyElementsOf(lowKeyValues);
+        assertThat(formatted.getKeyValues()).containsExactlyElementsOf(lowKeyValues.and(highKeyValues));
     }
 
     @Test

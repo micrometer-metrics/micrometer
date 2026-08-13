@@ -34,23 +34,28 @@ final class SimpleEvent implements Event {
 
     private final long wallTime;
 
-    private final KeyValues keyValues;
+    private final KeyValues lowCardinalityKeyValues;
+
+    private final KeyValues highCardinalityKeyValues;
 
     SimpleEvent(String name, String contextualName) {
-        this(name, contextualName, System.currentTimeMillis(), KeyValues.empty());
+        this(name, contextualName, System.currentTimeMillis(), KeyValues.empty(), KeyValues.empty());
     }
 
     /**
      * @param name The name of the event (should have low cardinality).
      * @param contextualName The contextual name of the event (can have high cardinality).
      * @param wallTime Wall time in milliseconds since the epoch
-     * @param keyValues key-values associated with the event
+     * @param highCardinalityKeyValues high-cardinality key-values associated with the event
+     * @param lowCardinalityKeyValues low-cardinality key-values associated with the event
      */
-    SimpleEvent(String name, String contextualName, long wallTime, Iterable<KeyValue> keyValues) {
+    SimpleEvent(String name, String contextualName, long wallTime, Iterable<KeyValue> highCardinalityKeyValues,
+            Iterable<KeyValue> lowCardinalityKeyValues) {
         this.name = name;
         this.contextualName = contextualName;
         this.wallTime = wallTime;
-        this.keyValues = KeyValues.of(keyValues);
+        this.highCardinalityKeyValues = KeyValues.of(highCardinalityKeyValues);
+        this.lowCardinalityKeyValues = KeyValues.of(lowCardinalityKeyValues);
     }
 
     @Override
@@ -69,8 +74,18 @@ final class SimpleEvent implements Event {
     }
 
     @Override
+    public KeyValues getLowCardinalityKeyValues() {
+        return this.lowCardinalityKeyValues;
+    }
+
+    @Override
+    public KeyValues getHighCardinalityKeyValues() {
+        return this.highCardinalityKeyValues;
+    }
+
+    @Override
     public KeyValues getKeyValues() {
-        return this.keyValues;
+        return this.lowCardinalityKeyValues.and(this.highCardinalityKeyValues);
     }
 
     @Override
