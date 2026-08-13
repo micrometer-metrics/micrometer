@@ -30,7 +30,7 @@ import java.util.function.Supplier;
  * An OpenTelemetry {@link HttpSender} implementation that delegates sending to a
  * configured Micrometer {@link OtlpMetricsSender}.
  */
-class OtlpMetricsSenderHttpSender implements HttpSender {
+final class OtlpMetricsSenderHttpSender implements HttpSender {
 
     private final OtlpMetricsSender otlpMetricsSender;
 

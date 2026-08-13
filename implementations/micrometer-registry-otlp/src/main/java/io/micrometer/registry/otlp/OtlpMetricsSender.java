@@ -21,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 /**
  * This is responsible for sending OTLP protobuf format metrics to a compatible location.
@@ -54,8 +53,6 @@ public interface OtlpMetricsSender {
 
         private final CompressionMode compressionMode;
 
-        private final @Nullable Supplier<String> readableMetricsDataSupplier;
-
         /**
          * Represents a payload of metrics to be sent.
          * @param address where to send the metrics
@@ -64,12 +61,11 @@ public interface OtlpMetricsSender {
          * @param compressionMode compression mode for the metrics data
          */
         private Request(@Nullable String address, Map<String, String> headers, byte[] metricsData,
-                CompressionMode compressionMode, @Nullable Supplier<String> readableMetricsDataSupplier) {
+                CompressionMode compressionMode) {
             this.address = address;
             this.headers = headers;
             this.metricsData = metricsData;
             this.compressionMode = compressionMode;
-            this.readableMetricsDataSupplier = readableMetricsDataSupplier;
         }
 
         public @Nullable String getAddress() {
@@ -95,9 +91,6 @@ public interface OtlpMetricsSender {
         }
 
         private String readableMetricsData() {
-            if (this.readableMetricsDataSupplier != null) {
-                return this.readableMetricsDataSupplier.get();
-            }
             return new String(metricsData, StandardCharsets.UTF_8);
         }
 
@@ -120,8 +113,6 @@ public interface OtlpMetricsSender {
 
             private CompressionMode compressionMode = CompressionMode.NONE;
 
-            private @Nullable Supplier<String> readableMetricsDataSupplier;
-
             private Builder(byte[] metricsData) {
                 this.metricsData = Objects.requireNonNull(metricsData);
             }
@@ -141,18 +132,8 @@ public interface OtlpMetricsSender {
                 return this;
             }
 
-            Builder readableMetricsData(Supplier<String> readableMetricsDataSupplier) {
-                this.readableMetricsDataSupplier = readableMetricsDataSupplier;
-                return this;
-            }
-
-            Builder readableMetricsData(String readableMetricsData) {
-                this.readableMetricsDataSupplier = () -> readableMetricsData;
-                return this;
-            }
-
             public Request build() {
-                return new Request(address, headers, metricsData, compressionMode, readableMetricsDataSupplier);
+                return new Request(address, headers, metricsData, compressionMode);
             }
 
         }
