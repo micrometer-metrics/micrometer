@@ -1,9 +1,24 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+plugins {
+    alias(libs.plugins.shadow)
+}
+
 description = 'Publishes Micrometer meters in OTLP format'
 
 dependencies {
     api project(':micrometer-core')
 
-    implementation libs.openTelemetry.proto
+    implementation platform(libs.openTelemetry.bom)
+    implementation(libs.openTelemetry.exporter.otlp) {
+        exclude group: 'io.opentelemetry', module: 'opentelemetry-exporter-sender-okhttp'
+        exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-trace'
+        exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-logs'
+    }
+    implementation(libs.openTelemetry.exporter.otlp.common) {
+        exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-extension-autoconfigure-spi'
+    }
+    implementation libs.openTelemetry.sdk.metrics
 
     testImplementation project(':micrometer-test')
     testImplementation libs.systemStubsJupiter
@@ -14,6 +29,43 @@ dependencies {
     testImplementation libs.logbackLatest
     testImplementation(platform(libs.prometheusMetricsBom))
     testImplementation libs.prometheusMetricsExpositionFormats
+}
+
+tasks.named('jar') {
+    enabled = false
+}
+
+def shadowJar = tasks.named('shadowJar', ShadowJar) {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    failOnDuplicateEntries = true
+    configurations.set([project.configurations.compileClasspath])
+    archiveClassifier.set('')
+    dependencies {
+        include(dependency('io.opentelemetry:.*'))
+    }
+    exclude("META-INF/maven/**")
+    relocate 'io.opentelemetry', 'io.micrometer.registry.otlp.shaded.io.opentelemetry'
+    metaInf {
+        from "$rootDir/LICENSE"
+        from "$rootDir/NOTICE"
+    }
+    mergeServiceFiles()
+}
+
+tasks.japicmp.dependsOn(shadowJar)
+
+publishing {
+    publications {
+        withType(MavenPublication) {
+            pom.withXml {
+                asNode()
+                    .dependencies
+                    .dependency
+                    .findAll { ['opentelemetry-exporter-otlp', 'opentelemetry-exporter-otlp-common', 'opentelemetry-sdk-metrics'].contains(it.artifactId.text()) }
+                    .each { it.parent().remove(it) }
+            }
+        }
+    }
 }
 
 dockerTest {

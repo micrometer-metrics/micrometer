@@ -36,15 +36,14 @@ public enum AggregationTemporality {
      */
     CUMULATIVE;
 
-    static io.opentelemetry.proto.metrics.v1.AggregationTemporality toOtlpAggregationTemporality(
+    static io.opentelemetry.sdk.metrics.data.AggregationTemporality toOtlpAggregationTemporality(
             AggregationTemporality aggregationTemporality) {
         switch (aggregationTemporality) {
             case DELTA:
-                return io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
+                return io.opentelemetry.sdk.metrics.data.AggregationTemporality.DELTA;
             case CUMULATIVE:
-                return io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE;
             default:
-                return io.opentelemetry.proto.metrics.v1.AggregationTemporality.UNRECOGNIZED;
+                return io.opentelemetry.sdk.metrics.data.AggregationTemporality.CUMULATIVE;
         }
     }
 

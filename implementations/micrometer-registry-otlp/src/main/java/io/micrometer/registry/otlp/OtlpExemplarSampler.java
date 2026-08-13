@@ -15,14 +15,15 @@
  */
 package io.micrometer.registry.otlp;
 
-import com.google.protobuf.ByteString;
-import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
+import io.micrometer.common.KeyValue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepValue;
-import io.opentelemetry.proto.common.v1.AnyValue;
-import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
-import org.jspecify.annotations.Nullable;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.api.trace.SpanContext;
+import io.opentelemetry.api.trace.TraceFlags;
+import io.opentelemetry.api.trace.TraceState;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,8 +35,6 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.function.Supplier;
 
 class OtlpExemplarSampler implements ExemplarSampler {
-
-    private static final WarnThenDebugLogger LOGGER = new WarnThenDebugLogger(OtlpExemplarSampler.class);
 
     private final ExemplarContextProvider exemplarContextProvider;
 
@@ -78,7 +77,7 @@ class OtlpExemplarSampler implements ExemplarSampler {
     }
 
     @Override
-    public List<Exemplar> collectExemplars() {
+    public List<DoubleExemplarData> collectExemplars() {
         return exemplars.collect();
     }
 
@@ -87,42 +86,42 @@ class OtlpExemplarSampler implements ExemplarSampler {
         exemplars.close();
     }
 
-    private static class Exemplars extends StepValue<Exemplar[]> {
+    private static class Exemplars extends StepValue<DoubleExemplarData[]> {
 
-        private static final Exemplar[] EMPTY = new Exemplar[0];
+        private static final DoubleExemplarData[] EMPTY = new DoubleExemplarData[0];
 
-        private Exemplar[] current;
+        private DoubleExemplarData[] current;
 
         private final CellSelector cellSelector;
 
         private Exemplars(Clock clock, long stepMillis, int size) {
-            this(clock, stepMillis, new Exemplar[size], new RandomDecayingProbabilityCellSelector());
+            this(clock, stepMillis, new DoubleExemplarData[size], new RandomDecayingProbabilityCellSelector());
         }
 
         private Exemplars(Clock clock, long stepMillis, double[] buckets) {
-            this(clock, stepMillis, new Exemplar[buckets.length], new HistogramCellSelector(buckets));
+            this(clock, stepMillis, new DoubleExemplarData[buckets.length], new HistogramCellSelector(buckets));
         }
 
-        private Exemplars(Clock clock, long stepMillis, Exemplar[] initValue, CellSelector cellSelector) {
+        private Exemplars(Clock clock, long stepMillis, DoubleExemplarData[] initValue, CellSelector cellSelector) {
             super(clock, stepMillis, EMPTY);
             this.current = initValue;
             this.cellSelector = cellSelector;
         }
 
         @Override
-        protected Supplier<Exemplar[]> valueSupplier() {
+        protected Supplier<DoubleExemplarData[]> valueSupplier() {
             return this::getExemplarsAndReset;
         }
 
-        private Exemplar[] getExemplarsAndReset() {
-            Exemplar[] result = current;
-            current = new Exemplar[current.length];
+        private DoubleExemplarData[] getExemplarsAndReset() {
+            DoubleExemplarData[] result = current;
+            current = new DoubleExemplarData[current.length];
             cellSelector.reset();
             return result;
         }
 
         @Override
-        protected Exemplar[] noValue() {
+        protected DoubleExemplarData[] noValue() {
             return EMPTY;
         }
 
@@ -134,8 +133,8 @@ class OtlpExemplarSampler implements ExemplarSampler {
             this._closingRollover();
         }
 
-        private List<Exemplar> collect() {
-            List<Exemplar> exemplars = new ArrayList<>(Arrays.asList(this.poll()));
+        private List<DoubleExemplarData> collect() {
+            List<DoubleExemplarData> exemplars = new ArrayList<>(Arrays.asList(this.poll()));
             exemplars.removeAll(Collections.singletonList(null));
             return Collections.unmodifiableList(exemplars);
         }
@@ -148,46 +147,22 @@ class OtlpExemplarSampler implements ExemplarSampler {
             }
         }
 
-        private static Exemplar createExemplar(double measurement, DoubleUnaryOperator converter,
+        private static DoubleExemplarData createExemplar(double measurement, DoubleUnaryOperator converter,
                 OtlpExemplarContext exemplarContext, Clock clock) {
-            ByteString traceId = fromHex(exemplarContext.getTraceId());
-            ByteString spanId = fromHex(exemplarContext.getSpanId());
+            String traceId = exemplarContext.getTraceId();
+            String spanId = exemplarContext.getSpanId();
 
-            Exemplar.Builder builder = Exemplar.newBuilder()
-                .setAsDouble(converter.applyAsDouble(measurement))
-                .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
-
-            if (traceId != null) {
-                builder.setTraceId(traceId);
-            }
-            if (spanId != null) {
-                builder.setSpanId(spanId);
-            }
-            for (io.micrometer.common.KeyValue keyValue : exemplarContext.getKeyValues()) {
-                builder.addFilteredAttributes(toOtelKeyValue(keyValue));
+            AttributesBuilder builder = Attributes.builder();
+            for (KeyValue keyValue : exemplarContext.getKeyValues()) {
+                builder.put(keyValue.getKey(), keyValue.getValue());
             }
 
-            return builder.build();
-        }
+            SpanContext spanContext = (traceId != null && spanId != null)
+                    ? SpanContext.create(traceId, spanId, TraceFlags.getDefault(), TraceState.getDefault())
+                    : SpanContext.getInvalid();
 
-        private static @Nullable ByteString fromHex(@Nullable String value) {
-            if (value == null) {
-                return null;
-            }
-            try {
-                return ByteString.fromHex(value);
-            }
-            catch (Exception e) {
-                LOGGER.log("Unable to parse value!", e);
-                return null;
-            }
-        }
-
-        private static KeyValue toOtelKeyValue(io.micrometer.common.KeyValue micrometerKeyValue) {
-            return KeyValue.newBuilder()
-                .setKey(micrometerKeyValue.getKey())
-                .setValue(AnyValue.newBuilder().setStringValue(micrometerKeyValue.getValue()).build())
-                .build();
+            return DoubleExemplarData.create(builder.build(), TimeUnit.MILLISECONDS.toNanos(clock.wallTime()),
+                    spanContext, converter.applyAsDouble(measurement));
         }
 
     }

@@ -15,8 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
@@ -93,12 +91,7 @@ public interface OtlpMetricsSender {
         }
 
         private String readableMetricsData() {
-            try {
-                return ExportMetricsServiceRequest.parseFrom(metricsData).toString();
-            }
-            catch (InvalidProtocolBufferException e) {
-                return new String(metricsData, StandardCharsets.UTF_8);
-            }
+            return new String(metricsData, StandardCharsets.UTF_8);
         }
 
         /**

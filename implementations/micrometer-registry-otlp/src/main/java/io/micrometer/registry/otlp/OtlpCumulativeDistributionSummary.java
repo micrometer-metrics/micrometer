@@ -18,7 +18,7 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
@@ -66,7 +66,7 @@ class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary
     }
 
     @Override
-    public List<Exemplar> exemplars() {
+    public List<DoubleExemplarData> exemplars() {
         if (exemplarSampler != null) {
             return exemplarSampler.collectExemplars();
         }

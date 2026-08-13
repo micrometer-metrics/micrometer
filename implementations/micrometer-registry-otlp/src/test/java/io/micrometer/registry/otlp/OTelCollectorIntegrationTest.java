@@ -212,8 +212,6 @@ class OTelCollectorIntegrationTest {
 
     @Test
     void collectorShouldExportExponentialHistograms() throws Exception {
-        // Shows that the collector received the exemplars:
-        // container.followOutput(frame -> System.out.println(frame.getUtf8String()));
         MeterRegistry registry = createOtlpMeterRegistryForContainerWithExponentialHistogram(container);
         Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(registry);
         DistributionSummary ds = DistributionSummary.builder("test.ds").publishPercentileHistogram().register(registry);

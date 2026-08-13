@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import org.jspecify.annotations.Nullable;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +68,7 @@ class OtlpCumulativeTimer extends CumulativeTimer
     }
 
     @Override
-    public List<Exemplar> exemplars() {
+    public List<DoubleExemplarData> exemplars() {
         if (exemplarSampler != null) {
             return exemplarSampler.collectExemplars();
         }

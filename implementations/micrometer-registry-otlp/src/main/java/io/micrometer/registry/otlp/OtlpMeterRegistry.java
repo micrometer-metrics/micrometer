@@ -35,12 +35,15 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
-import io.opentelemetry.proto.common.v1.AnyValue;
-import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
-import io.opentelemetry.proto.metrics.v1.ScopeMetrics;
-import io.opentelemetry.proto.resource.v1.Resource;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.common.ComponentLoader;
+import io.opentelemetry.exporter.otlp.http.metrics.OtlpHttpMetricExporter;
+import io.opentelemetry.sdk.common.CompletableResultCode;
+import io.opentelemetry.sdk.common.export.HttpSender;
+import io.opentelemetry.sdk.common.export.HttpSenderProvider;
+import io.opentelemetry.sdk.metrics.data.MetricData;
+import io.opentelemetry.sdk.resources.Resource;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
@@ -79,7 +82,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpConfig config;
 
-    private final OtlpMetricsSender metricsSender;
+    private final OtlpHttpMetricExporter otlpHttpMetricExporter;
 
     private final HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup;
 
@@ -115,7 +118,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()), null);
+        this(config, clock, threadFactory, createDefaultSender(), null);
     }
 
     private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
@@ -123,15 +126,37 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
-        this.metricsSender = metricsSender;
         this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
         this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
-        this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
+        this.resource = createResource();
         this.aggregationTemporality = config.aggregationTemporality();
         this.exemplarSamplerFactory = exemplarContextProvider != null
                 ? new OtlpExemplarSamplerFactory(exemplarContextProvider, clock, config) : null;
+
+        HttpSender otelHttpSender = new OtlpMetricsSenderHttpSender(metricsSender, config::url, config::headers,
+                config::compressionMode);
+        ComponentLoader componentLoader = new ComponentLoader() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> Iterable<T> load(Class<T> type) {
+                if (type.equals(HttpSenderProvider.class)) {
+                    return Collections.singletonList((T) (HttpSenderProvider) httpSenderConfig -> otelHttpSender);
+                }
+                return Collections.emptyList();
+            }
+        };
+
+        this.otlpHttpMetricExporter = OtlpHttpMetricExporter.builder()
+            .setEndpoint(config.url())
+            .setComponentLoader(componentLoader)
+            .build();
+
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
+    }
+
+    private static OtlpMetricsSender createDefaultSender() {
+        return new OtlpHttpMetricsSender(new HttpUrlConnectionSender());
     }
 
     /**
@@ -145,6 +170,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void start(ThreadFactory threadFactory) {
         super.start(threadFactory);
 
@@ -173,28 +199,20 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(clock, config.step(), getBaseTimeUnit(),
-                    config.aggregationTemporality(), config().namingConvention(),
-                    config.publishMaxGaugeForHistograms());
+                    config.aggregationTemporality(), config().namingConvention(), config.publishMaxGaugeForHistograms(),
+                    this.resource);
             otlpMetricConverter.addMeters(batch);
 
             try {
-                ExportMetricsServiceRequest request = ExportMetricsServiceRequest.newBuilder()
-                    .addResourceMetrics(ResourceMetrics.newBuilder()
-                        .setResource(this.resource)
-                        .addScopeMetrics(ScopeMetrics.newBuilder()
-                            // we don't have instrumentation library/version
-                            // attached to meters; leave unknown for now
-                            // .setScope(InstrumentationScope.newBuilder().setName("").setVersion("").build())
-                            .addAllMetrics(otlpMetricConverter.getAllMetrics())
-                            .build())
-                        .build())
-                    .build();
-                logger.trace("Request: {}", request);
-                metricsSender.send(OtlpMetricsSender.Request.builder(request.toByteArray())
-                    .address(config.url())
-                    .headers(config.headers())
-                    .compressionMode(config.compressionMode())
-                    .build());
+                Collection<MetricData> metrics = otlpMetricConverter.getAllMetrics();
+                if (!metrics.isEmpty()) {
+                    CompletableResultCode result = this.otlpHttpMetricExporter.export(metrics);
+                    result.join(config.step().toMillis(), TimeUnit.MILLISECONDS);
+                    if (!result.isSuccess()) {
+                        logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
+                                getConfigurationContext()));
+                    }
+                }
             }
             catch (Exception e) {
                 logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
@@ -394,20 +412,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     // VisibleForTesting
-    static KeyValue createKeyValue(String key, String value) {
-        return KeyValue.newBuilder().setKey(key).setValue(AnyValue.newBuilder().setStringValue(value)).build();
+    Resource getResource() {
+        return this.resource;
     }
 
-    // VisibleForTesting
-    Iterable<KeyValue> getResourceAttributes() {
-        boolean serviceNameProvided = false;
-        List<KeyValue> attributes = new ArrayList<>();
-        attributes.add(createKeyValue(TELEMETRY_SDK_NAME, "io.micrometer"));
-        attributes.add(createKeyValue(TELEMETRY_SDK_LANGUAGE, "java"));
+    private Resource createResource() {
+        AttributesBuilder builder = Attributes.builder();
+        builder.put(TELEMETRY_SDK_NAME, "io.micrometer");
+        builder.put(TELEMETRY_SDK_LANGUAGE, "java");
         String micrometerCoreVersion = MeterRegistry.class.getPackage().getImplementationVersion();
         if (micrometerCoreVersion != null) {
-            attributes.add(createKeyValue(TELEMETRY_SDK_VERSION, micrometerCoreVersion));
+            builder.put(TELEMETRY_SDK_VERSION, micrometerCoreVersion);
         }
+        boolean serviceNameProvided = false;
         for (Map.Entry<String, String> keyValue : this.config.resourceAttributes().entrySet()) {
             if ("service.name".equals(keyValue.getKey())) {
                 serviceNameProvided = true;
@@ -416,12 +433,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 logger.warn("Resource attribute {} is reserved and will be ignored", keyValue.getKey());
                 continue;
             }
-            attributes.add(createKeyValue(keyValue.getKey(), keyValue.getValue()));
+            builder.put(keyValue.getKey(), keyValue.getValue());
         }
         if (!serviceNameProvided) {
-            attributes.add(createKeyValue("service.name", "unknown_service"));
+            builder.put("service.name", "unknown_service");
         }
-        return attributes;
+        return Resource.create(builder.build());
     }
 
     private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
@@ -451,11 +468,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                                 minimumExpectedValue, baseTimeUnit, exemplarSamplerFactory);
             }
 
-            Histogram explicitBucketHistogram = getExplicitBucketHistogram(clock, distributionStatisticConfig,
-                    config.aggregationTemporality(), config.step().toMillis(), baseTimeUnit, exemplarSamplerFactory);
-            if (explicitBucketHistogram != null) {
-                return explicitBucketHistogram;
-            }
+            return getExplicitBucketHistogram(clock, distributionStatisticConfig, config.aggregationTemporality(),
+                    config.step().toMillis(), baseTimeUnit, exemplarSamplerFactory);
         }
 
         if (distributionStatisticConfig.isPublishingPercentiles()) {
@@ -485,11 +499,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
     }
 
-    private static @Nullable Histogram getExplicitBucketHistogram(final Clock clock,
+    private static Histogram getExplicitBucketHistogram(final Clock clock,
             final DistributionStatisticConfig distributionStatisticConfig,
             final AggregationTemporality aggregationTemporality, final long stepMillis,
             final @Nullable TimeUnit baseTimeUnit, final @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
-
         double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
         if (AggregationTemporality.isCumulative(aggregationTemporality)) {
             return new OtlpCumulativeBucketHistogram(clock, DistributionStatisticConfig.builder()
@@ -510,7 +523,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     exemplarSamplerFactory, baseTimeUnit != null);
         }
 
-        return null;
+        return NoopHistogram.INSTANCE;
     }
 
     // VisibleForTesting
@@ -628,13 +641,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
-        private OtlpMetricsSender metricsSender;
+        private @Nullable OtlpMetricsSender metricsSender;
 
         private @Nullable ExemplarContextProvider exemplarContextProvider;
 
         private Builder(OtlpConfig otlpConfig) {
             this.otlpConfig = otlpConfig;
-            this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender());
         }
 
         /** Override the default clock. */
@@ -650,10 +662,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
 
         /**
-         * Provide your own custom metrics sender. This can be used to send OTLP metrics
-         * from OtlpMeterRegistry using different transports or clients than the default
-         * (HTTP using the HttpUrlConnectionSender). Encoding is in OTLP protobuf format.
-         * @see OtlpHttpMetricsSender
+         * Provide your own custom metrics sender. This can be used to send OTLP protobuf
+         * format metrics to an OTLP receiver using different transports or senders.
+         * @param metricsSender custom metrics sender
+         * @return builder
+         * @since 1.15.0
          */
         public Builder metricsSender(OtlpMetricsSender metricsSender) {
             this.metricsSender = metricsSender;
@@ -666,7 +679,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
 
         public OtlpMeterRegistry build() {
-            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, metricsSender, exemplarContextProvider);
+            OtlpMetricsSender sender = this.metricsSender != null ? this.metricsSender : createDefaultSender();
+            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, sender, exemplarContextProvider);
         }
 
     }

@@ -19,7 +19,7 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.StepBucketHistogram;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
+import io.opentelemetry.sdk.metrics.data.DoubleExemplarData;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
@@ -58,7 +58,7 @@ class OtlpStepBucketHistogram extends StepBucketHistogram implements OtlpExempla
     }
 
     @Override
-    public List<Exemplar> exemplars() {
+    public List<DoubleExemplarData> exemplars() {
         return exemplarSampler != null ? exemplarSampler.collectExemplars() : Collections.emptyList();
     }
 
