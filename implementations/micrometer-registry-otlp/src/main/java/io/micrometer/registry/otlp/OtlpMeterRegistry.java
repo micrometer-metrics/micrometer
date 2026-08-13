@@ -203,9 +203,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     this.resource);
             otlpMetricConverter.addMeters(batch);
 
-            Collection<MetricData> metrics = otlpMetricConverter.getAllMetrics();
-            if (!metrics.isEmpty()) {
-                try {
+            try {
+                Collection<MetricData> metrics = otlpMetricConverter.getAllMetrics();
+                if (!metrics.isEmpty()) {
                     CompletableResultCode result = this.otlpHttpMetricExporter.export(metrics);
                     result.join(config.step().toMillis(), TimeUnit.MILLISECONDS);
                     if (!result.isSuccess()) {
@@ -213,10 +213,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                                 getConfigurationContext()));
                     }
                 }
-                catch (Exception e) {
-                    logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
-                            getConfigurationContext()), e);
-                }
+            }
+            catch (Exception e) {
+                logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
+                        getConfigurationContext()), e);
             }
         }
     }
