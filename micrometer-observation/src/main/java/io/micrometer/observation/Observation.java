@@ -1373,7 +1373,40 @@ public interface Observation extends ObservationView {
          * @since 1.12.0
          */
         static Event of(String name, String contextualName, long wallTime) {
-            return new SimpleEvent(name, contextualName, wallTime);
+            return of(name, contextualName, wallTime, KeyValues.empty());
+        }
+
+        /**
+         * Creates an {@link Event} with high-cardinality key-values.
+         * @param name The name of the event (should have low cardinality).
+         * @param contextualName The contextual name of the event (can have high
+         * cardinality).
+         * @param wallTime Wall time when the event happened in milliseconds since the
+         * epoch
+         * @param highCardinalityKeyValues high-cardinality metadata specific to the event
+         * @return event
+         * @since 1.18.0
+         */
+        static Event of(String name, String contextualName, long wallTime,
+                Iterable<KeyValue> highCardinalityKeyValues) {
+            return of(name, contextualName, wallTime, highCardinalityKeyValues, KeyValues.empty());
+        }
+
+        /**
+         * Creates an {@link Event} with high- and low-cardinality key-values.
+         * @param name The name of the event (should have low cardinality).
+         * @param contextualName The contextual name of the event (can have high
+         * cardinality).
+         * @param wallTime Wall time when the event happened in milliseconds since the
+         * epoch
+         * @param highCardinalityKeyValues high-cardinality metadata specific to the event
+         * @param lowCardinalityKeyValues low-cardinality metadata specific to the event
+         * @return event
+         * @since 1.18.0
+         */
+        static Event of(String name, String contextualName, long wallTime, Iterable<KeyValue> highCardinalityKeyValues,
+                Iterable<KeyValue> lowCardinalityKeyValues) {
+            return new SimpleEvent(name, contextualName, wallTime, highCardinalityKeyValues, lowCardinalityKeyValues);
         }
 
         /**
@@ -1413,13 +1446,44 @@ public interface Observation extends ObservationView {
         }
 
         /**
+         * Low-cardinality metadata about the event in the form of {@link KeyValues}. It
+         * may be empty if there is no low-cardinality metadata specific to the event.
+         * @return low-cardinality key values associated with this event
+         * @since 1.18.0
+         */
+        default KeyValues getLowCardinalityKeyValues() {
+            return KeyValues.empty();
+        }
+
+        /**
+         * High-cardinality metadata about the event in the form of {@link KeyValues}. It
+         * may be empty if there is no high-cardinality metadata specific to the event.
+         * @return high-cardinality key values associated with this event
+         * @since 1.18.0
+         */
+        default KeyValues getHighCardinalityKeyValues() {
+            return KeyValues.empty();
+        }
+
+        /**
+         * All metadata about the event in the form of {@link KeyValues}. It may be empty
+         * if there is no metadata specific to the event.
+         * @return key values associated with this event
+         * @since 1.18.0
+         */
+        default KeyValues getKeyValues() {
+            return getLowCardinalityKeyValues().and(getHighCardinalityKeyValues());
+        }
+
+        /**
          * Creates a new event with the given dynamic entries for the contextual name.
          * @param dynamicEntriesForContextualName variables to be resolved in
          * {@link Event#getContextualName()} via {@link String#format(String, Object...)}.
          * @return event
          */
         default Event format(Object... dynamicEntriesForContextualName) {
-            return Event.of(getName(), String.format(getContextualName(), dynamicEntriesForContextualName));
+            return Event.of(getName(), String.format(getContextualName(), dynamicEntriesForContextualName),
+                    getWallTime(), getHighCardinalityKeyValues(), getLowCardinalityKeyValues());
         }
 
     }

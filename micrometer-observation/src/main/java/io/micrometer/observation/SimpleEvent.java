@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation.Event;
 
 /**
@@ -24,7 +26,7 @@ import io.micrometer.observation.Observation.Event;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  */
-class SimpleEvent implements Event {
+final class SimpleEvent implements Event {
 
     private final String name;
 
@@ -32,19 +34,29 @@ class SimpleEvent implements Event {
 
     private final long wallTime;
 
+    private final KeyValues lowCardinalityKeyValues;
+
+    private final KeyValues highCardinalityKeyValues;
+
     SimpleEvent(String name, String contextualName) {
-        this(name, contextualName, System.currentTimeMillis());
+        this(name, contextualName, System.currentTimeMillis(), KeyValues.empty(), KeyValues.empty());
     }
 
     /**
      * @param name The name of the event (should have low cardinality).
      * @param contextualName The contextual name of the event (can have high cardinality).
      * @param wallTime Wall time in milliseconds since the epoch
+     * @param highCardinalityKeyValues high-cardinality key-values associated with the
+     * event
+     * @param lowCardinalityKeyValues low-cardinality key-values associated with the event
      */
-    SimpleEvent(String name, String contextualName, long wallTime) {
+    SimpleEvent(String name, String contextualName, long wallTime, Iterable<KeyValue> highCardinalityKeyValues,
+            Iterable<KeyValue> lowCardinalityKeyValues) {
         this.name = name;
         this.contextualName = contextualName;
         this.wallTime = wallTime;
+        this.highCardinalityKeyValues = KeyValues.of(highCardinalityKeyValues);
+        this.lowCardinalityKeyValues = KeyValues.of(lowCardinalityKeyValues);
     }
 
     @Override
@@ -60,6 +72,21 @@ class SimpleEvent implements Event {
     @Override
     public long getWallTime() {
         return this.wallTime;
+    }
+
+    @Override
+    public KeyValues getLowCardinalityKeyValues() {
+        return this.lowCardinalityKeyValues;
+    }
+
+    @Override
+    public KeyValues getHighCardinalityKeyValues() {
+        return this.highCardinalityKeyValues;
+    }
+
+    @Override
+    public KeyValues getKeyValues() {
+        return this.lowCardinalityKeyValues.and(this.highCardinalityKeyValues);
     }
 
     @Override
