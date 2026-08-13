@@ -286,9 +286,21 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return isCumulative()
-                ? new OtlpCumulativeLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig)
-                : new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
+        DistributionStatisticConfig lttConfig = createModifiedConfigForLongTaskTimer(distributionStatisticConfig);
+        return isCumulative() ? new OtlpCumulativeLongTaskTimer(id, this.clock, getBaseTimeUnit(), lttConfig)
+                : new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), lttConfig, false);
+    }
+
+    private DistributionStatisticConfig createModifiedConfigForLongTaskTimer(DistributionStatisticConfig config) {
+        if (config.isPublishingHistogram()) {
+            return DistributionStatisticConfig.builder()
+                .serviceLevelObjectives(getSloWithPositiveInf(config))
+                .build()
+                .merge(config);
+        }
+        else {
+            return config;
+        }
     }
 
     @Override

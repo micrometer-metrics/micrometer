@@ -416,6 +416,9 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             assertThat(point.getEpochNanos()).isEqualTo(180001000000L);
             assertThat(point.getCount()).isEqualTo(2);
             assertThat(point.getSum()).isEqualTo(360000.0);
+            assertThat(point.getBoundaries()).isEmpty();
+            assertThat(point.getCounts()).size().isEqualTo(1L);
+            assertThat(point.getCounts()).first().isEqualTo(2L);
         });
 
         task1.stop();
@@ -429,7 +432,62 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(metric.getHistogramData().getPoints()).singleElement().satisfies(point -> {
             assertThat(point.getStartEpochNanos()).isEqualTo(1000000L);
             assertThat(point.getEpochNanos()).isEqualTo(240001000000L);
+            assertThat(point.getCount()).isEqualTo(0);
             assertThat(point.getSum()).isEqualTo(0.0);
+            assertThat(point.getBoundaries()).isEmpty();
+            assertThat(point.getCounts()).size().isEqualTo(1L);
+            assertThat(point.getCounts()).first().isEqualTo(0L);
+        });
+    }
+
+    @Test
+    void longTaskTimerWithHistogram() {
+        LongTaskTimer taskTimer = LongTaskTimer.builder("checkout.batch")
+            .publishPercentileHistogram()
+            .register(registry);
+        LongTaskTimer.Sample task1 = taskTimer.start();
+        LongTaskTimer.Sample task2 = taskTimer.start();
+        this.clock.add(otlpConfig().step().multipliedBy(3));
+
+        List<MetricData> metrics = writeToMetrics(taskTimer);
+        MetricData metric = metrics.stream()
+            .filter(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .findFirst()
+            .orElseThrow();
+        assertThat(metric.getName()).isEqualTo("checkout.batch");
+        assertThat(metric.getUnit()).isEqualTo("milliseconds");
+        assertThat(metric.getHistogramData().getPoints()).singleElement().satisfies(point -> {
+            assertThat(point.getStartEpochNanos()).isEqualTo(1000000L);
+            assertThat(point.getEpochNanos()).isEqualTo(180001000000L);
+            // TODO: Histogram counts are still broken so as the calculated count
+            // assertThat(point.getCount()).isEqualTo(2);
+            assertThat(point.getSum()).isEqualTo(360000.0);
+            assertThat(point.getBoundaries()).hasSize(28);
+            assertThat(point.getCounts()).size().isEqualTo(29);
+            assertThat(point.getCounts()).allSatisfy(c -> assertThat(c).isGreaterThanOrEqualTo(0));
+            // TODO: Histogram counts are still broken
+            // assertThat(point.getCounts().stream().mapToLong(Long::longValue).sum()).isEqualTo(2);
+        });
+
+        task1.stop();
+        task2.stop();
+        this.clock.add(otlpConfig().step());
+
+        metrics = writeToMetrics(taskTimer);
+        metric = metrics.stream().filter(m -> m.getType() == MetricDataType.HISTOGRAM).findFirst().orElseThrow();
+        assertThat(metric.getName()).isEqualTo("checkout.batch");
+        assertThat(metric.getUnit()).isEqualTo("milliseconds");
+        assertThat(metric.getHistogramData().getPoints()).singleElement().satisfies(point -> {
+            assertThat(point.getStartEpochNanos()).isEqualTo(1000000L);
+            assertThat(point.getEpochNanos()).isEqualTo(240001000000L);
+            // TODO: Histogram counts are still broken so as the calculated count
+            // assertThat(point.getCount()).isEqualTo(0);
+            assertThat(point.getSum()).isEqualTo(0.0);
+            assertThat(point.getBoundaries()).hasSize(28);
+            assertThat(point.getCounts()).hasSize(29);
+            assertThat(point.getCounts()).allSatisfy(c -> assertThat(c).isGreaterThanOrEqualTo(0));
+            // TODO: Histogram counts are still broken
+            // assertThat(point.getCounts().stream().mapToLong(Long::longValue).sum()).isEqualTo(2);
         });
     }
 

@@ -371,6 +371,29 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
                 UNIT_MILLISECONDS, 0, 0, 0);
     }
 
+    @Test
+    void longTaskTimerWithHistogram() {
+        // TODO: LTT does not produce any buckets for delta (bucket counts are not tested)
+        LongTaskTimer taskTimer = LongTaskTimer.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registry);
+        LongTaskTimer.Sample task1 = taskTimer.start();
+        LongTaskTimer.Sample task2 = taskTimer.start();
+        stepOverNStep(3);
+        assertHistogram(writeToMetric(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
+                UNIT_MILLISECONDS, 2, 360000, 180000);
+
+        task1.stop();
+        assertHistogram(writeToMetric(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
+                UNIT_MILLISECONDS, 1, 180000, 180000);
+        task2.stop();
+        stepOverNStep(1);
+        assertHistogram(writeToMetric(taskTimer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
+                UNIT_MILLISECONDS, 0, 0, 0);
+    }
+
     @Override
     @Test
     void testMetricsStartAndEndTime() {
