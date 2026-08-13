@@ -93,6 +93,26 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
+    void sanitizeNewlinesWithDefaultMeterIdPrinter() {
+        LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT).build();
+        Counter counter = registry.counter("my\ngauage", "tag\r1", "tag\n2");
+        LoggingMeterRegistry.Printer printer = registry.new Printer(counter);
+
+        assertThat(printer.id()).isEqualTo("my_gauage{tag_1=tag_2}");
+    }
+
+    @Test
+    void sanitizeNewlinesWithCustomMeterIdPrinter() {
+        LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
+            .meterIdPrinter(meter -> meter.getId().getName() + "\ncustom\r")
+            .build();
+        Counter counter = registry.counter("my\ngauage");
+        LoggingMeterRegistry.Printer printer = registry.new Printer(counter);
+
+        assertThat(printer.id()).isEqualTo("my_gauage_custom_");
+    }
+
+    @Test
     void customMeterIdPrinter() {
         LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
             .meterIdPrinter(meter -> meter.getId().getName())

@@ -54,4 +54,14 @@ class EtsyStatsdLineBuilderTest {
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter.my_tag.my_value.statistic.count:1|c");
     }
 
+    @Test
+    void sanitizeNewlines() {
+        Counter c = registry.counter("my\ncounter", "my\ntag\r", "my\rvalue\n");
+        EtsyStatsdLineBuilder lb = new EtsyStatsdLineBuilder(c.getId(), registry.config(),
+                HierarchicalNameMapper.DEFAULT);
+
+        registry.config().namingConvention(NamingConvention.dot);
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter.my_tag_.my_value_.statistic.count:1|c");
+    }
+
 }
