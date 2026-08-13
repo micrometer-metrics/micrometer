@@ -46,7 +46,8 @@ final class SimpleEvent implements Event {
      * @param name The name of the event (should have low cardinality).
      * @param contextualName The contextual name of the event (can have high cardinality).
      * @param wallTime Wall time in milliseconds since the epoch
-     * @param highCardinalityKeyValues high-cardinality key-values associated with the event
+     * @param highCardinalityKeyValues high-cardinality key-values associated with the
+     * event
      * @param lowCardinalityKeyValues low-cardinality key-values associated with the event
      */
     SimpleEvent(String name, String contextualName, long wallTime, Iterable<KeyValue> highCardinalityKeyValues,

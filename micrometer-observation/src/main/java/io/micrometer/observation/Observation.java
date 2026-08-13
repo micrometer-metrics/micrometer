@@ -1404,8 +1404,8 @@ public interface Observation extends ObservationView {
          * @return event
          * @since 1.18.0
          */
-        static Event of(String name, String contextualName, long wallTime,
-                Iterable<KeyValue> highCardinalityKeyValues, Iterable<KeyValue> lowCardinalityKeyValues) {
+        static Event of(String name, String contextualName, long wallTime, Iterable<KeyValue> highCardinalityKeyValues,
+                Iterable<KeyValue> lowCardinalityKeyValues) {
             return new SimpleEvent(name, contextualName, wallTime, highCardinalityKeyValues, lowCardinalityKeyValues);
         }
 
@@ -1446,8 +1446,8 @@ public interface Observation extends ObservationView {
         }
 
         /**
-         * Low-cardinality metadata about the event in the form of {@link KeyValues}. It may
-         * be empty if there is no low-cardinality metadata specific to the event.
+         * Low-cardinality metadata about the event in the form of {@link KeyValues}. It
+         * may be empty if there is no low-cardinality metadata specific to the event.
          * @return low-cardinality key values associated with this event
          * @since 1.18.0
          */
@@ -1466,8 +1466,8 @@ public interface Observation extends ObservationView {
         }
 
         /**
-         * All metadata about the event in the form of {@link KeyValues}. It may be empty if
-         * there is no metadata specific to the event.
+         * All metadata about the event in the form of {@link KeyValues}. It may be empty
+         * if there is no metadata specific to the event.
          * @return key values associated with this event
          * @since 1.18.0
          */
