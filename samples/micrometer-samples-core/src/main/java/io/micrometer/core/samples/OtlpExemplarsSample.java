@@ -15,10 +15,13 @@
  */
 package io.micrometer.core.samples;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.registry.otlp.*;
+import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicLong;
@@ -89,7 +92,22 @@ public class OtlpExemplarsSample {
         @Override
         public void send(Request request) throws Exception {
             System.out.println("Publishing...");
-            System.out.println(request);
+            System.out.println(toString(request));
+        }
+
+        private String toString(Request request) {
+            return "OtlpMetricsSender.Request for address: " + request.getAddress() + ", headers: "
+                    + request.getHeaders() + ", compressionMode: " + request.getCompressionMode() + ", metricsData:\n"
+                    + readableMetricsData(request.getMetricsData());
+        }
+
+        private String readableMetricsData(byte[] metricsData) {
+            try {
+                return ExportMetricsServiceRequest.parseFrom(metricsData).toString();
+            }
+            catch (InvalidProtocolBufferException e) {
+                return new String(metricsData, StandardCharsets.UTF_8);
+            }
         }
 
     }
