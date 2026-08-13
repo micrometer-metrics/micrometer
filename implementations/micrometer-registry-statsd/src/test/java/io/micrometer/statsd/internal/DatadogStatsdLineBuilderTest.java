@@ -104,4 +104,13 @@ class DatadogStatsdLineBuilderTest {
                 "my_counter:1|c|#statistic:count,m.123.another.tag:123:value,my_tag:my:value,other_tag:some:value_");
     }
 
+    @Test
+    void sanitizeNewlines() {
+        Counter c = registry.counter("my\ncounter", "my\ntag\r", "my\rvalue\n");
+        DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
+
+        registry.config().namingConvention(NamingConvention.dot);
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,my_tag_:my_value_");
+    }
+
 }

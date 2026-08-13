@@ -33,12 +33,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
+import org.apache.hc.core5.http.message.BasicHttpResponse;
+import org.apache.hc.core5.http.protocol.BasicHttpContext;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.http.Fault;
+import java.lang.ref.WeakReference;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests for {@link MicrometerHttpClientInterceptor}.
@@ -96,6 +102,58 @@ class MicrometerHttpClientInterceptorTest {
             .tag("status", "200")
             .timer()
             .count()).isEqualTo(1);
+
+        client.close();
+    }
+
+    @Test
+    void responseInterceptorDoesNotThrowNpeIfRequestInterceptorNeverRan() {
+        MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry, Tags.empty(), true);
+        HttpContext context = new BasicHttpContext();
+        HttpResponse response = new BasicHttpResponse(200, "OK");
+
+        assertThatCode(() -> interceptor.getResponseInterceptor().process(response, null, context))
+            .doesNotThrowAnyException();
+    }
+
+    @Test
+    void whenConnectionResetByServer_noLeakOccurs(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
+        server.stubFor(any(anyUrl()).willReturn(WireMock.aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
+
+        CloseableHttpAsyncClient client = asyncClient();
+        client.start();
+
+        SimpleHttpRequest request = SimpleRequestBuilder.get(server.baseUrl() + "/test").build();
+        HttpContext context = new BasicHttpContext();
+
+        WeakReference<HttpContext> weakContext = new WeakReference<>(context);
+
+        Future<SimpleHttpResponse> future = client.execute(request, context, null);
+        try {
+            future.get(5, TimeUnit.SECONDS);
+            fail("Expected exception");
+        }
+        catch (Exception e) {
+            // Expected transport failure (connection reset), meaning
+            // responseInterceptor is never called
+        }
+
+        // Release references to the context, future, etc., but keep client active!
+        context = null;
+        future = null;
+
+        // Perform GC and assert that the HttpContext is garbage-collected while the
+        // client is still active
+        boolean collected = false;
+        for (int i = 0; i < 50; i++) {
+            System.gc();
+            if (weakContext.get() == null) {
+                collected = true;
+                break;
+            }
+            Thread.sleep(50);
+        }
+        assertThat(collected).isTrue();
 
         client.close();
     }

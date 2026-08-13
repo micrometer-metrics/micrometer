@@ -158,11 +158,13 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         if (!Character.isLetter(value.charAt(0))) {
             value = "m." + value;
         }
-        return value.replace(':', '_');
+        return value.replace('\r', '_').replace('\n', '_').replace(':', '_');
     }
 
     private String sanitizeTagValue(String value) {
-        return (value.charAt(value.length() - 1) == ':') ? value.substring(0, value.length() - 1) + '_' : value;
+        String sanitized = value.replace('\r', '_').replace('\n', '_');
+        return (sanitized.charAt(sanitized.length() - 1) == ':') ? sanitized.substring(0, sanitized.length() - 1) + '_'
+                : sanitized;
     }
 
     private String tagsByStatistic(@Nullable Statistic stat) {
