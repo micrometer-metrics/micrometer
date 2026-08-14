@@ -150,6 +150,21 @@ include::{include-java}/metrics/TimedAspectTest.java[tags=example_value_spel,ind
 include::{include-java}/metrics/TimedAspectTest.java[tags=example_multi_annotations,indent=0]
 -----
 
+=== @MeterTag on Methods
+
+`@MeterTag` can also be placed on the method itself. With the same `MeterTagAnnotationHandler` configured on `TimedAspect`, the resolver, expression, or `toString()` path runs against the method's return value rather than a parameter.
+
+[source,java]
+-----
+@Timed
+@MeterTag(key = "result", expression = "id")
+public Order placeOrder(String sku) {
+    return orderService.place(sku);
+}
+-----
+
+Here `expression` is evaluated against the returned `Order`. The same low-cardinality rule applies: do not tag with end-user input or other high-cardinality values.
+
 == Function-tracking Timers
 
 Micrometer also provides a more infrequently used timer pattern that tracks two monotonically increasing functions (a function that stays the same or increases over time but never decreases): a count function and a total time function. Some monitoring systems, such as Prometheus, push cumulative values for counters (which apply to both the count and total time functions in this case) to the backend, but others publish the rate at which a counter increments over the push interval. By employing this pattern, you let the Micrometer implementation for your monitoring system choose whether to rate normalize the timer, and your timer remains portable across different types of monitoring systems.
