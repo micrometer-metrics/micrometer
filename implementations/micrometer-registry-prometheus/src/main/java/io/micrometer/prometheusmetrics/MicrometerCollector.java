@@ -358,19 +358,22 @@ class MicrometerCollector implements MultiCollector {
     // can convert it back to cumulative.
     private static ClassicHistogramBuckets nonCumulativeBuckets(CountAtBucket[] histogramCounts, long count,
             @Nullable TimeUnit timeUnit) {
-        List<Double> buckets = new ArrayList<>();
-        List<Number> counts = new ArrayList<>();
-        buckets.add(bucket(histogramCounts[0], timeUnit));
-        counts.add(histogramCounts[0].count());
+        boolean hasInfinityBucket = Double.isInfinite(histogramCounts[histogramCounts.length - 1].bucket());
+        int bucketCount = histogramCounts.length + (hasInfinityBucket ? 0 : 1);
+        double[] buckets = new double[bucketCount];
+        long[] counts = new long[bucketCount];
+
+        buckets[0] = bucket(histogramCounts[0], timeUnit);
+        counts[0] = (long) histogramCounts[0].count();
         for (int i = 1; i < histogramCounts.length; i++) {
-            buckets.add(bucket(histogramCounts[i], timeUnit));
-            counts.add(histogramCounts[i].count() - histogramCounts[i - 1].count());
+            buckets[i] = bucket(histogramCounts[i], timeUnit);
+            counts[i] = (long) (histogramCounts[i].count() - histogramCounts[i - 1].count());
         }
-        if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
+        if (!hasInfinityBucket) {
             // ClassicHistogramBuckets is not cumulative
-            buckets.add(Double.POSITIVE_INFINITY);
+            buckets[bucketCount - 1] = Double.POSITIVE_INFINITY;
             double infCount = count - histogramCounts[histogramCounts.length - 1].count();
-            counts.add(infCount >= 0 ? infCount : 0);
+            counts[bucketCount - 1] = (long) (infCount >= 0 ? infCount : 0);
         }
         return ClassicHistogramBuckets.of(buckets, counts);
     }
