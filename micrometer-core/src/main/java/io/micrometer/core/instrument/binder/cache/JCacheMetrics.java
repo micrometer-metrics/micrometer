@@ -34,8 +34,14 @@ import java.util.List;
  * <p>
  * Note that JSR-107 does not provide any insight into the size or estimated size of the
  * cache, so the size metric of a JCache cache will always report 0.
+ * <p>
+ * The statistics-enabled state is captured when this binder is created. Runtime changes
+ * made through {@link CacheManager#enableStatistics(String, boolean)} are not tracked. If
+ * statistics are enabled later, create and bind a new {@code JCacheMetrics} instance to
+ * register statistics-dependent meters.
  *
  * @author Jon Schneider
+ * @author Jewoo Shin
  */
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
@@ -195,9 +201,6 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
         }
     }
 
-    // Captured once at construction; runtime toggles via
-    // CacheManager#enableStatistics(...) are not tracked.
-    // Rebind the metrics if statistics are enabled later.
     private static boolean isStatisticsEnabled(Cache<?, ?> cache) {
         try {
             CompleteConfiguration<?, ?> config = cache.getConfiguration(CompleteConfiguration.class);
