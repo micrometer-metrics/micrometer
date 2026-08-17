@@ -360,6 +360,12 @@ class MicrometerCollector implements MultiCollector {
             @Nullable TimeUnit timeUnit) {
         boolean hasInfinityBucket = Double.isInfinite(histogramCounts[histogramCounts.length - 1].bucket());
         int bucketCount = histogramCounts.length + (hasInfinityBucket ? 0 : 1);
+
+        // We use `ClassicHistogramBuckets.of(double[], long[])` instead of
+        // `ClassicHistogramBuckets.of(List<Double>, List<Number>)` to avoid boxing the
+        // primitive values. Using `long`s for values instead of `Number`s looks like it
+        // can lose precision, but in fact `ClassicHistogramBuckets` would convert the
+        // `Number`s to `long`s anyway via `Number.longValue()`.
         double[] buckets = new double[bucketCount];
         long[] counts = new long[bucketCount];
 
