@@ -111,12 +111,17 @@ public class HistogramGauges {
         this.polledGaugesLatch = new CountDownLatch(0);
 
         for (int i = 0; i < valueAtPercentiles.length; i++) {
-            final int index = i;
+            ValueAtPercentile registeredPercentile = valueAtPercentiles[i];
 
             ToDoubleFunction<HistogramSupport> percentileValueFunction = m -> {
-                snapshotIfNecessary();
-                polledGaugesLatch.countDown();
-                return percentileValue.apply(snapshot.percentileValues()[index]);
+                HistogramSnapshot currentSnapshot = pollSnapshot();
+                for (ValueAtPercentile currentPercentile : currentSnapshot.percentileValues()) {
+                    if (Double.compare(currentPercentile.percentile(), registeredPercentile.percentile()) == 0) {
+                        return percentileValue.apply(currentPercentile);
+                    }
+                }
+                return percentileValue
+                    .apply(new ValueAtPercentile(registeredPercentile.percentile(), currentSnapshot.max()));
             };
 
             Gauge.builder(percentileName.apply(valueAtPercentiles[i]), meter, percentileValueFunction)
@@ -127,12 +132,16 @@ public class HistogramGauges {
         }
 
         for (int i = 0; i < countAtBuckets.length; i++) {
-            final int index = i;
+            CountAtBucket registeredBucket = countAtBuckets[i];
 
             ToDoubleFunction<HistogramSupport> bucketCountFunction = m -> {
-                snapshotIfNecessary();
-                polledGaugesLatch.countDown();
-                return snapshot.histogramCounts()[index].count();
+                HistogramSnapshot currentSnapshot = pollSnapshot();
+                for (CountAtBucket currentBucket : currentSnapshot.histogramCounts()) {
+                    if (sameBucket(currentBucket, registeredBucket)) {
+                        return currentBucket.count();
+                    }
+                }
+                return Double.NaN;
             };
 
             Gauge.builder(bucketName.apply(countAtBuckets[i]), meter, bucketCountFunction)
@@ -142,11 +151,19 @@ public class HistogramGauges {
         }
     }
 
-    private void snapshotIfNecessary() {
+    private synchronized HistogramSnapshot pollSnapshot() {
         if (polledGaugesLatch.getCount() == 0) {
             snapshot = meter.takeSnapshot();
             polledGaugesLatch = new CountDownLatch(totalGauges);
         }
+        HistogramSnapshot currentSnapshot = snapshot;
+        polledGaugesLatch.countDown();
+        return currentSnapshot;
+    }
+
+    private static boolean sameBucket(CountAtBucket current, CountAtBucket registered) {
+        return (current.isPositiveInf() && registered.isPositiveInf())
+                || Double.compare(current.bucket(), registered.bucket()) == 0;
     }
 
 }
