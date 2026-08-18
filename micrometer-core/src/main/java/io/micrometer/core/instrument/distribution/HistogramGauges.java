@@ -19,18 +19,16 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.DoubleFormat;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 
 @Incubating(since = "1.0.3")
 public class HistogramGauges {
 
-    // How many gauges have been polled so far on this publish cycle
-    volatile CountDownLatch polledGaugesLatch;
-
-    private volatile HistogramSnapshot snapshot;
+    private final AtomicReference<SnapshotState> snapshotState;
 
     private final HistogramSupport meter;
 
@@ -98,17 +96,12 @@ public class HistogramGauges {
         this.meter = meter;
 
         HistogramSnapshot initialSnapshot = meter.takeSnapshot();
-        this.snapshot = initialSnapshot;
+        this.snapshotState = new AtomicReference<>(new SnapshotState(initialSnapshot, 0));
 
         ValueAtPercentile[] valueAtPercentiles = initialSnapshot.percentileValues();
         CountAtBucket[] countAtBuckets = initialSnapshot.histogramCounts();
 
         this.totalGauges = valueAtPercentiles.length + countAtBuckets.length;
-
-        // set to zero initially, so the first polling of one of the gauges on each
-        // publish cycle results in a
-        // new snapshot
-        this.polledGaugesLatch = new CountDownLatch(0);
 
         for (int i = 0; i < valueAtPercentiles.length; i++) {
             ValueAtPercentile registeredPercentile = valueAtPercentiles[i];
@@ -151,19 +144,49 @@ public class HistogramGauges {
         }
     }
 
-    private synchronized HistogramSnapshot pollSnapshot() {
-        if (polledGaugesLatch.getCount() == 0) {
-            snapshot = meter.takeSnapshot();
-            polledGaugesLatch = new CountDownLatch(totalGauges);
+    private HistogramSnapshot pollSnapshot() {
+        while (true) {
+            SnapshotState current = snapshotState.get();
+            if (current.tryPoll()) {
+                return current.snapshot;
+            }
+
+            // Concurrent callers may create duplicate candidates, but only one complete
+            // snapshot generation can be installed.
+            SnapshotState replacement = new SnapshotState(meter.takeSnapshot(), totalGauges);
+            if (snapshotState.compareAndSet(current, replacement) && replacement.tryPoll()) {
+                return replacement.snapshot;
+            }
         }
-        HistogramSnapshot currentSnapshot = snapshot;
-        polledGaugesLatch.countDown();
-        return currentSnapshot;
     }
 
     private static boolean sameBucket(CountAtBucket current, CountAtBucket registered) {
         return (current.isPositiveInf() && registered.isPositiveInf())
                 || Double.compare(current.bucket(), registered.bucket()) == 0;
+    }
+
+    private static final class SnapshotState {
+
+        private final HistogramSnapshot snapshot;
+
+        private final AtomicInteger remainingGauges;
+
+        private SnapshotState(HistogramSnapshot snapshot, int remainingGauges) {
+            this.snapshot = snapshot;
+            this.remainingGauges = new AtomicInteger(remainingGauges);
+        }
+
+        private boolean tryPoll() {
+            int remaining = remainingGauges.get();
+            while (remaining > 0) {
+                if (remainingGauges.compareAndSet(remaining, remaining - 1)) {
+                    return true;
+                }
+                remaining = remainingGauges.get();
+            }
+            return false;
+        }
+
     }
 
 }
