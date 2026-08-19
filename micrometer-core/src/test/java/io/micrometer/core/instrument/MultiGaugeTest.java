@@ -15,15 +15,19 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MultiGauge.Row;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -184,6 +188,71 @@ class MultiGaugeTest {
         multiGauge.register(List.of(Row.of(Tags.of("key", "1", "ignored", "3"), 3d)), true);
         assertThat(registry.get("mg").tag("key", "1").gauges()).hasSize(1);
         assertThat(registry.get("mg").tag("key", "1").gauge().value()).isEqualTo(3d);
+    }
+
+    @Test
+    void overwriteReusesExistingGaugeInstances() {
+        colorGauges.register(List.of(RED.toRow(1.0)));
+        Gauge initialGauge = registry.get("colors").tag("color", "red").gauge();
+
+        colorGauges.register(List.of(RED.toRow(2.0)), true);
+        Gauge updatedGauge = registry.get("colors").tag("color", "red").gauge();
+
+        assertThat(updatedGauge).isSameAs(initialGauge);
+        assertThat(updatedGauge.value()).isEqualTo(2.0);
+    }
+
+    @Test
+    void overwriteDoesNotTriggerMeterRemovalOrAdditionListeners() {
+        AtomicInteger addedCount = new AtomicInteger();
+        AtomicInteger removedCount = new AtomicInteger();
+        registry.config()
+            .onMeterAdded(m -> addedCount.incrementAndGet())
+            .onMeterRemoved(m -> removedCount.incrementAndGet());
+
+        colorGauges.register(List.of(RED.toRow(1.0)));
+        assertThat(addedCount.get()).isEqualTo(1);
+        assertThat(removedCount.get()).isEqualTo(0);
+
+        colorGauges.register(List.of(RED.toRow(2.0)), true);
+        assertThat(addedCount.get()).isEqualTo(1);
+        assertThat(removedCount.get()).isEqualTo(0);
+
+        colorGauges.register(Collections.emptyList(), true);
+        assertThat(addedCount.get()).isEqualTo(1);
+        assertThat(removedCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    @Issue("#6851")
+    void concurrentOverwriteAndRead() throws Exception {
+        MultiGauge multiGauge = MultiGauge.builder("mg").register(registry);
+        List<MultiGauge.Row<?>> rows = IntStream.range(0, 100)
+            .mapToObj(i -> MultiGauge.Row.of(Tags.of("id", Integer.toString(i)), i))
+            .collect(toList());
+
+        multiGauge.register(rows, true);
+
+        AtomicBoolean stop = new AtomicBoolean();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<?> readerTask = executor.submit(() -> {
+            while (!stop.get()) {
+                assertThat(registry.getMeters()).hasSize(100);
+            }
+        });
+
+        try {
+            for (int i = 0; i < 1_000; i++) {
+                multiGauge.register(rows, true);
+            }
+        }
+        finally {
+            stop.set(true);
+            executor.shutdown();
+            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+        }
+
+        readerTask.get();
     }
 
     private static class Color {
