@@ -65,8 +65,7 @@ def shadowJar = tasks.named('shadowJar', ShadowJar) {
     relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
     relocate 'io.netty', 'io.micrometer.shaded.io.netty'
     relocate 'META-INF/native/libnetty', 'META-INF/native/libio_micrometer_shaded_netty'
-    // see gh-3212: rewrite class-name string literals in shaded netty/reactor's
-    // GraalVM native-image config so they match the relocated (shaded) class names
+    // see gh-3212
     transform(NativeImageConfigRelocatingTransformer)
     metaInf {
         from "$rootDir/LICENSE"
@@ -98,10 +97,8 @@ dockerTest {
     systemProperty 'influxdb-image.version', '2.8.0'
 }
 
-// Shadow relocates class bytecode but not string literals inside resource files, so
-// GraalVM's native-image config (META-INF/native-image/**/*.json, native-image.properties)
-// bundled in the shaded netty/reactor jars still names the pre-shading classes. Without this,
-// native-image can't find those classes anymore and reflective/JNI hints silently no-op.
+// Shadow relocates class bytecode but not string literals in resource files, so GraalVM
+// native-image config shipped in shaded jars still names the pre-shading classes.
 class NativeImageConfigRelocatingTransformer implements ResourceTransformer {
 
     private final Map<String, String> transformedResources = new LinkedHashMap<>()
