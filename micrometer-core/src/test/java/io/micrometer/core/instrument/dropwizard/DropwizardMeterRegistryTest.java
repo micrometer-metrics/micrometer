@@ -19,7 +19,6 @@ import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
@@ -61,9 +60,9 @@ class DropwizardMeterRegistryTest {
     };
 
     @Test
-    @NullUnmarked
+    @SuppressWarnings("NullAway")
     void gaugeOnNullValue() {
-        registry.gauge("gauge", emptyList(), (Object) null, obj -> 1.0);
+        registry.gauge("gauge", emptyList(), null, obj -> 1.0);
         assertThat(registry.get("gauge").gauge().value()).isNaN();
     }
 

@@ -18,8 +18,8 @@ package io.micrometer.core.tck;
 import io.micrometer.common.KeyValue;
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -34,14 +34,12 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.jspecify.annotations.NullUnmarked;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -429,10 +427,10 @@ public abstract class MeterRegistryCompatibilityKit {
         }
 
         @Test
-        @DisplayName("gauges with a null source object report NaN")
-        @NullUnmarked
-        void nullSourceObjectReportsNaN() {
-            registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
+        @DisplayName("gauges that reference an object that is garbage collected report NaN")
+        @SuppressWarnings("NullAway")
+        void garbageCollectedSourceObject() {
+            registry.gauge("my.gauge", emptyList(), (Map<?, ?>) null, Map::size);
             assertThat(registry.get("my.gauge").gauge().value())
                 .matches(val -> val == null || Double.isNaN(val) || val == 0.0);
         }
