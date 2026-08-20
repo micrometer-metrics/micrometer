@@ -17,7 +17,6 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
-import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.FluxSink;
 
 import java.lang.ref.WeakReference;
@@ -38,7 +37,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
 
     private final boolean alwaysPublish;
 
-    StatsdGauge(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, @Nullable T obj, ToDoubleFunction<T> value,
+    StatsdGauge(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, T obj, ToDoubleFunction<T> value,
             boolean alwaysPublish) {
         super(id);
         this.lineBuilder = lineBuilder;

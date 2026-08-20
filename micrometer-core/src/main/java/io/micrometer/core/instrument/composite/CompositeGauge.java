@@ -30,7 +30,7 @@ class CompositeGauge<T> extends AbstractCompositeMeter<Gauge> implements Gauge {
 
     private final ToDoubleFunction<T> f;
 
-    CompositeGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
+    CompositeGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
         super(id);
         ref = new WeakReference<>(obj);
         this.f = f;

@@ -71,6 +71,17 @@ It is your responsibility to hold a strong reference to the state object that yo
 
 If you see your gauge reporting for a few minutes and then disappearing or reporting NaN, it almost certainly suggests that the underlying object being gauged has been garbage collected.
 
+== Nullable state objects
+
+It can happen that you have a nullable object that you want to measure with a `Gauge`. You should avoid passing nullable state objects to Micrometer, but if you have one, there are multiple solutions, depending on your scenario:
+
+1. Check if the state object is `null` and do not register a `Gauge` if so (the time series will be missing).
+2. Check if the state object is `null` and, instead, register a `Gauge` that reports a value signaling the nullness, for example: `+Gauge.builder("gauge", () -> Double.NaN).register(registry);+`.
+3. Wrap your state object in a non-null, immutable wrapper (you need to write one) and use the wrapper as your state object. Your `ToDoubleFunction` needs to handle the case where the wrapped value is `null`.
+4. Similarly, you can wrap your nullable state object in a (mutable) `AtomicReference`. Your `ToDoubleFunction` needs to handle the case where `AtomicReference#get()` returns `null`. This solution also handles the case where the nullness is temporary: you can set a non-null value on the `AtomicReference` later, once one becomes available.
+
+NOTE: The same applies to other function-based meter registrations: `TimeGauge`, `FunctionTimer`, and `FunctionCounter`, since their state object has the same non-null requirement.
+
 == `TimeGauge`
 
 `TimeGauge` is a specialized gauge that tracks a time value, to be scaled to the base unit of time expected by each registry implementation.

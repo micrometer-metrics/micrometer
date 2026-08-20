@@ -232,7 +232,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         return new DefaultGauge<>(id, obj, valueFunction);
     }
 

@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -102,12 +101,12 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         return new CompositeGauge<>(id, obj, valueFunction);
     }
 
     @Override
-    protected <T> TimeGauge newTimeGauge(Meter.Id id, @Nullable T obj, TimeUnit valueFunctionUnit,
+    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit valueFunctionUnit,
             ToDoubleFunction<T> valueFunction) {
         return new CompositeTimeGauge<>(id, obj, valueFunctionUnit, valueFunction);
     }

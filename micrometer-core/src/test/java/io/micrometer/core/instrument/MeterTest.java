@@ -17,7 +17,6 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
-import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class MeterTest {
 
-    TimeGauge gauge = TimeGauge.builder("time.gauge", null, TimeUnit.MILLISECONDS, o -> 1.0)
+    TimeGauge gauge = TimeGauge.builder("time.gauge", new Object(), TimeUnit.MILLISECONDS, o -> 1.0)
         .register(new SimpleMeterRegistry());
 
     @Test
@@ -44,7 +43,7 @@ class MeterTest {
 
     @Test
     void matchWhenFunctionReturnsNullShouldReturnNull() {
-        @Nullable String matched = gauge.match((gauge) -> "gauge", (counter) -> "counter", (timer) -> "timer",
+        String matched = gauge.match((gauge) -> "gauge", (counter) -> "counter", (timer) -> "timer",
                 (distributionSummary) -> "distributionSummary", (longTaskTimer) -> "longTaskTimer", (timeGauge) -> null,
                 (functionCounter) -> "functionCounter", (functionTimer) -> "functionTimer", (meter) -> "meter");
 

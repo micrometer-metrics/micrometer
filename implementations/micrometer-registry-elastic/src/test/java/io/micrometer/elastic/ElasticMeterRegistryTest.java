@@ -164,6 +164,7 @@ class ElasticMeterRegistryTest {
 
     @Issue("#497")
     @Test
+    @SuppressWarnings("NullAway")
     void nullGauge() {
         Gauge g = Gauge.builder("gauge", null, o -> 1).register(registry);
         assertThat(registry.writeGauge(g)).isNotPresent();

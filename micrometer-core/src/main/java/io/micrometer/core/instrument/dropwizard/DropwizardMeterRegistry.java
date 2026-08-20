@@ -87,8 +87,7 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj,
-            ToDoubleFunction<T> valueFunction) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         final WeakReference<T> ref = new WeakReference<>(obj);
         Gauge<Double> gauge = () -> {
             T obj2 = ref.get();

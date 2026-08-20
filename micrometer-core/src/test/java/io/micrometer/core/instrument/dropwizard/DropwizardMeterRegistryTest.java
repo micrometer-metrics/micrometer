@@ -60,6 +60,7 @@ class DropwizardMeterRegistryTest {
     };
 
     @Test
+    @SuppressWarnings("NullAway")
     void gaugeOnNullValue() {
         registry.gauge("gauge", emptyList(), null, obj -> 1.0);
         assertThat(registry.get("gauge").gauge().value()).isNaN();
