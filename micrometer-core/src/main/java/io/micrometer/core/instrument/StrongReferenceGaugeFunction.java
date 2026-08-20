@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import org.jspecify.annotations.Nullable;
-
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -33,11 +31,11 @@ class StrongReferenceGaugeFunction<T> implements ToDoubleFunction<T> {
      * If obj is {@code null} initially then this gauge will not be reported.
      */
     @SuppressWarnings("FieldCanBeLocal")
-    private final @Nullable T obj;
+    private final T obj;
 
     private final ToDoubleFunction<T> f;
 
-    StrongReferenceGaugeFunction(@Nullable T obj, ToDoubleFunction<T> f) {
+    StrongReferenceGaugeFunction(T obj, ToDoubleFunction<T> f) {
         this.obj = obj;
         this.f = f;
     }

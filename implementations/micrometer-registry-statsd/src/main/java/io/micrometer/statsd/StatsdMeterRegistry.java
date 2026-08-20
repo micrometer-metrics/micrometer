@@ -329,7 +329,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), this.sink, obj, valueFunction,
                 statsdConfig.publishUnchangedMeters());
         pollableMeters.put(id, gauge);

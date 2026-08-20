@@ -34,6 +34,7 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.jspecify.annotations.NullUnmarked;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -428,8 +429,9 @@ public abstract class MeterRegistryCompatibilityKit {
         }
 
         @Test
-        @DisplayName("gauges that reference an object that is garbage collected report NaN")
-        void garbageCollectedSourceObject() {
+        @DisplayName("gauges with a null source object report NaN")
+        @NullUnmarked
+        void nullSourceObjectReportsNaN() {
             registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
             assertThat(registry.get("my.gauge").gauge().value())
                 .matches(val -> val == null || Double.isNaN(val) || val == 0.0);

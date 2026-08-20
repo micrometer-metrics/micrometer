@@ -18,6 +18,7 @@ package io.micrometer.elastic;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullUnmarked;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -164,6 +165,7 @@ class ElasticMeterRegistryTest {
 
     @Issue("#497")
     @Test
+    @NullUnmarked
     void nullGauge() {
         Gauge g = Gauge.builder("gauge", null, o -> 1).register(registry);
         assertThat(registry.writeGauge(g)).isNotPresent();

@@ -32,7 +32,7 @@ import java.util.function.ToDoubleFunction;
  */
 public interface TimeGauge extends Gauge {
 
-    static <T> Builder<T> builder(String name, @Nullable T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
+    static <T> Builder<T> builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, fUnits, f);
     }
 
@@ -84,11 +84,11 @@ public interface TimeGauge extends Gauge {
 
         private boolean strongReference = false;
 
-        private final @Nullable T obj;
+        private final T obj;
 
         private @Nullable String description;
 
-        private Builder(String name, @Nullable T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
+        private Builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
             this.name = name;
             this.obj = obj;
             this.fUnits = fUnits;

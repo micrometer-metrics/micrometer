@@ -25,7 +25,6 @@ import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.*;
-import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Locale;
@@ -108,7 +107,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         return new DefaultGauge<>(id, obj, valueFunction);
     }
 

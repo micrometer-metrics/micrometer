@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class MeterTest {
 
-    TimeGauge gauge = TimeGauge.builder("time.gauge", null, TimeUnit.MILLISECONDS, o -> 1.0)
+    TimeGauge gauge = TimeGauge.builder("time.gauge", new Object(), TimeUnit.MILLISECONDS, o -> 1.0)
         .register(new SimpleMeterRegistry());
 
     @Test

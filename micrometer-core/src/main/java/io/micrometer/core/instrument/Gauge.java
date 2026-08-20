@@ -40,7 +40,7 @@ public interface Gauge extends Meter {
      * @param <T> The type of object to gauge.
      * @return A new gauge builder.
      */
-    static <T> Builder<T> builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
+    static <T> Builder<T> builder(String name, T obj, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, f);
     }
 
@@ -89,13 +89,13 @@ public interface Gauge extends Meter {
 
         private Meter.@Nullable Id syntheticAssociation = null;
 
-        private final @Nullable T obj;
+        private final T obj;
 
         private @Nullable String description;
 
         private @Nullable String baseUnit;
 
-        private Builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
+        private Builder(String name, T obj, ToDoubleFunction<T> f) {
             this.name = name;
             this.obj = obj;
             this.f = f;

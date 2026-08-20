@@ -364,7 +364,7 @@ class PushMeterRegistryTest {
         }
 
         @Override
-        protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
             return mock(Gauge.class);
         }
 

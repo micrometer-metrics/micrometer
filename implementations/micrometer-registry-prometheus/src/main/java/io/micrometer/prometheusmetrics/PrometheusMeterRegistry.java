@@ -225,8 +225,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj,
-            ToDoubleFunction<T> valueFunction) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         Gauge gauge = new DefaultGauge<>(id, obj, valueFunction);
         applyToCollector(id, (collector, context) -> collector.addGauge(context, gauge));
         return gauge;

@@ -32,7 +32,7 @@ class CompositeTimeGauge<T> extends AbstractCompositeMeter<TimeGauge> implements
 
     private final TimeUnit fUnit;
 
-    CompositeTimeGauge(Id id, @Nullable T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+    CompositeTimeGauge(Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
         super(id);
         ref = new WeakReference<>(obj);
         this.f = f;

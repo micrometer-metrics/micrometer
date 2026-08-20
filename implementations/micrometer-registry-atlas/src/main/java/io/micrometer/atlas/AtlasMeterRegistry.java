@@ -33,7 +33,6 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
-import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -181,8 +180,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj,
-            ToDoubleFunction<T> valueFunction) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         com.netflix.spectator.api.Gauge gauge = new SpectatorToDoubleGauge<>(registry.clock(), spectatorId(id), obj,
                 valueFunction);
         registry.register(gauge);

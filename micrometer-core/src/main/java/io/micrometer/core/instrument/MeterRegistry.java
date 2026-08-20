@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.internal.Contract;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -165,7 +164,7 @@ public abstract class MeterRegistry {
      * @param <T> The type of the state object from which the gauge value is extracted.
      * @return A new gauge.
      */
-    protected abstract <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction);
+    protected abstract <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction);
 
     /**
      * Build a new counter to be added to the registry. This is guaranteed to only be
@@ -249,7 +248,7 @@ public abstract class MeterRegistry {
      * measurement.
      * @return A new time gauge.
      */
-    protected <T> TimeGauge newTimeGauge(Meter.Id id, @Nullable T obj, TimeUnit valueFunctionUnit,
+    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit valueFunctionUnit,
             ToDoubleFunction<T> valueFunction) {
         Meter.Id withUnit = id.withBaseUnit(getBaseTimeUnitStr());
         Gauge gauge = newGauge(withUnit, obj,
@@ -356,7 +355,7 @@ public abstract class MeterRegistry {
      * @param <T> The type of the state object from which the gauge value is extracted.
      * @return A new or existing gauge.
      */
-    <T> Gauge gauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    <T> Gauge gauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         return registerMeterIfNecessary(Gauge.class, id,
                 (registry, mappedId) -> registry.newGauge(mappedId, obj, valueFunction), NoopGauge::new);
     }
@@ -564,9 +563,7 @@ public abstract class MeterRegistry {
      * @return The state object that was passed in so the registration can be done as part
      * of an assignment statement.
      */
-    @Contract("_, _, null, _ -> null; _, _, !null, _ -> !null")
-    public <T> @Nullable T gauge(String name, Iterable<Tag> tags, @Nullable T stateObject,
-            ToDoubleFunction<T> valueFunction) {
+    public <T> T gauge(String name, Iterable<Tag> tags, T stateObject, ToDoubleFunction<T> valueFunction) {
         Gauge.builder(name, stateObject, valueFunction).tags(tags).register(this);
         return stateObject;
     }
@@ -1272,8 +1269,7 @@ public abstract class MeterRegistry {
          * extracted.
          * @return A new or existing time gauge.
          */
-        <T> TimeGauge timeGauge(Meter.Id id, @Nullable T obj, TimeUnit timeFunctionUnit,
-                ToDoubleFunction<T> timeFunction) {
+        <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return registerMeterIfNecessary(TimeGauge.class, id,
                     (registry, mappedId) -> registry.newTimeGauge(mappedId, obj, timeFunctionUnit, timeFunction),
                     NoopTimeGauge::new);
