@@ -23,19 +23,18 @@ Micrometer provides a `CompositeMeterRegistry` to which you can add multiple reg
 ----
 CompositeMeterRegistry composite = new CompositeMeterRegistry();
 
-Counter compositeCounter = composite.counter("counter");
-compositeCounter.increment(); <1>
-
 SimpleMeterRegistry simple = new SimpleMeterRegistry();
-composite.add(simple); <2>
+composite.add(simple); <1>
 
+Counter compositeCounter = composite.counter("counter"); <2>
 compositeCounter.increment(); <3>
 ----
-
-<1> Increments are NOOP'd until there is a registry in the composite. The counter's count still yields 0 at this point.
+<1> You can add multiple registries to a composite.
 <2> A counter named `counter` is registered to the simple registry.
 <3> The simple registry counter is incremented, along with counters for any other registries in the composite.
 ====
+
+NOTE: Meters should be registered _after_ registry configuration is completed (after all registries and filters have been added). Recordings are NOOP'd until there is a registry in the composite. Also, if a `MeterRegistry` is added to the `CompositeMeterRegistry` that already has registered meters, meter recordings that occurred before the registry was added will not be reflected in the newly added registry.
 
 == Global Registry
 
