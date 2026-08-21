@@ -95,12 +95,18 @@ public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
         if (obj2 != null && clock.monotonicTime() - lastUpdateTime > 1e6) {
             long prevLastCount = lastCount;
             lastCount = Math.max(countFunction.applyAsLong(obj2), 0);
-            count.add(lastCount - prevLastCount);
+            // The count and totalTime functions are expected to be monotonically
+            // increasing. Guard against a finite decrease (a reset), which would
+            // otherwise record a negative count/total for the step interval. A
+            // non-finite total delta (e.g. NaN/Inf totalTime) is left as-is so each
+            // registry's own infinite/NaN-value handling still applies. See gh-2489.
+            count.add(Math.max(lastCount - prevLastCount, 0));
 
             double prevLastTime = lastTime;
             lastTime = Math.max(
                     TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()), 0);
-            total.add(lastTime - prevLastTime);
+            double timeDelta = lastTime - prevLastTime;
+            total.add(Double.isFinite(timeDelta) ? Math.max(timeDelta, 0) : timeDelta);
 
             lastUpdateTime = clock.monotonicTime();
         }
