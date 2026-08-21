@@ -18,9 +18,13 @@ package io.micrometer.benchmark.prometheus;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import org.jspecify.annotations.NonNull;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.profile.GCProfiler;
@@ -70,6 +74,9 @@ public class PrometheusRegistryBenchmark {
     @Param({ "500" })
     private int scrapeMeterCount;
 
+    @Param({ "true", "false" })
+    private boolean useHistograms;
+
     private PrometheusMeterRegistry scrapeRegistry;
 
     private AtomicInteger gaugeValue;
@@ -77,6 +84,16 @@ public class PrometheusRegistryBenchmark {
     @Setup(Level.Trial)
     public void setupTrial() {
         scrapeRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        if (useHistograms) {
+            scrapeRegistry.config().meterFilter(new MeterFilter() {
+                @Override
+                public DistributionStatisticConfig configure(Meter.@NonNull Id id,
+                        @NonNull DistributionStatisticConfig config) {
+                    return DistributionStatisticConfig.builder().percentilesHistogram(true).build().merge(config);
+                }
+            });
+        }
+
         gaugeValue = new AtomicInteger(42);
 
         // System gauges registered once during setup
