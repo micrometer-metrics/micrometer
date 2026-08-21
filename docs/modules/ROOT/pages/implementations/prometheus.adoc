@@ -6,6 +6,8 @@ Prometheus is designed to operate on a pull model, periodically scraping metrics
 
 Micrometer uses the Prometheus Java Client under the hood; there are two versions of it and Micrometer supports both. If you want to use the "new" client (`1.x`), use `micrometer-registry-prometheus` but if you want to use the "legacy" client (`0.x`), use `micrometer-registry-prometheus-simpleclient`.
 
+NOTE: Prometheus is *dimensional*, uses *server-side* xref:../concepts/rate-aggregation.adoc[rate aggregation] (Micrometer publishes cumulative values; Prometheus computes rates in queries), and operates on a *server-poll* model where Prometheus scrapes the application. See xref:../concepts/implementations.adoc[Supported Monitoring Systems] for a comparison across registries.
+
 :system: prometheus
 include::_install.adoc[]
 

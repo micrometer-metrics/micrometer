@@ -4,6 +4,8 @@
 
 Micrometer provides a hierarchical mapping to JMX, primarily as a cheap and portable way to view metrics locally. Where JMX exporting is found in production, the same metrics are generally exported to another, more purpose-fit monitoring system.
 
+NOTE: JMX uses a *hierarchical* naming model (tag key/value pairs are flattened into the metric name), uses *client-side* xref:../concepts/rate-aggregation.adoc[rate aggregation], and uses a *client-push* model. See xref:../concepts/implementations.adoc[Supported Monitoring Systems] for a comparison across registries.
+
 include::_install.adoc[]
 
 Micrometer also sometimes scrapes data from JMX beans for use in reporting metrics. This registry implementation is not needed for these uses. Rather, this module is strictly used to _export_ data to JMX.

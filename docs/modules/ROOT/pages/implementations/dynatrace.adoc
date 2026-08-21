@@ -6,6 +6,8 @@ https://www.dynatrace.com/[*Dynatrace*] is a Software Intelligence Platform feat
 It can ingest multi-purpose dimensional time-series data and has built-in dashboarding.
 Both SaaS and self-hosted (Managed) deployments are offered.
 
+NOTE: Dynatrace is *dimensional*, uses *client-side* xref:../concepts/rate-aggregation.adoc[rate aggregation] (Micrometer pre-aggregates before pushing), and uses a *client-push* model. See xref:../concepts/implementations.adoc[Supported Monitoring Systems] for a comparison across registries.
+
 include::_install.adoc[]
 
 == Configuring
