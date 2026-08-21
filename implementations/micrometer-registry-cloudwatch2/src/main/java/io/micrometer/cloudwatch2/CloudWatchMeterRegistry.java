@@ -19,6 +19,8 @@ import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.jspecify.annotations.Nullable;
@@ -33,9 +35,12 @@ import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -79,6 +84,11 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     private static final WarnThenDebugLogger tooManyTagsLogger = new WarnThenDebugLogger(CloudWatchMeterRegistry.class);
 
+    /**
+     * Cache of per-meter `publishAverage` flags captured when meters are created.
+     */
+    private final Map<Meter.Id, Boolean> publishAvgFlags = new ConcurrentHashMap<>();
+
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock, CloudWatchAsyncClient cloudWatchAsyncClient) {
         this(config, clock, cloudWatchAsyncClient, new NamedThreadFactory("cloudwatch-metrics-publisher"));
     }
@@ -91,6 +101,27 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         config().namingConvention(new CloudWatchNamingConvention());
         start(threadFactory);
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig config, PauseDetector pauseDetector) {
+        publishAvgFlags.put(id, config.isPublishingAverage());
+        return super.newTimer(id, config, pauseDetector);
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig config,
+            double scale) {
+        publishAvgFlags.put(id, config.isPublishingAverage());
+        return super.newDistributionSummary(id, config, scale);
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        // FunctionTimer does NOT get DistributionStatisticConfig → fallback to DEFAULT
+        publishAvgFlags.put(id, DistributionStatisticConfig.DEFAULT.isPublishingAverage());
+        return super.newFunctionTimer(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
     }
 
     @Override
@@ -193,10 +224,17 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 .add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
             metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, (double) count));
+            Boolean publishAvg = publishAvgFlags.getOrDefault(timer.getId(),
+                    DistributionStatisticConfig.DEFAULT.isPublishingAverage());
+
             if (count > 0) {
-                metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
+                if (publishAvg) {
+                    metrics.add(
+                            metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
+                }
                 metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
             }
+
             return metrics.build();
         }
 
@@ -206,10 +244,16 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
             long count = summary.count();
             metrics.add(metricDatum(summary.getId(), "count", StandardUnit.COUNT, (double) count));
+            Boolean publishAvg = publishAvgFlags.getOrDefault(summary.getId(),
+                    DistributionStatisticConfig.DEFAULT.isPublishingAverage());
+
             if (count > 0) {
-                metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
+                if (publishAvg) {
+                    metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
+                }
                 metrics.add(metricDatum(summary.getId(), "max", summary.max()));
             }
+
             return metrics.build();
         }
 
@@ -247,9 +291,15 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             double count = timer.count();
             metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, count));
             metrics.add(metricDatum(timer.getId(), "sum", sum));
+            Boolean publishAvg = publishAvgFlags.getOrDefault(timer.getId(),
+                    DistributionStatisticConfig.DEFAULT.isPublishingAverage());
+
             if (count > 0) {
-                metrics.add(metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
+                if (publishAvg) {
+                    metrics.add(metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
+                }
             }
+
             return metrics.build();
         }
 
