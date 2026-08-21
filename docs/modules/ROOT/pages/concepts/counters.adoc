@@ -122,6 +122,21 @@ include::{include-java}/metrics/CountedAspectTest.java[tags=example_value_spel,i
 include::{include-java}/metrics/CountedAspectTest.java[tags=example_multi_annotations,indent=0]
 -----
 
+=== @MeterTag on Methods
+
+`@MeterTag` can also be placed on the method itself. With the same `CountedMeterTagAnnotationHandler` configured on `CountedAspect`, the resolver, expression, or `toString()` path runs against the method's return value rather than a parameter.
+
+[source,java]
+-----
+@Counted
+@MeterTag(key = "result", expression = "status")
+public PaymentResult charge(String accountId) {
+    return paymentService.charge(accountId);
+}
+-----
+
+Here `expression` is evaluated against the returned `PaymentResult`. The same low-cardinality rule applies: do not tag with end-user input or other high-cardinality values.
+
 NOTE: `CountedAspect` doesn't support meta-annotations with `@Counted`.
 
 == Function-tracking Counters
