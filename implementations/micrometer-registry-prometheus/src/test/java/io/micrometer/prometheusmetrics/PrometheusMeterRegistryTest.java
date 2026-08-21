@@ -977,7 +977,7 @@ class PrometheusMeterRegistryTest {
         MultiGauge multiGauge = MultiGauge.builder("my.metric").register(registry);
         List<MultiGauge.Row<?>> rows = IntStream.range(0, 100)
             .mapToObj(i -> MultiGauge.Row
-                .of(Tags.of("tag1", "abc", "poll_count", Integer.toString(i), "some_other_tag", "cde"), i))
+                .of(Tags.of("tag1", "abc", "poll.count", Integer.toString(i), "some.other.tag", "cde"), i))
             .collect(toList());
 
         multiGauge.register(rows, true);
