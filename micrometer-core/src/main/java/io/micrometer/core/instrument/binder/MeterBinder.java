@@ -23,6 +23,20 @@ import io.micrometer.core.instrument.MeterRegistry;
  * <p>
  * Binders are enabled by default if they source data for an alert that is recommended for
  * a production ready app.
+ *
+ * <h2>Lifecycle</h2>
+ * {@link #bindTo(MeterRegistry)} is typically called once per registry during application
+ * startup (configuration time). The same {@code MeterBinder} instance may be bound to
+ * multiple registries, for example when a composite registry and an individual registry
+ * are both present in a Spring Boot application. Each such call registers fresh meters on
+ * the supplied registry.
+ *
+ * <h2>Thread Safety</h2>
+ * Implementations are <strong>not</strong> required to make {@link #bindTo} thread-safe.
+ * Concurrent invocations of {@link #bindTo} on the same instance, or invocations that
+ * overlap with ongoing meter observations from a previous call, are not a supported use
+ * case. In normal usage, all {@code bindTo} calls for a given instance happen serially
+ * during the single-threaded application context initialization phase.
  */
 public interface MeterBinder {
 
