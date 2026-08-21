@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jvm.convention;
+package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmClassCountMeterConvention;
 
 /**
- * Get {@link MeterConvention} for thread related metrics.
+ * Micrometer's historical convention for JVM current class count metrics.
  *
- * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+ * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
  * @since 1.16.0
- * @deprecated use {@link JvmThreadCountMeterConvention} with
- * {@link io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics.Builder} instead
  */
-@Deprecated
-public interface JvmThreadMeterConventions {
+public class MicrometerJvmClassCountMeterConvention implements JvmClassCountMeterConvention {
 
-    MeterConvention<Thread.State> threadCountConvention();
+    @Override
+    public String getName() {
+        return "jvm.classes.loaded";
+    }
 
 }
