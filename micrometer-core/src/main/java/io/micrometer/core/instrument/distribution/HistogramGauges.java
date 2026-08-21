@@ -19,7 +19,6 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.DoubleFormat;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
@@ -27,10 +26,9 @@ import java.util.function.ToDoubleFunction;
 @Incubating(since = "1.0.3")
 public class HistogramGauges {
 
-    // How many gauges have been polled so far on this publish cycle
-    volatile CountDownLatch polledGaugesLatch;
+    private HistogramSnapshot snapshot;
 
-    private volatile HistogramSnapshot snapshot;
+    private int remainingGauges;
 
     private final HistogramSupport meter;
 
@@ -105,18 +103,18 @@ public class HistogramGauges {
 
         this.totalGauges = valueAtPercentiles.length + countAtBuckets.length;
 
-        // set to zero initially, so the first polling of one of the gauges on each
-        // publish cycle results in a
-        // new snapshot
-        this.polledGaugesLatch = new CountDownLatch(0);
-
         for (int i = 0; i < valueAtPercentiles.length; i++) {
-            final int index = i;
+            ValueAtPercentile registeredPercentile = valueAtPercentiles[i];
 
             ToDoubleFunction<HistogramSupport> percentileValueFunction = m -> {
-                snapshotIfNecessary();
-                polledGaugesLatch.countDown();
-                return percentileValue.apply(snapshot.percentileValues()[index]);
+                HistogramSnapshot currentSnapshot = pollSnapshot();
+                for (ValueAtPercentile currentPercentile : currentSnapshot.percentileValues()) {
+                    if (Double.compare(currentPercentile.percentile(), registeredPercentile.percentile()) == 0) {
+                        return percentileValue.apply(currentPercentile);
+                    }
+                }
+                return percentileValue
+                    .apply(new ValueAtPercentile(registeredPercentile.percentile(), currentSnapshot.max()));
             };
 
             Gauge.builder(percentileName.apply(valueAtPercentiles[i]), meter, percentileValueFunction)
@@ -127,12 +125,16 @@ public class HistogramGauges {
         }
 
         for (int i = 0; i < countAtBuckets.length; i++) {
-            final int index = i;
+            CountAtBucket registeredBucket = countAtBuckets[i];
 
             ToDoubleFunction<HistogramSupport> bucketCountFunction = m -> {
-                snapshotIfNecessary();
-                polledGaugesLatch.countDown();
-                return snapshot.histogramCounts()[index].count();
+                HistogramSnapshot currentSnapshot = pollSnapshot();
+                for (CountAtBucket currentBucket : currentSnapshot.histogramCounts()) {
+                    if (sameBucket(currentBucket, registeredBucket)) {
+                        return currentBucket.count();
+                    }
+                }
+                return Double.NaN;
             };
 
             Gauge.builder(bucketName.apply(countAtBuckets[i]), meter, bucketCountFunction)
@@ -142,11 +144,18 @@ public class HistogramGauges {
         }
     }
 
-    private void snapshotIfNecessary() {
-        if (polledGaugesLatch.getCount() == 0) {
+    private synchronized HistogramSnapshot pollSnapshot() {
+        if (remainingGauges == 0) {
             snapshot = meter.takeSnapshot();
-            polledGaugesLatch = new CountDownLatch(totalGauges);
+            remainingGauges = totalGauges;
         }
+        remainingGauges--;
+        return snapshot;
+    }
+
+    private static boolean sameBucket(CountAtBucket current, CountAtBucket registered) {
+        return (current.isPositiveInf() && registered.isPositiveInf())
+                || Double.compare(current.bucket(), registered.bucket()) == 0;
     }
 
 }
