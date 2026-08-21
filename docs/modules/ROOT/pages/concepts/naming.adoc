@@ -30,6 +30,18 @@ By adhering to Micrometer's lowercase dot notation convention, you guarantee the
 
 TIP: We recommend that you follow the same lowercase dot notation described for meter names when naming tags. Using this consistent naming convention for tags allows for better translation into the respective monitoring system's idiomatic naming schemes.
 
+[NOTE]
+====
+The naming convention that each registry applies transforms *dot-separated* names to the backend's idiomatic format.
+Characters other than dots — such as hyphens (`-`), underscores (`_`), or spaces — are *not* converted by the generic naming conventions and are passed through verbatim (after removing any characters the backend disallows).
+
+For example, `NamingConvention.snakeCase` converts `my.tag.name` to `my_tag_name`, but `my-tag-name` remains `my-tag-name` (a hyphen is not a dot, so it is not replaced).
+
+Each registry ships with a backend-specific naming convention (for example, `PrometheusNamingConvention`) that replaces all disallowed characters with `_`.
+Replacing the default with a generic one like `NamingConvention.snakeCase` may therefore produce unexpected results for names and tags that use non-dot separators.
+If you use Prometheus, keep the default `PrometheusNamingConvention` and use dot notation for your names and tags.
+====
+
 Suppose we are trying to measure the number of http requests and the number of database calls.
 
 *Recommended Approach*
