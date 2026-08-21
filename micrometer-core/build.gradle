@@ -303,3 +303,28 @@ tasks.register("openj9ConcurrentScavengeTest", Test) {
 
     jvmArgs '-Xgc:concurrentScavenge'
 }
+
+configurations {
+    kafkaLatestTestRuntime {
+        extendsFrom configurations.testRuntimeClasspath
+        resolutionStrategy {
+            force "org.apache.kafka:kafka-clients:${libs.versions.kafkaLatest.get()}"
+            force "org.apache.kafka:kafka-streams:${libs.versions.kafkaLatest.get()}"
+        }
+    }
+}
+
+tasks.register("dockerTestKafkaLatest", Test) {
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'docker'
+    }
+
+    filter {
+        includeTestsMatching "io.micrometer.core.instrument.binder.kafka.*"
+    }
+
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.output + configurations.kafkaLatestTestRuntime
+}
