@@ -122,6 +122,10 @@ updates:
     target-branch: "main"
     milestone: 337
     ignore:
+      # update minor versions of shaded otel to get bug/CVE fixes
+      - dependency-name: "io.opentelemetry:opentelemetry-bom"
+        update-types:
+          - version-update:semver-major
       # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
       # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
       # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
