@@ -25,9 +25,13 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
-public class SpelValueExpressionResolver implements ValueExpressionResolver {
+// tag::class[]
+// NOTE: Micrometer does not provide a ValueExpressionResolver out of the box.
+// You need to implement one yourself (or use one provided by your framework).
+// Below is an example implementation using Spring Expression Language (SpEL).
+public class CustomValueExpressionResolver implements ValueExpressionResolver {
 
-    private static final InternalLogger log = InternalLoggerFactory.getInstance(SpelValueExpressionResolver.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(CustomValueExpressionResolver.class);
 
     @Override
     public @NonNull String resolve(@NonNull String expression, @Nullable Object parameter) {
@@ -44,3 +48,4 @@ public class SpelValueExpressionResolver implements ValueExpressionResolver {
     }
 
 }
+// end::class[]
