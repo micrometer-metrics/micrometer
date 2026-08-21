@@ -495,4 +495,71 @@ class CompositeMeterRegistryTest {
         assertThat(this.simple.getMeters()).isEmpty();
     }
 
+    @Test
+    @Issue("#5607")
+    void meterRemovalPreservesChildMeterReferencedByAnotherCompositeMeter() {
+        this.simple.config().meterFilter(MeterFilter.ignoreTags("tableId"));
+        this.composite.add(this.simple);
+
+        DistributionSummary summary1 = this.composite.summary("scan.results", "address", "localhost:1234", "tableId",
+                "1");
+        DistributionSummary summary2 = this.composite.summary("scan.results", "address", "localhost:1234", "tableId",
+                "2");
+        DistributionSummary childSummary = this.simple.get("scan.results").tag("address", "localhost:1234").summary();
+
+        summary1.record(1);
+        summary2.record(2);
+        assertThat(childSummary.count()).isEqualTo(2);
+
+        this.composite.remove(summary2);
+
+        assertThat(this.simple.find("scan.results").summary()).isSameAs(childSummary);
+        summary1.record(3);
+        assertThat(childSummary.count()).isEqualTo(3);
+
+        this.composite.remove(summary1);
+        assertThat(this.simple.find("scan.results").summary()).isNull();
+    }
+
+    @Test
+    @Issue("#5607")
+    void sharedChildMeterReferencesRemainConsistentWhenRegistryIsReadded() {
+        this.simple.config().meterFilter(MeterFilter.ignoreTags("tableId"));
+        this.composite.add(this.simple);
+
+        Counter counter1 = this.composite.counter("requests", "tableId", "1");
+        Counter counter2 = this.composite.counter("requests", "tableId", "2");
+
+        this.composite.remove(this.simple);
+        this.composite.add(this.simple);
+        this.composite.remove(counter2);
+
+        assertThat(this.simple.find("requests").counter()).isNotNull();
+
+        this.composite.remove(counter1);
+        assertThat(this.simple.find("requests").counter()).isNull();
+    }
+
+    @Test
+    @Issue("#5607")
+    void customMeterRemovalPreservesSharedChildMeter() {
+        this.simple.config().meterFilter(MeterFilter.ignoreTags("tableId"));
+        this.composite.add(this.simple);
+
+        Meter meter1 = Meter
+            .builder("custom", Meter.Type.OTHER, singletonList(new Measurement(() -> 1.0, Statistic.UNKNOWN)))
+            .tag("tableId", "1")
+            .register(this.composite);
+        Meter meter2 = Meter
+            .builder("custom", Meter.Type.OTHER, singletonList(new Measurement(() -> 2.0, Statistic.UNKNOWN)))
+            .tag("tableId", "2")
+            .register(this.composite);
+
+        this.composite.remove(meter2);
+        assertThat(this.simple.find("custom").meter()).isNotNull();
+
+        this.composite.remove(meter1);
+        assertThat(this.simple.find("custom").meter()).isNull();
+    }
+
 }
