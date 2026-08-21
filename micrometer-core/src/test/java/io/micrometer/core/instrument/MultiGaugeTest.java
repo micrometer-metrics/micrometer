@@ -188,6 +188,19 @@ class MultiGaugeTest {
         multiGauge.register(List.of(Row.of(Tags.of("key", "1", "ignored", "3"), 3d)), true);
         assertThat(registry.get("mg").tag("key", "1").gauges()).hasSize(1);
         assertThat(registry.get("mg").tag("key", "1").gauge().value()).isEqualTo(3d);
+
+        // @formatter:off
+        multiGauge.register(
+            List.of(
+                Row.of(Tags.of("key", "2", "ignored", "4"), 4d),
+                Row.of(Tags.of("key", "2", "ignored", "5"), 5d),
+                Row.of(Tags.of("key", "2", "ignored", "6"), 6d)
+            ),
+            true
+        );
+        // @formatter:on
+        assertThat(registry.get("mg").tag("key", "2").gauges()).hasSize(1);
+        assertThat(registry.get("mg").tag("key", "2").gauge().value()).isEqualTo(6d);
     }
 
     @Test
