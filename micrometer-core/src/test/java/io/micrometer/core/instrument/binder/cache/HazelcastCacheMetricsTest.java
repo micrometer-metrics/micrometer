@@ -46,11 +46,14 @@ import static org.mockito.Mockito.when;
  * Tests for {@link HazelcastCacheMetrics}.
  *
  * @author Oleksii Bondar
+ * @author Jewoo Shin
  */
 @ExtendWith(OutputCaptureExtension.class)
 class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     private static final String STATS_DISABLED_MAP_NAME = "statsDisabledCache";
+
+    private static final Config CONFIG = new Config();
 
     @SuppressWarnings("NullAway.Init")
     // tag::setup[]
@@ -179,7 +182,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void doNotReportMetricsWhenStatisticsAreDisabled(CapturedOutput output) {
         MeterRegistry registry = new SimpleMeterRegistry();
-        new HazelcastCacheMetrics(statsDisabledCache, expectedTag).bindTo(registry);
+        HazelcastCacheMetrics.monitor(registry, statsDisabledCache, expectedTag, CONFIG);
 
         assertThat(output).contains("'" + STATS_DISABLED_MAP_NAME + "' is not recording statistics");
         assertThat(registry.find("cache.size").gauge()).isNull();
@@ -193,11 +196,18 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
         assertThat(registry.find("cache.removals.latency").functionTimer()).isNull();
     }
 
+    @Test
+    void assumeStatisticsAreEnabledWhenConfigIsNotProvided() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        new HazelcastCacheMetrics(statsDisabledCache, expectedTag).bindTo(registry);
+
+        assertThat(registry.find("cache.size").gauge()).isNotNull();
+    }
+
     @BeforeAll
     static void setup() {
-        Config config = new Config();
-        config.addMapConfig(new MapConfig(STATS_DISABLED_MAP_NAME).setStatisticsEnabled(false));
-        HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
+        CONFIG.addMapConfig(new MapConfig(STATS_DISABLED_MAP_NAME).setStatisticsEnabled(false));
+        HazelcastInstance instance = Hazelcast.newHazelcastInstance(CONFIG);
         cache = instance.getMap("mycache");
         statsDisabledCache = instance.getMap(STATS_DISABLED_MAP_NAME);
         NearCacheStats nearCacheStats = mock(NearCacheStatsImpl.class);
