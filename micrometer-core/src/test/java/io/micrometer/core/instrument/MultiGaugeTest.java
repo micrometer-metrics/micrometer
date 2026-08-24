@@ -188,6 +188,12 @@ class MultiGaugeTest {
         multiGauge.register(List.of(Row.of(Tags.of("key", "1", "ignored", "3"), 3d)), true);
         assertThat(registry.get("mg").tag("key", "1").gauges()).hasSize(1);
         assertThat(registry.get("mg").tag("key", "1").gauge().value()).isEqualTo(3d);
+    }
+
+    @Test
+    void overwriteDuplicateRows_withIgnoredTags() {
+        registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
+        MultiGauge multiGauge = MultiGauge.builder("mg").register(registry);
 
         // @formatter:off
         multiGauge.register(
@@ -201,6 +207,42 @@ class MultiGaugeTest {
         // @formatter:on
         assertThat(registry.get("mg").tag("key", "2").gauges()).hasSize(1);
         assertThat(registry.get("mg").tag("key", "2").gauge().value()).isEqualTo(6d);
+    }
+
+    @Test
+    void overwriteDuplicateRows() {
+        MultiGauge multiGauge = MultiGauge.builder("mg").register(registry);
+
+        // @formatter:off
+        multiGauge.register(
+            List.of(
+                Row.of(Tags.of("key", "2"), 4d),
+                Row.of(Tags.of("key", "2"), 5d),
+                Row.of(Tags.of("key", "2"), 6d)
+            ),
+            true
+        );
+        // @formatter:on
+        assertThat(registry.get("mg").tag("key", "2").gauges()).hasSize(1);
+        assertThat(registry.get("mg").tag("key", "2").gauge().value()).isEqualTo(6d);
+    }
+
+    @Test
+    void duplicateRows() {
+        MultiGauge multiGauge = MultiGauge.builder("mg").register(registry);
+
+        // @formatter:off
+        multiGauge.register(
+            List.of(
+                Row.of(Tags.of("key", "2"), 4d),
+                Row.of(Tags.of("key", "2"), 5d),
+                Row.of(Tags.of("key", "2"), 6d)
+            ),
+            false
+        );
+        // @formatter:on
+        assertThat(registry.get("mg").tag("key", "2").gauges()).hasSize(1);
+        assertThat(registry.get("mg").tag("key", "2").gauge().value()).isEqualTo(4d);
     }
 
     @Test
