@@ -34,7 +34,7 @@ compositeCounter.increment(); <3>
 <3> The simple registry counter is incremented, along with counters for any other registries in the composite.
 ====
 
-NOTE: Meters should be registered _after_ registry configuration is completed (after all registries and filters have been added). Recordings are NOOP'd until there is a registry in the composite. Also, if a `MeterRegistry` is added to the `CompositeMeterRegistry` that already has registered meters, meter recordings that occurred before the registry was added will not be reflected in the newly added registry.
+NOTE: Meters should be registered _after_ registry configuration is completed (after all registries and filters have been added). Recordings have no effect until there is a non-composite registry in the composite. Also, if a `MeterRegistry` is added to the `CompositeMeterRegistry` that already has registered meters, meter recordings that occurred before the registry was added will not be reflected in the newly added registry.
 
 == Global Registry
 
