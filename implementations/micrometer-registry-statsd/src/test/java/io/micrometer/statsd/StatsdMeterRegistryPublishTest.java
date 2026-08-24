@@ -169,7 +169,7 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         await().until(() -> serverLatch.getCount() == 2);
         meterRegistry.stop();
-        await().until(() -> clientIsDisposed(meterRegistry));
+        await().until(() -> !isClientReady(meterRegistry));
         // These increments shouldn't be sent
         IntStream.range(0, 3).forEach(i -> counter.increment());
         startRegistryAndWaitForClient(meterRegistry);
@@ -226,10 +226,7 @@ class StatsdMeterRegistryPublishTest {
         CountDownLatch server2Latch = new CountDownLatch(3);
         server = startServer(protocol, port, server2Latch);
         if (protocol == StatsdProtocol.TCP || protocol == StatsdProtocol.UDS_DATAGRAM) {
-            // client is null until connection established
-            await().until(() -> meterRegistry.statsdConnection.get() != null);
-            // client may take some time to reconnect to the server
-            await().until(() -> !clientIsDisposed(meterRegistry));
+            waitForClientReady(meterRegistry);
         }
         assertThat(server2Latch.getCount()).isEqualTo(3);
 
@@ -260,7 +257,7 @@ class StatsdMeterRegistryPublishTest {
         startRegistryAndWaitForClient(meterRegistry);
         server.disposeNow();
         meterRegistry.stop();
-        await().until(() -> clientIsDisposed(meterRegistry));
+        await().until(() -> !isClientReady(meterRegistry));
         assertThat(serverLatch.getCount()).isEqualTo(3);
 
         CountDownLatch server2Latch = new CountDownLatch(3);
@@ -293,7 +290,7 @@ class StatsdMeterRegistryPublishTest {
         // write will cause error
         counter.increment();
         // wait for reconnect
-        await().until(() -> !clientIsDisposed(meterRegistry));
+        waitForClientReady(meterRegistry);
         // remove write exception handler
         ((Connection) meterRegistry.statsdConnection.get()).removeHandler("writeFailure");
         IntStream.range(1, 4).forEach(counter::increment);
@@ -397,12 +394,16 @@ class StatsdMeterRegistryPublishTest {
 
     private void startRegistryAndWaitForClient(StatsdMeterRegistry meterRegistry) {
         meterRegistry.start();
-        await().until(() -> !clientIsDisposed(meterRegistry));
+        waitForClientReady(meterRegistry);
     }
 
-    private boolean clientIsDisposed(StatsdMeterRegistry meterRegistry) {
+    private void waitForClientReady(StatsdMeterRegistry meterRegistry) {
+        await().until(() -> isClientReady(meterRegistry));
+    }
+
+    private boolean isClientReady(StatsdMeterRegistry meterRegistry) {
         Disposable connection = meterRegistry.statsdConnection.get();
-        return connection == null || connection.isDisposed();
+        return connection != null && !connection.isDisposed();
     }
 
     private DisposableChannel startServer(StatsdProtocol protocol, int port, CountDownLatch serverLatch) {

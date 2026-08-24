@@ -165,12 +165,12 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     }
 
     private void waitForClientReady(StatsdMeterRegistry meterRegistry) {
-        await().until(() -> !clientIsDisposed(meterRegistry));
+        await().until(() -> isClientReady(meterRegistry));
     }
 
-    private boolean clientIsDisposed(StatsdMeterRegistry meterRegistry) {
+    private boolean isClientReady(StatsdMeterRegistry meterRegistry) {
         Disposable connection = meterRegistry.statsdConnection.get();
-        return connection != null && connection.isDisposed();
+        return connection != null && !connection.isDisposed();
     }
 
     private StatsdConfig getStatsdConfig() {
