@@ -15,7 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import com.hazelcast.config.Config;
+import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.internal.monitor.impl.LocalMapStatsImpl;
 import com.hazelcast.internal.monitor.impl.NearCacheStatsImpl;
 import com.hazelcast.map.IMap;
@@ -23,9 +26,12 @@ import com.hazelcast.map.LocalMapStats;
 import com.hazelcast.nearcache.NearCacheStats;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.testsupport.system.CapturedOutput;
+import io.micrometer.core.testsupport.system.OutputCaptureExtension;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.HashMap;
 import java.util.Random;
@@ -40,12 +46,21 @@ import static org.mockito.Mockito.when;
  * Tests for {@link HazelcastCacheMetrics}.
  *
  * @author Oleksii Bondar
+ * @author Jewoo Shin
  */
+@ExtendWith(OutputCaptureExtension.class)
 class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
+
+    private static final String STATS_DISABLED_MAP_NAME = "statsDisabledCache";
+
+    private static final Config CONFIG = new Config();
 
     @SuppressWarnings("NullAway.Init")
     // tag::setup[]
     static IMap<String, String> cache;
+
+    @SuppressWarnings("NullAway.Init")
+    static IMap<String, String> statsDisabledCache;
 
     HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
 
@@ -164,9 +179,37 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
             .isThrownBy(() -> new HazelcastCacheMetrics(new HashMap<String, String>(), Tags.empty()));
     }
 
+    @Test
+    void doNotReportMetricsWhenStatisticsAreDisabled(CapturedOutput output) {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        HazelcastCacheMetrics.monitor(registry, statsDisabledCache, expectedTag, CONFIG);
+
+        assertThat(output).contains("'" + STATS_DISABLED_MAP_NAME + "' is not recording statistics");
+        assertThat(registry.find("cache.size").gauge()).isNull();
+        assertThat(registry.find("cache.gets").functionCounter()).isNull();
+        assertThat(registry.find("cache.puts").functionCounter()).isNull();
+        assertThat(registry.find("cache.entries").gauges()).isEmpty();
+        assertThat(registry.find("cache.entry.memory").gauges()).isEmpty();
+        assertThat(registry.find("cache.partition.gets").functionCounter()).isNull();
+        assertThat(registry.find("cache.gets.latency").functionTimer()).isNull();
+        assertThat(registry.find("cache.puts.latency").functionTimer()).isNull();
+        assertThat(registry.find("cache.removals.latency").functionTimer()).isNull();
+    }
+
+    @Test
+    void assumeStatisticsAreEnabledWhenConfigIsNotProvided() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        new HazelcastCacheMetrics(statsDisabledCache, expectedTag).bindTo(registry);
+
+        assertThat(registry.find("cache.size").gauge()).isNotNull();
+    }
+
     @BeforeAll
     static void setup() {
-        cache = Hazelcast.newHazelcastInstance().getMap("mycache");
+        CONFIG.addMapConfig(new MapConfig(STATS_DISABLED_MAP_NAME).setStatisticsEnabled(false));
+        HazelcastInstance instance = Hazelcast.newHazelcastInstance(CONFIG);
+        cache = instance.getMap("mycache");
+        statsDisabledCache = instance.getMap(STATS_DISABLED_MAP_NAME);
         NearCacheStats nearCacheStats = mock(NearCacheStatsImpl.class);
         // generate non-negative random value to address false-positives
         int valueBound = 100000;
