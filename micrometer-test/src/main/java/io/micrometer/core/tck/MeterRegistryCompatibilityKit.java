@@ -428,11 +428,10 @@ public abstract class MeterRegistryCompatibilityKit {
 
         @Test
         @DisplayName("gauges that reference an object that is garbage collected report NaN")
-        @SuppressWarnings("NullAway")
         void garbageCollectedSourceObject() {
-            registry.gauge("my.gauge", emptyList(), (Map<?, ?>) null, Map::size);
-            assertThat(registry.get("my.gauge").gauge().value())
-                .matches(val -> val == null || Double.isNaN(val) || val == 0.0);
+            registry.gauge("my.gauge", Tags.empty(), new Object(), o -> 2.3);
+            System.gc(); // collect unreferenced state object
+            assertThat(registry.get("my.gauge").gauge().value()).isNaN();
         }
 
         @Test

@@ -26,7 +26,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -60,9 +59,9 @@ class DropwizardMeterRegistryTest {
     };
 
     @Test
-    @SuppressWarnings("NullAway")
-    void gaugeOnNullValue() {
-        registry.gauge("gauge", emptyList(), null, obj -> 1.0);
+    void gaugeValueWhenStateObjectIsGarbageCollected() {
+        registry.gauge("gauge", Tags.empty(), new Object(), obj -> 1.0);
+        System.gc(); // collect unreferenced state object
         assertThat(registry.get("gauge").gauge().value()).isNaN();
     }
 

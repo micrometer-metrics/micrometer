@@ -164,12 +164,11 @@ class ElasticMeterRegistryTest {
 
     @Issue("#497")
     @Test
-    @SuppressWarnings("NullAway")
-    void nullGauge() {
-        Gauge g = Gauge.builder("gauge", null, o -> 1).register(registry);
+    void NaNGauge() {
+        Gauge g = Gauge.builder("gauge", this, o -> Double.NaN).register(registry);
         assertThat(registry.writeGauge(g)).isNotPresent();
 
-        TimeGauge tg = TimeGauge.builder("time.gauge", null, TimeUnit.MILLISECONDS, o -> 1).register(registry);
+        TimeGauge tg = TimeGauge.builder("time.gauge", this, TimeUnit.MILLISECONDS, o -> Double.NaN).register(registry);
         assertThat(registry.writeTimeGauge(tg)).isNotPresent();
     }
 
