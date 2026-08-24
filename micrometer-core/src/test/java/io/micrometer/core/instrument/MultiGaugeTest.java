@@ -191,7 +191,7 @@ class MultiGaugeTest {
     }
 
     @Test
-    void overwriteDuplicateRows_withIgnoredTags() {
+    void overwriteIntraBatchDuplicateRows_withIgnoredTags() {
         registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
         MultiGauge multiGauge = MultiGauge.builder("mg").register(registry);
 
@@ -210,7 +210,7 @@ class MultiGaugeTest {
     }
 
     @Test
-    void overwriteDuplicateRows() {
+    void overwriteIntraBatchDuplicateRows() {
         MultiGauge multiGauge = MultiGauge.builder("mg").register(registry);
 
         // @formatter:off
@@ -228,7 +228,7 @@ class MultiGaugeTest {
     }
 
     @Test
-    void duplicateRows() {
+    void intraBatchDuplicateRows() {
         MultiGauge multiGauge = MultiGauge.builder("mg").register(registry);
 
         // @formatter:off
