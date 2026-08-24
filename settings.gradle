@@ -15,12 +15,12 @@ rootProject.name = 'micrometer'
 enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
 develocity {
-    server = 'https://ge.micrometer.io'
+    server = 'https://ge.spring.io'
 }
 
 buildCache {
     remote(develocity.buildCache) {
-        server = 'https://ge.micrometer.io'
+        server = 'https://ge.spring.io'
     }
 }
 
