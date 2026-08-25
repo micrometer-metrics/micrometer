@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +38,7 @@ public class NoopTimer extends NoopMeter implements Timer {
     }
 
     @Override
-    public <T> T record(Supplier<T> f) {
+    public <T extends @Nullable Object> T record(Supplier<T> f) {
         return f.get();
     }
 
@@ -62,7 +63,7 @@ public class NoopTimer extends NoopMeter implements Timer {
     }
 
     @Override
-    public <T> T recordCallable(Callable<T> f) throws Exception {
+    public <T extends @Nullable Object> T recordCallable(Callable<T> f) throws Exception {
         return f.call();
     }
 
