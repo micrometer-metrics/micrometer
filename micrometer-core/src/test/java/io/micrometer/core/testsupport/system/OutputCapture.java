@@ -16,6 +16,7 @@
 
 package io.micrometer.core.testsupport.system;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -75,7 +77,7 @@ class OutputCapture implements CapturedOutput {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (obj == this) {
             return true;
         }
@@ -128,7 +130,7 @@ class OutputCapture implements CapturedOutput {
      */
     void reset() {
         clearExisting();
-        this.systemCaptures.peek().reset();
+        Objects.requireNonNull(this.systemCaptures.peek()).reset();
     }
 
     void clearExisting() {

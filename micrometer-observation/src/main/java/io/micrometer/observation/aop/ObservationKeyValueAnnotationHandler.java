@@ -21,6 +21,7 @@ import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.annotation.ObservationKeyValue;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.function.Function;
@@ -60,7 +61,7 @@ public class ObservationKeyValueAnnotationHandler extends AnnotationHandler<Obse
         }
     }
 
-    private static KeyValueWithCardinality toKeyValue(Annotation annotation, Object object,
+    private static KeyValueWithCardinality toKeyValue(Annotation annotation, @Nullable Object object,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         ObservationKeyValue observationKeyValue = (ObservationKeyValue) annotation;

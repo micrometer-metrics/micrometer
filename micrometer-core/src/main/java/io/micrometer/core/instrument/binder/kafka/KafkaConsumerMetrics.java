@@ -369,7 +369,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
                 MBeanServerNotification mbs2 = (MBeanServerNotification) notification2;
                 ObjectName o2 = mbs2.getMBeanName();
                 if (o2.equals(o)) {
-                    meters.stream().forEach(registry::remove);
+                    meters.forEach(m -> registry.remove(m));
                 }
                 removeNotificationListener(this);
             }
@@ -389,6 +389,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         };
     }
 
+    @SuppressWarnings("NullAway")
     private void addNotificationListener(NotificationListener listener, NotificationFilter filter) {
         try {
             mBeanServer.addNotificationListener(MBeanServerDelegate.DELEGATE_NAME, listener, filter, null);

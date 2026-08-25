@@ -24,6 +24,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.ObservationConvention;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -127,7 +128,7 @@ public class ObservationHandlerSample {
     static class IgnoringObservationPredicate implements ObservationPredicate {
 
         @Override
-        public boolean test(String name, Observation.Context context) {
+        public boolean test(@Nullable String name, Observation.Context context) {
             boolean observationIgnored = "sample.ignored".equals(name);
             if (observationIgnored) {
                 System.out.println("Ignoring " + name);

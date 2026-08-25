@@ -131,6 +131,7 @@ subprojects {
                     // see https://bugs.openjdk.org/browse/JDK-8346471
                     // see https://github.com/uber/NullAway/wiki/JSpecify-Support
                     option("NullAway:JSpecifyMode", "true")
+                    option("NullAway:JSpecifyExperimental", "true")
                 }
                 if (!javaLanguageVersion.canCompileOrRun(21)) {
                     // Error Prone 2.43.0 requires JDK 21+

@@ -175,10 +175,11 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
      * Performs closing rollover on StepMeters.
      */
     private void closingRolloverStepMeters() {
-        getMeters().stream()
-            .filter(StepMeter.class::isInstance)
-            .map(StepMeter.class::cast)
-            .forEach(StepMeter::_closingRollover);
+        for (Meter meter : getMeters()) {
+            if (meter instanceof StepMeter) {
+                ((StepMeter) meter)._closingRollover();
+            }
+        }
     }
 
     /**

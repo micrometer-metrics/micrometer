@@ -70,7 +70,7 @@ public class JettyClientMetrics implements Request.Listener {
     protected JettyClientMetrics(MeterRegistry registry, JettyClientTagsProvider tagsProvider, String timingMetricName,
             String contentSizeMetricName, int maxUriTags) {
         this(registry, ObservationRegistry.NOOP, null, tagsProvider, timingMetricName, contentSizeMetricName,
-                maxUriTags, (request, result) -> tagsProvider.uriPattern(result));
+                maxUriTags, (request, result) -> result != null ? tagsProvider.uriPattern(result) : "UNKNOWN");
     }
 
     private JettyClientMetrics(MeterRegistry registry, ObservationRegistry observationRegistry,
@@ -131,7 +131,7 @@ public class JettyClientMetrics implements Request.Listener {
      */
     @Deprecated
     public static Builder builder(MeterRegistry registry, JettyClientTagsProvider tagsProvider) {
-        return new Builder(registry, (request, result) -> tagsProvider.uriPattern(result));
+        return new Builder(registry, (request, result) -> result != null ? tagsProvider.uriPattern(result) : "UNKNOWN");
     }
 
     /**

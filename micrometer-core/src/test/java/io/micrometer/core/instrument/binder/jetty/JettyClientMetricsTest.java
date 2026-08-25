@@ -73,7 +73,10 @@ class JettyClientMetricsTest {
         httpClient.setFollowRedirects(false);
         // noinspection deprecation
         httpClient.getRequestListeners()
-            .add(JettyClientMetrics.builder(registry, result -> result.getRequest().getURI().getPath()).build());
+            .add(JettyClientMetrics.builder(registry,
+                    result -> (result.getRequest() != null && result.getRequest().getURI().getPath() != null)
+                            ? result.getRequest().getURI().getPath() : "UNKNOWN")
+                .build());
 
         httpClient.addLifeCycleListener(new LifeCycle.Listener() {
             @Override

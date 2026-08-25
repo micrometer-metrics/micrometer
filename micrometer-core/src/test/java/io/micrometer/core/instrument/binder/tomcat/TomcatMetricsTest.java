@@ -316,11 +316,11 @@ class TomcatMetricsTest {
         });
     }
 
-    void runTomcat(HttpServlet servlet, Callable<Void> doWithTomcat) throws Exception {
+    void runTomcat(HttpServlet servlet, Callable<?> doWithTomcat) throws Exception {
         runTomcat(Collections.singleton(servlet), doWithTomcat);
     }
 
-    void runTomcat(Collection<Servlet> servlets, Callable<Void> doWithTomcat) throws Exception {
+    void runTomcat(Collection<Servlet> servlets, Callable<?> doWithTomcat) throws Exception {
         Tomcat server = new Tomcat();
         try {
             StandardHost host = new StandardHost();

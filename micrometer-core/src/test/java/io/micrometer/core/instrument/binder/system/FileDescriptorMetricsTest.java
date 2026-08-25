@@ -48,7 +48,8 @@ class FileDescriptorMetricsTest {
 
     @Test
     void unixFileDescriptorMetrics() {
-        assumeFalse(System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
+        String osName = System.getProperty("os.name");
+        assumeFalse(osName != null && osName.toLowerCase(Locale.ROOT).contains("win"));
 
         // tag::example[]
         new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
@@ -60,7 +61,8 @@ class FileDescriptorMetricsTest {
 
     @Test
     void windowsFileDescriptorMetrics() {
-        assumeTrue(System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
+        String osName = System.getProperty("os.name");
+        assumeTrue(osName != null && osName.toLowerCase(Locale.ROOT).contains("win"));
 
         new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
 
