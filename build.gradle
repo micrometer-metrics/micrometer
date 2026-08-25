@@ -131,6 +131,8 @@ subprojects {
                     // see https://bugs.openjdk.org/browse/JDK-8346471
                     // see https://github.com/uber/NullAway/wiki/JSpecify-Support
                     option("NullAway:JSpecifyMode", "true")
+                }
+                if (javaLanguageVersion.canCompileOrRun(22)) {
                     option("NullAway:JSpecifyExperimental", "true")
                 }
                 if (!javaLanguageVersion.canCompileOrRun(21)) {

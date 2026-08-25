@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1029,7 +1030,8 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         AtomicBoolean isPublishing = new AtomicBoolean(false);
 
-        CompletableFuture<@Nullable Void> scheduledPublishingFuture = CompletableFuture.completedFuture(null);
+        Future<?> scheduledPublishingFuture = CompletableFuture.runAsync(() -> {
+        });
 
         TestOtlpMeterRegistry() {
             this(otlpConfig(), OtlpDeltaMeterRegistryTest.this.clock);
