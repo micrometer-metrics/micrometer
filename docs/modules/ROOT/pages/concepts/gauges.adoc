@@ -71,6 +71,8 @@ It is your responsibility to hold a strong reference to the state object that yo
 
 If you see your gauge reporting for a few minutes and then disappearing or reporting NaN, it almost certainly suggests that the underlying object being gauged has been garbage collected.
 
+Similarly, `FunctionCounter` and `FunctionTimer` hold only weak references to their state objects, so you are responsible for maintaining a strong reference to those as well. Unlike gauges, when their underlying state object is garbage collected, function meters do not report `NaN` or disappear. Instead, cumulative registries continue reporting the last recorded value, while step-based registries report zero once the current step rolls over. If you see a function counter or function timer series go flat (at either a constant value or zero), it usually indicates that the underlying state object was garbage collected.
+
 == Nullable state objects
 
 It can happen that you have a nullable object that you want to measure with a `Gauge`. You should avoid passing nullable state objects to Micrometer, but if you have one, there are multiple solutions, depending on your scenario:
