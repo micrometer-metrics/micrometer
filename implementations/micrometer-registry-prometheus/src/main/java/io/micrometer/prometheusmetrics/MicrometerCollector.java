@@ -15,12 +15,13 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.util.CollectionUtils;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
+import io.prometheus.metrics.model.snapshots.DuplicateLabelsException;
+import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricMetadata;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
@@ -81,17 +82,8 @@ class MicrometerCollector implements MultiCollector {
     public MetricSnapshots collect() {
         Map<String, Family> families = new HashMap<>();
 
-        Set<List<String>> seen = CollectionUtils.newHashSet(children.size());
-
-        for (Map.Entry<List<String>, Child> child : children.entrySet()) {
-            // `children` is a `ConcurrentHashMap` and its iterator is weakly-consistent.
-            // This means we could see duplicate children in case there are other threads
-            // concurrently adding to it. As such we deduplicate here.
-            if (!seen.add(child.getKey())) {
-                continue;
-            }
-            child.getValue()
-                .samples(conventionName, tagKeys)
+        for (Child child : children.values()) {
+            child.samples(conventionName, tagKeys)
                 .forEach(family -> families.compute(family.getConventionName(),
                         (name, matchingFamily) -> matchingFamily != null
                                 ? matchingFamily.addSamples(family.dataPointSnapshots) : family));
@@ -139,7 +131,14 @@ class MicrometerCollector implements MultiCollector {
         }
 
         MetricSnapshot toMetricSnapshot() {
-            return metricSnapshotFactory.apply(this);
+            try {
+                return metricSnapshotFactory.apply(this);
+            }
+            catch (DuplicateLabelsException ex) {
+                Set<Labels> seenLabels = new HashSet<>();
+                dataPointSnapshots.removeIf(dataPoint -> !seenLabels.add(dataPoint.getLabels()));
+                return metricSnapshotFactory.apply(this);
+            }
         }
 
     }
