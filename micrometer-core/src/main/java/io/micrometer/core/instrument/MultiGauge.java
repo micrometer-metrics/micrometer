@@ -72,13 +72,25 @@ public class MultiGauge {
      * Register rows for this multi-gauge.
      * <p>
      * Each row is registered as a gauge using this multi-gauge's common name and tags,
-     * combined with the row's unique tags. When {@code overwrite} is {@code true}, rows
-     * that were previously registered with the same tags are replaced with the latest
-     * values. When {@code overwrite} is {@code false}, previously registered rows with
-     * the same tags are left unchanged. Rows that are no longer present are removed.
+     * combined with the row's unique tags, after applying any configured
+     * {@link io.micrometer.core.instrument.config.MeterFilter MeterFilter}s.
+     * <ul>
+     * <li>Previously registered rows that are no longer present in {@code rows} are
+     * removed from the registry.</li>
+     * <li>When {@code overwrite} is {@code true}, existing gauges are updated to track
+     * the new row values. If multiple rows in {@code rows} resolve to the same meter ID
+     * (either directly or after filter transformations), the last row in iteration order
+     * takes precedence.</li>
+     * <li>When {@code overwrite} is {@code false}, previously registered rows are left
+     * unchanged. If multiple rows in {@code rows} resolve to the same meter ID, the first
+     * row in iteration order takes precedence.</li>
+     * </ul>
+     * <p>
+     * Note: If a {@code MeterFilter} removes or modifies tags such that multiple rows
+     * share the same mapped tags, those rows will contend for the same single gauge.
      * @param rows rows to register
-     * @param overwrite whether to replace rows that have already been registered with the
-     * same tags
+     * @param overwrite whether to update previously registered rows and overwrite
+     * duplicate rows within the batch
      */
     public void register(Iterable<? extends Row<?>> rows, boolean overwrite) {
         synchronized (registeredRows) {
