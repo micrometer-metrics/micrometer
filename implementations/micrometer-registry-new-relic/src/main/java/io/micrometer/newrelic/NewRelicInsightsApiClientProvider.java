@@ -202,6 +202,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         return Stream.of(event(meter.getId(), attributes.values().toArray(new Attribute[0])));
     }
 
+    @SuppressWarnings("NullAway")
     private String event(Meter.Id id, Attribute... attributes) {
         if (!config.meterNameEventTypeEnabled()) {
             // Include contextual attributes when publishing all metrics under a single

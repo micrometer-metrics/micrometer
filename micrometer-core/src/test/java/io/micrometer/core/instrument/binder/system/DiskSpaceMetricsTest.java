@@ -38,7 +38,8 @@ class DiskSpaceMetricsTest {
     @Test
     void diskSpaceMetrics() {
         // tag::example[]
-        new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
+        String userDir = System.getProperty("user.dir");
+        new DiskSpaceMetrics(new File(userDir != null ? userDir : ".")).bindTo(registry);
 
         assertThat(registry.get("disk.free").gauge().value()).isNotNaN().isGreaterThan(0);
         assertThat(registry.get("disk.total").gauge().value()).isNotNaN().isGreaterThan(0);
@@ -47,7 +48,8 @@ class DiskSpaceMetricsTest {
 
     @Test
     void diskSpaceMetricsWithTags() {
-        new DiskSpaceMetrics(new File(System.getProperty("user.dir")), Tags.of("key1", "value1")).bindTo(registry);
+        String userDir = System.getProperty("user.dir");
+        new DiskSpaceMetrics(new File(userDir != null ? userDir : "."), Tags.of("key1", "value1")).bindTo(registry);
 
         assertThat(registry.get("disk.free").tags("key1", "value1").gauge().value()).isNotNaN().isGreaterThan(0);
         assertThat(registry.get("disk.total").tags("key1", "value1").gauge().value()).isNotNaN().isGreaterThan(0);
@@ -55,7 +57,8 @@ class DiskSpaceMetricsTest {
 
     @Test
     void garbageCollectionDoesNotLoseGaugeValue() {
-        new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
+        String userDir = System.getProperty("user.dir");
+        new DiskSpaceMetrics(new File(userDir != null ? userDir : ".")).bindTo(registry);
 
         System.gc();
 

@@ -199,7 +199,7 @@ public interface ObservationRegistry {
          * @param context context
          * @return {@code true} when observation is enabled
          */
-        boolean isObservationEnabled(@Nullable String name, Observation.@Nullable Context context) {
+        boolean isObservationEnabled(@Nullable String name, Observation.Context context) {
             for (ObservationPredicate predicate : this.observationPredicates) {
                 if (!predicate.test(name, context)) {
                     return false;

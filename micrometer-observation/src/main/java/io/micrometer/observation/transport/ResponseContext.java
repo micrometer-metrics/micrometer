@@ -37,6 +37,6 @@ public interface ResponseContext<RES> {
      * Setter for the response object.
      * @param response the response
      */
-    void setResponse(RES response);
+    void setResponse(@Nullable RES response);
 
 }

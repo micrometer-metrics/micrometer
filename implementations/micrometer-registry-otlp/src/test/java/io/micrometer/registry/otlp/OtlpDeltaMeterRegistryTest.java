@@ -1029,7 +1029,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         AtomicBoolean isPublishing = new AtomicBoolean(false);
 
-        CompletableFuture<Void> scheduledPublishingFuture = CompletableFuture.completedFuture(null);
+        CompletableFuture<@Nullable Void> scheduledPublishingFuture = CompletableFuture.completedFuture(null);
 
         TestOtlpMeterRegistry() {
             this(otlpConfig(), OtlpDeltaMeterRegistryTest.this.clock);

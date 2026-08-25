@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -74,7 +75,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
 
     private final ClassLoader junitLoader;
 
-    ModifiedClassPathClassLoader(URL[] urls, ClassLoader parent, ClassLoader junitLoader) {
+    ModifiedClassPathClassLoader(URL[] urls, @Nullable ClassLoader parent, ClassLoader junitLoader) {
         super(urls, parent);
         this.junitLoader = junitLoader;
     }
@@ -99,11 +100,16 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
         if (annotatedElements.isEmpty()) {
             return null;
         }
-        return cache.computeIfAbsent(annotatedElements, (key) -> compute(testClass.getClassLoader(), key));
+        ClassLoader classLoader = testClass.getClassLoader() != null ? testClass.getClassLoader()
+                : ClassLoader.getSystemClassLoader();
+        return cache.computeIfAbsent(annotatedElements, (key) -> compute(classLoader, key));
     }
 
-    private static Collection<AnnotatedElement> getAnnotatedElements(Object[] array) {
+    private static Collection<AnnotatedElement> getAnnotatedElements(@Nullable Object @Nullable [] array) {
         Set<AnnotatedElement> result = new LinkedHashSet<>();
+        if (array == null) {
+            return result;
+        }
         for (Object item : array) {
             if (item instanceof AnnotatedElement) {
                 result.add((AnnotatedElement) item);
@@ -201,7 +207,8 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
 
     private static Attributes getManifestMainAttributesFromUrl(URL url) throws Exception {
         try (JarFile jarFile = new JarFile(new File(url.toURI()))) {
-            return jarFile.getManifest().getMainAttributes();
+            Manifest manifest = jarFile.getManifest();
+            return manifest != null ? manifest.getMainAttributes() : new Attributes();
         }
     }
 

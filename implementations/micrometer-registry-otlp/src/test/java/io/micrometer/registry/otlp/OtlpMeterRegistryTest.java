@@ -137,7 +137,7 @@ abstract class OtlpMeterRegistryTest {
     @Test
     void setResourceAttributesAsString() throws IOException {
         Properties propertiesConfig = new Properties();
-        propertiesConfig.load(this.getClass().getResourceAsStream("/otlp-config.properties"));
+        propertiesConfig.load(Objects.requireNonNull(this.getClass().getResourceAsStream("/otlp-config.properties")));
         registry = new OtlpMeterRegistry(key -> (String) propertiesConfig.get(key), Clock.SYSTEM);
         assertThat(registry.getResource().getAttributes().get(AttributeKey.stringKey("key1"))).isEqualTo("value1");
         assertThat(registry.getResource().getAttributes().get(AttributeKey.stringKey("key2"))).isEqualTo("value2");

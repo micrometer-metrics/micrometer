@@ -50,6 +50,7 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -480,7 +481,7 @@ class ObservationExecChainHandlerIntegrationTest {
                             .withValue("GET"))
                 .hasLowCardinalityKeyValue(
                         OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_ADDRESS
-                            .withValue(java.net.URI.create(server.baseUrl()).getHost()))
+                            .withValue(Objects.requireNonNull(java.net.URI.create(server.baseUrl()).getHost())))
                 .hasLowCardinalityKeyValue(
                         OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_PORT
                             .withValue(String.valueOf(server.port())))

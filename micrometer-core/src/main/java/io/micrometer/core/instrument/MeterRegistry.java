@@ -92,7 +92,7 @@ public abstract class MeterRegistry {
 
     private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
 
-    private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
+    private final List<BiConsumer<Meter.Id, @Nullable String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
 
     private final Config config = new Config();
 
@@ -866,7 +866,7 @@ public abstract class MeterRegistry {
      */
     @Incubating(since = "1.2.0")
     public void clear() {
-        meterMap.keySet().forEach(this::remove);
+        meterMap.keySet().forEach(id -> remove(id));
     }
 
     /**
@@ -961,7 +961,8 @@ public abstract class MeterRegistry {
          * @since 1.6.0
          */
         @Incubating(since = "1.6.0")
-        public Config onMeterRegistrationFailed(BiConsumer<Meter.Id, String> meterRegistrationFailedListener) {
+        public Config onMeterRegistrationFailed(
+                BiConsumer<Meter.Id, @Nullable String> meterRegistrationFailedListener) {
             meterRegistrationFailedListeners.add(meterRegistrationFailedListener);
             return this;
         }
@@ -1310,7 +1311,7 @@ public abstract class MeterRegistry {
      * @since 1.6.0
      */
     protected void meterRegistrationFailed(Meter.Id id, @Nullable String reason) {
-        for (BiConsumer<Meter.Id, String> listener : meterRegistrationFailedListeners) {
+        for (BiConsumer<Meter.Id, @Nullable String> listener : meterRegistrationFailedListeners) {
             listener.accept(id, reason);
         }
     }

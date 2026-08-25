@@ -61,7 +61,10 @@ class JettyClientMetricsTest {
 
     protected void addInstrumentingListener() {
         httpClient.getRequestListeners()
-            .addListener(JettyClientMetrics.builder(registry, (request, result) -> request.getURI().getPath()).build());
+            .addListener(JettyClientMetrics
+                .builder(registry, (request, result) -> (request != null && request.getURI().getPath() != null)
+                        ? request.getURI().getPath() : "UNKNOWN")
+                .build());
     }
 
     @Test
