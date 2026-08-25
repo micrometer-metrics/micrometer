@@ -453,8 +453,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void addDistributionStatisticSamples(DistributionStatisticConfig distributionStatisticConfig,
-            MicrometerCollector collector, HistogramSupport histogramSupport, Supplier<Exemplar> lastExemplarSupplier,
-            Supplier<Exemplar[]> histogramExemplarsSupplier, List<String> tagValues, boolean forLongTaskTimer) {
+            MicrometerCollector collector, HistogramSupport histogramSupport,
+            Supplier<@Nullable Exemplar> lastExemplarSupplier,
+            Supplier<Exemplar @Nullable []> histogramExemplarsSupplier, List<String> tagValues,
+            boolean forLongTaskTimer) {
         collector.add(tagValues, (conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
@@ -476,7 +478,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 }
             }
 
-            Exemplar lastExemplar = lastExemplarSupplier.get();
+            @Nullable Exemplar lastExemplar = lastExemplarSupplier.get();
             Collector.Type type = distributionStatisticConfig.isPublishingHistogram() ? Collector.Type.HISTOGRAM
                     : Collector.Type.SUMMARY;
             if (histogramCounts.length > 0) {
@@ -491,7 +493,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     case Prometheus:
                         histogramKeys.add("le");
 
-                        Exemplar[] exemplars = histogramExemplarsSupplier.get();
+                        Exemplar @Nullable [] exemplars = histogramExemplarsSupplier.get();
 
                         // satisfies
                         // https://prometheus.io/docs/concepts/metric_types/#histogram

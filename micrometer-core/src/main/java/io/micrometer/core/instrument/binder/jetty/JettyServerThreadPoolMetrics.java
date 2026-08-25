@@ -120,7 +120,7 @@ public class JettyServerThreadPoolMetrics implements MeterBinder, AutoCloseable 
     @Override
     public void close() throws Exception {
         if (registry != null) {
-            registeredMeterIds.forEach(registry::remove);
+            registeredMeterIds.forEach(id -> registry.remove(id));
             registeredMeterIds.clear();
         }
     }

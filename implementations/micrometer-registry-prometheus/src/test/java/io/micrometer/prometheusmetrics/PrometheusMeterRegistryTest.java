@@ -538,13 +538,12 @@ class PrometheusMeterRegistryTest {
     }
 
     private Condition<Iterable<? extends MetricSnapshot>> withNameAndQuantile(String name) {
-        return new Condition<>(
-                metricSnapshots -> ((MetricSnapshots) metricSnapshots).stream()
-                    .filter(snapshot -> snapshot.getMetadata().getPrometheusName().equals(name))
-                    .flatMap(snapshot -> snapshot.getDataPoints().stream())
-                    .filter(SummarySnapshot.SummaryDataPointSnapshot.class::isInstance)
-                    .map(SummarySnapshot.SummaryDataPointSnapshot.class::cast)
-                    .anyMatch(summaryDataPoint -> summaryDataPoint.getQuantiles().size() > 0),
+        return new Condition<>(metricSnapshots -> ((MetricSnapshots) metricSnapshots).stream()
+            .filter(snapshot -> snapshot.getMetadata().getPrometheusName().equals(name))
+            .flatMap(snapshot -> snapshot.getDataPoints().stream())
+            .filter(SummarySnapshot.SummaryDataPointSnapshot.class::isInstance)
+            .map(SummarySnapshot.SummaryDataPointSnapshot.class::cast)
+            .anyMatch(summaryDataPoint -> summaryDataPoint != null && summaryDataPoint.getQuantiles().size() > 0),
                 "a summary with name `%s` and at least one quantile", name);
     }
 
@@ -1227,7 +1226,10 @@ class PrometheusMeterRegistryTest {
             @Override
             public Properties prometheusProperties() {
                 Properties properties = new Properties();
-                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                Properties defaultProperties = PrometheusConfig.super.prometheusProperties();
+                if (defaultProperties != null) {
+                    properties.putAll(defaultProperties);
+                }
                 properties.setProperty("io.prometheus.exporter.includeCreatedTimestamps", "true");
                 return properties;
             }
@@ -1274,7 +1276,10 @@ class PrometheusMeterRegistryTest {
             @Override
             public Properties prometheusProperties() {
                 Properties properties = new Properties();
-                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                Properties defaultProperties = PrometheusConfig.super.prometheusProperties();
+                if (defaultProperties != null) {
+                    properties.putAll(defaultProperties);
+                }
                 properties.setProperty("io.prometheus.exporter.includeCreatedTimestamps", "false");
                 return properties;
             }
@@ -1373,7 +1378,10 @@ class PrometheusMeterRegistryTest {
             @Override
             public Properties prometheusProperties() {
                 Properties mergedProperties = new Properties();
-                mergedProperties.putAll(PrometheusConfig.super.prometheusProperties());
+                Properties defaultProperties = PrometheusConfig.super.prometheusProperties();
+                if (defaultProperties != null) {
+                    mergedProperties.putAll(defaultProperties);
+                }
                 properties.forEach((key, value) -> mergedProperties.setProperty(key.toString(), value.toString()));
                 return mergedProperties;
             }

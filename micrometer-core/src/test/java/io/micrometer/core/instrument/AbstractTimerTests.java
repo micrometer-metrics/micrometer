@@ -68,7 +68,9 @@ class AbstractTimerTests {
         Field loggerField = clazz.getDeclaredField("logger");
         loggerField.setAccessible(true);
         Logger logbackLogger = (Logger) loggerField.get(internalLogger);
-        logbackLogger.setLevel(Level.DEBUG);
+        if (logbackLogger != null) {
+            logbackLogger.setLevel(Level.DEBUG);
+        }
     }
 
     static class MyTimer extends AbstractTimer {

@@ -105,7 +105,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private Disposable.Swap meterPoller = Disposables.swap();
 
-    private @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction;
+    private @Nullable BiFunction<Meter.Id, @Nullable DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction;
 
     private @Nullable Consumer<String> lineSink;
 
@@ -129,7 +129,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper,
             NamingConvention namingConvention, Clock clock,
-            @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction,
+            @Nullable BiFunction<Meter.Id, @Nullable DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction,
             @Nullable Consumer<String> lineSink) {
         super(clock);
 
@@ -512,7 +512,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
 
-        private @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction = null;
+        private @Nullable BiFunction<Meter.Id, @Nullable DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction = null;
 
         private @Nullable Consumer<String> lineSink;
 
@@ -536,7 +536,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
          * @since 1.8.0
          */
         public Builder lineBuilder(
-                BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction) {
+                BiFunction<Meter.Id, @Nullable DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction) {
             this.lineBuilderFunction = lineBuilderFunction;
             return this;
         }

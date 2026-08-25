@@ -85,7 +85,7 @@ public class MetricsDSLContext extends DefaultDSLContext {
         return derive(c, () -> new JooqExecuteListener(registry, tags, () -> queryTags));
     }
 
-    @SuppressWarnings("ReferenceEquality")
+    @SuppressWarnings({ "ReferenceEquality", "NullAway" })
     private static Configuration derive(Configuration configuration, ExecuteListenerProvider executeListenerProvider) {
         ExecuteListenerProvider[] providers = configuration.executeListenerProviders();
         for (int i = 0; i < providers.length; i++) {

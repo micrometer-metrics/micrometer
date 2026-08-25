@@ -323,6 +323,7 @@ class TomcatMetricsTest {
         });
     }
 
+<<<<<<< HEAD
     @Test
     @Issue("#7535")
     void globalRequestMetrics_areRegisteredForBothHttp11AndHttp2WithRealTomcat() throws Exception {
@@ -423,15 +424,15 @@ class TomcatMetricsTest {
         });
     }
 
-    void runTomcat(HttpServlet servlet, Callable<Void> doWithTomcat) throws Exception {
+    void runTomcat(HttpServlet servlet, Callable<?> doWithTomcat) throws Exception {
         runTomcat(Collections.singleton(servlet), doWithTomcat);
     }
 
-    void runTomcat(Collection<Servlet> servlets, Callable<Void> doWithTomcat) throws Exception {
+    void runTomcat(Collection<Servlet> servlets, Callable<?> doWithTomcat) throws Exception {
         runTomcat(servlets, false, doWithTomcat);
     }
 
-    void runTomcat(Collection<Servlet> servlets, boolean enableHttp2, Callable<Void> doWithTomcat) throws Exception {
+    void runTomcat(Collection<Servlet> servlets, boolean enableHttp2, Callable<?> doWithTomcat) throws Exception {
         Tomcat server = new Tomcat();
         try {
             StandardHost host = new StandardHost();
