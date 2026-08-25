@@ -184,7 +184,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     @Override
-    public <T> T recordCallable(Callable<T> f) throws Exception {
+    public <T extends @Nullable Object> T recordCallable(Callable<T> f) throws Exception {
         final long s = clock.monotonicTime();
         try {
             return f.call();
@@ -196,7 +196,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     @Override
-    public <T> T record(Supplier<T> f) {
+    public <T extends @Nullable Object> T record(Supplier<T> f) {
         final long s = clock.monotonicTime();
         try {
             return f.get();

@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.NoopTimer;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.Callable;
@@ -63,7 +64,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     }
 
     @Override
-    public <T> T record(Supplier<T> f) {
+    public <T extends @Nullable Object> T record(Supplier<T> f) {
         final long s = clock.monotonicTime();
         try {
             return f.get();
@@ -123,7 +124,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     }
 
     @Override
-    public <T> T recordCallable(Callable<T> f) throws Exception {
+    public <T extends @Nullable Object> T recordCallable(Callable<T> f) throws Exception {
         final long s = clock.monotonicTime();
         try {
             return f.call();
