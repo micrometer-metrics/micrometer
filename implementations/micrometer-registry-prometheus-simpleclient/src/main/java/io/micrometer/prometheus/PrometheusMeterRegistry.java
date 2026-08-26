@@ -474,7 +474,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 }
             }
 
-            @Nullable Exemplar lastExemplar = lastExemplarSupplier.get();
+            Exemplar lastExemplar = lastExemplarSupplier.get();
             Collector.Type type = distributionStatisticConfig.isPublishingHistogram() ? Collector.Type.HISTOGRAM
                     : Collector.Type.SUMMARY;
             if (histogramCounts.length > 0) {
@@ -489,7 +489,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     case Prometheus:
                         histogramKeys.add("le");
 
-                        Exemplar @Nullable [] exemplars = histogramExemplarsSupplier.get();
+                        Exemplar[] exemplars = histogramExemplarsSupplier.get();
 
                         // satisfies
                         // https://prometheus.io/docs/concepts/metric_types/#histogram

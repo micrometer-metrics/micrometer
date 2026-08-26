@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -73,10 +74,7 @@ class JettyClientMetricsTest {
         httpClient.setFollowRedirects(false);
         // noinspection deprecation
         httpClient.getRequestListeners()
-            .add(JettyClientMetrics.builder(registry,
-                    result -> (result.getRequest() != null && result.getRequest().getURI().getPath() != null)
-                            ? result.getRequest().getURI().getPath() : "UNKNOWN")
-                .build());
+            .add(JettyClientMetrics.builder(registry, JettyClientMetricsTest::getUriPath).build());
 
         httpClient.addLifeCycleListener(new LifeCycle.Listener() {
             @Override
@@ -196,6 +194,11 @@ class JettyClientMetricsTest {
             .tag("host", "localhost")
             .timer()
             .count()).isEqualTo(1);
+    }
+
+    private static String getUriPath(Result result) {
+        return (result.getRequest() != null && result.getRequest().getURI().getPath() != null)
+                ? result.getRequest().getURI().getPath() : "UNKNOWN";
     }
 
 }

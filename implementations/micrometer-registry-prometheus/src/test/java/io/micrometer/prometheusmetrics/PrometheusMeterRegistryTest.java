@@ -514,6 +514,7 @@ class PrometheusMeterRegistryTest {
         return new Condition<>(metricSnapshots -> ((MetricSnapshots) metricSnapshots).stream()
             .filter(snapshot -> snapshot.getMetadata().getPrometheusName().equals(name))
             .flatMap(snapshot -> snapshot.getDataPoints().stream())
+            .filter(Objects::nonNull)
             .filter(SummarySnapshot.SummaryDataPointSnapshot.class::isInstance)
             .map(SummarySnapshot.SummaryDataPointSnapshot.class::cast)
             .anyMatch(summaryDataPoint -> summaryDataPoint != null && summaryDataPoint.getQuantiles().size() > 0),
