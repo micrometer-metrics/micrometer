@@ -74,7 +74,7 @@ class JdkLogger extends AbstractInternalLogger {
     final transient Logger logger;
 
     JdkLogger(Logger logger) {
-        super(logger.getName() != null ? logger.getName() : "");
+        super(logger.getName() != null ? logger.getName() : "unnamed");
         this.logger = logger;
     }
 
