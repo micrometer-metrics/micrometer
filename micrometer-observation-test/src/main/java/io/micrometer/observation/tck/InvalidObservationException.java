@@ -17,7 +17,6 @@ package io.micrometer.observation.tck;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
-import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,7 +32,7 @@ import java.util.stream.Collectors;
  */
 public class InvalidObservationException extends RuntimeException {
 
-    private static final @Nullable StackTraceElement[] EMPTY_STACK_TRACE = new StackTraceElement[0];
+    private static final StackTraceElement[] EMPTY_STACK_TRACE = new StackTraceElement[0];
 
     private final Context context;
 
@@ -73,7 +72,7 @@ public class InvalidObservationException extends RuntimeException {
 
         private final EventName eventName;
 
-        private final @Nullable StackTraceElement[] stackTrace;
+        private final StackTraceElement[] stackTrace;
 
         HistoryElement(EventName eventName) {
             this.eventName = eventName;
@@ -81,7 +80,8 @@ public class InvalidObservationException extends RuntimeException {
             this.stackTrace = findRelevantStackTraceElements(currentStackTrace);
         }
 
-        private @Nullable StackTraceElement[] findRelevantStackTraceElements(@Nullable StackTraceElement[] stackTrace) {
+        @SuppressWarnings("NullAway")
+        private StackTraceElement[] findRelevantStackTraceElements(StackTraceElement[] stackTrace) {
             int index = findFirstRelevantStackTraceElementIndex(stackTrace);
             if (index == -1) {
                 return EMPTY_STACK_TRACE;
@@ -91,7 +91,7 @@ public class InvalidObservationException extends RuntimeException {
             }
         }
 
-        private int findFirstRelevantStackTraceElementIndex(@Nullable StackTraceElement[] stackTrace) {
+        private int findFirstRelevantStackTraceElementIndex(StackTraceElement[] stackTrace) {
             int index = -1;
             for (int i = 0; i < stackTrace.length; i++) {
                 if (isObservationRelated(stackTrace[i])) {
@@ -103,10 +103,7 @@ public class InvalidObservationException extends RuntimeException {
             return (index >= stackTrace.length) ? -1 : index;
         }
 
-        private boolean isObservationRelated(@Nullable StackTraceElement stackTraceElement) {
-            if (stackTraceElement == null) {
-                return false;
-            }
+        private boolean isObservationRelated(StackTraceElement stackTraceElement) {
             String className = stackTraceElement.getClassName();
             return className.equals(Observation.class.getName())
                     || className.equals("io.micrometer.observation.SimpleObservation")
@@ -117,7 +114,7 @@ public class InvalidObservationException extends RuntimeException {
             return eventName;
         }
 
-        public @Nullable StackTraceElement[] getStackTrace() {
+        public StackTraceElement[] getStackTrace() {
             return stackTrace;
         }
 

@@ -38,6 +38,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import javax.management.MBeanServer;
@@ -323,7 +324,6 @@ class TomcatMetricsTest {
         });
     }
 
-<<<<<<< HEAD
     @Test
     @Issue("#7535")
     void globalRequestMetrics_areRegisteredForBothHttp11AndHttp2WithRealTomcat() throws Exception {
@@ -424,15 +424,16 @@ class TomcatMetricsTest {
         });
     }
 
-    void runTomcat(HttpServlet servlet, Callable<?> doWithTomcat) throws Exception {
+    void runTomcat(HttpServlet servlet, Callable<@Nullable Void> doWithTomcat) throws Exception {
         runTomcat(Collections.singleton(servlet), doWithTomcat);
     }
 
-    void runTomcat(Collection<Servlet> servlets, Callable<?> doWithTomcat) throws Exception {
+    void runTomcat(Collection<Servlet> servlets, Callable<@Nullable Void> doWithTomcat) throws Exception {
         runTomcat(servlets, false, doWithTomcat);
     }
 
-    void runTomcat(Collection<Servlet> servlets, boolean enableHttp2, Callable<?> doWithTomcat) throws Exception {
+    void runTomcat(Collection<Servlet> servlets, boolean enableHttp2, Callable<@Nullable Void> doWithTomcat)
+            throws Exception {
         Tomcat server = new Tomcat();
         try {
             StandardHost host = new StandardHost();
