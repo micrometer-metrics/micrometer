@@ -21,6 +21,7 @@ import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.testsupport.system.CapturedOutput;
 import io.micrometer.core.testsupport.system.OutputCaptureExtension;
 import org.junit.jupiter.api.Test;
@@ -73,11 +74,46 @@ class AbstractTimerTests {
         }
     }
 
+    @Test
+    void customPauseDetectorShouldNotThrowClassCastException() {
+        AbstractTimer timer = new MyTimerWithCustomPauseDetector();
+        assertThat(timer).isNotNull();
+    }
+
     static class MyTimer extends AbstractTimer {
 
         MyTimer() {
             super(new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER), Clock.SYSTEM,
                     DistributionStatisticConfig.DEFAULT, NoPauseDetector.INSTANCE, TimeUnit.SECONDS, false);
+        }
+
+        @Override
+        protected void recordNonNegative(long amount, TimeUnit unit) {
+        }
+
+        @Override
+        public long count() {
+            return 0;
+        }
+
+        @Override
+        public double totalTime(TimeUnit unit) {
+            return 0;
+        }
+
+        @Override
+        public double max(TimeUnit unit) {
+            return 0;
+        }
+
+    }
+
+    static class MyTimerWithCustomPauseDetector extends AbstractTimer {
+
+        MyTimerWithCustomPauseDetector() {
+            super(new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER), Clock.SYSTEM,
+                    DistributionStatisticConfig.DEFAULT, new PauseDetector() {
+                    }, TimeUnit.SECONDS, false);
         }
 
         @Override

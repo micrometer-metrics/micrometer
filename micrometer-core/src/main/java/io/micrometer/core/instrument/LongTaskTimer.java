@@ -22,7 +22,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
@@ -360,8 +359,8 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
          */
         public Builder serviceLevelObjectives(Duration @Nullable ... slos) {
             if (slos != null) {
-                this.distributionConfigBuilder.serviceLevelObjectives(
-                        Arrays.stream(slos).filter(Objects::nonNull).mapToDouble(Duration::toNanos).toArray());
+                this.distributionConfigBuilder
+                    .serviceLevelObjectives(Arrays.stream(slos).mapToDouble(Duration::toNanos).toArray());
             }
             return this;
         }
