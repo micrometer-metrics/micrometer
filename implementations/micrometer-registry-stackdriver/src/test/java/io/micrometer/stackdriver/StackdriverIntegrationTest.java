@@ -44,8 +44,7 @@ class StackdriverIntegrationTest {
     static final StackdriverConfig CONFIG = new StackdriverConfig() {
         @Override
         public String projectId() {
-            String projectId = System.getenv("GOOGLE_CLOUD_PROJECT_ID");
-            return projectId != null ? projectId : "projectId";
+            return Objects.requireNonNull(System.getenv("GOOGLE_CLOUD_PROJECT_ID"), "GOOGLE_CLOUD_PROJECT_ID env var needs to be set!");
         }
 
         @Override
