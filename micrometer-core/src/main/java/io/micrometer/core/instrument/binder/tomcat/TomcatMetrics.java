@@ -261,6 +261,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
      * register an MBean registration listener with the MBeanServer and register metrics
      * when/if the MBeans becomes available.
      */
+    // Passing null filter/handback to MBeanServer.addNotificationListener
     @SuppressWarnings("NullAway")
     private void registerMetricsEventually(String namePatternSuffix, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
         if (getJmxDomain() != null) {
