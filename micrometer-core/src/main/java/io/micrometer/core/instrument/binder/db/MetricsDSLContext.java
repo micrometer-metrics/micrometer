@@ -85,6 +85,7 @@ public class MetricsDSLContext extends DefaultDSLContext {
         return derive(c, () -> new JooqExecuteListener(registry, tags, () -> queryTags));
     }
 
+    // Arrays.copyOf expands the array with null elements that are immediately populated
     @SuppressWarnings("NullAway")
     private static Configuration derive(Configuration configuration, ExecuteListenerProvider executeListenerProvider) {
         ExecuteListenerProvider[] providers = configuration.executeListenerProviders();
