@@ -27,8 +27,6 @@ buildscript {
             }
         }
     }
-
-    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 }
 
 plugins {
