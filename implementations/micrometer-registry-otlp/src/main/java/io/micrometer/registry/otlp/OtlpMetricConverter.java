@@ -186,17 +186,15 @@ class OtlpMetricConverter {
         }
 
         if (histogramSnapshot.histogramCounts().length > 0) {
-            // Ignore count from the CumulativeTimer since it may be out of sync with the
-            // count from the histogram
-            // buckets because the record operation is not atomic.
+            // OTLP requires the histogram count to equal the sum of the bucket counts.
+            // Micrometer HistogramSnapshot's count may not be equal because they are not
+            // updated atomically.
             long bucketsCount = 0L;
-            // if histogram enabled, add histogram buckets
             for (CountAtBucket countAtBucket : histogramSnapshot.histogramCounts()) {
                 if (countAtBucket.bucket() != Double.POSITIVE_INFINITY) {
                     // OTLP expects explicit bounds to not contain POSITIVE_INFINITY but
-                    // there should be a
-                    // bucket count representing values between last bucket and
-                    // POSITIVE_INFINITY.
+                    // there should be a bucket count representing values between last
+                    // bucket and POSITIVE_INFINITY.
                     histogramDataPoint
                         .addExplicitBounds(isTimeBased ? countAtBucket.bucket(baseTimeUnit) : countAtBucket.bucket());
                 }
@@ -228,9 +226,9 @@ class OtlpMetricConverter {
         // Currently, micrometer doesn't support negative recordings hence we will only
         // add positive buckets.
         if (!exponentialHistogramSnapShot.positive().isEmpty()) {
-            // Ignore count from the CumulativeTimer since it may be out of sync with the
-            // count from the histogram
-            // buckets because the record operation is not atomic.
+            // OTLP requires the histogram count to equal the sum of the bucket counts.
+            // Micrometer HistogramSnapshot's count may not be equal because they are not
+            // updated atomically.
             long bucketsCount = exponentialHistogramSnapShot.zeroCount();
             exponentialDataPoint.setPositive(ExponentialHistogramDataPoint.Buckets.newBuilder()
                 .addAllBucketCounts(exponentialHistogramSnapShot.positive().bucketCounts())
