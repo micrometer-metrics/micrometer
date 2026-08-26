@@ -424,22 +424,19 @@ subprojects {
             if (!(project.name in [])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
 
-                tasks.register('downloadBaseline') {
-                    doLast {
-                        Set<File> baselineFiles = configurations.detachedConfiguration(dependencies.create("${project.group}:${project.name}:${compatibleVersion}@jar")).files
-                        logger.info("Downloaded for baseline comparison: $baselineFiles")
-                        assert baselineFiles.size() == 1
-                        assert baselineFiles.first().name.endsWith("${project.name}-${compatibleVersion}.jar")
-                        copy {
-                            from baselineFiles.first()
-                            into layout.buildDirectory.dir('baselineLibs')
-                        }
-                    }
+                def baselineConfig = configurations.create('japicmpBaseline') {
+                    visible = false
+                    canBeConsumed = false
+                    canBeResolved = true
+                    description = "Baseline dependency for Japicmp binary compatibility check"
+                }
+                if (compatibleVersion != 'SKIP') {
+                    dependencies.add(baselineConfig.name, "${project.group}:${project.name}:${compatibleVersion}@jar")
                 }
 
                 tasks.register("japicmp", me.champeau.gradle.japicmp.JapicmpTask) {
-                    dependsOn downloadBaseline, jar
-                    oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
+                    dependsOn jar
+                    oldClasspath.from(baselineConfig)
                     newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
                     onlyBinaryIncompatibleModified = true
                     failOnModification = true

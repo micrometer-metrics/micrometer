@@ -118,10 +118,6 @@ tasks.withType(AbstractPublishToMaven).configureEach {
     enabled = false
 }
 
-downloadBaseline {
-    enabled = false
-}
-
 japicmp {
     enabled = false
 }
