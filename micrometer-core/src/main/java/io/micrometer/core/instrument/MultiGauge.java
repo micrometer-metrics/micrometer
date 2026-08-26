@@ -18,15 +18,12 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.annotation.Incubating;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import static java.util.Collections.emptySet;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * A virtual meter that manages a dynamic set of gauges with a common name and common
@@ -47,7 +44,7 @@ public class MultiGauge {
 
     private final Meter.Id commonId;
 
-    private final AtomicReference<Set<Meter.Id>> registeredRows = new AtomicReference<>(emptySet());
+    private final Map<Meter.Id, RowState> registeredRows = new HashMap<>();
 
     private MultiGauge(MeterRegistry registry, Meter.Id commonId) {
         this.registry = registry;
@@ -75,45 +72,75 @@ public class MultiGauge {
      * Register rows for this multi-gauge.
      * <p>
      * Each row is registered as a gauge using this multi-gauge's common name and tags,
-     * combined with the row's unique tags. When {@code overwrite} is {@code true}, rows
-     * that were previously registered with the same tags are replaced with the latest
-     * values. When {@code overwrite} is {@code false}, previously registered rows with
-     * the same tags are left unchanged. Rows that are no longer present are removed.
+     * combined with the row's unique tags, after applying any configured
+     * {@link io.micrometer.core.instrument.config.MeterFilter MeterFilter}s.
+     * <ul>
+     * <li>Previously registered rows that are no longer present in {@code rows} are
+     * removed from the registry.</li>
+     * <li>When {@code overwrite} is {@code true}, existing gauges are updated to track
+     * the new row values. If multiple rows in {@code rows} resolve to the same meter ID
+     * (either directly or after filter transformations), the last row in iteration order
+     * takes precedence.</li>
+     * <li>When {@code overwrite} is {@code false}, previously registered rows are left
+     * unchanged. If multiple rows in {@code rows} resolve to the same meter ID, the first
+     * row in iteration order takes precedence.</li>
+     * </ul>
+     * <p>
+     * Note: If a {@code MeterFilter} removes or modifies tags such that multiple rows
+     * share the same mapped tags, those rows will contend for the same single gauge.
      * @param rows rows to register
-     * @param overwrite whether to replace rows that have already been registered with the
-     * same tags
+     * @param overwrite whether to update previously registered rows and overwrite
+     * duplicate rows within the batch
      */
-    @SuppressWarnings("unchecked")
     public void register(Iterable<? extends Row<?>> rows, boolean overwrite) {
-        registeredRows.getAndUpdate(oldRows -> {
-            // for some reason the compiler needs type assistance by creating this
-            // intermediate variable.
-            Stream<Meter.Id> idStream = StreamSupport.stream(rows.spliterator(), false).map(row -> {
-                Row r = row;
-                Meter.Id preFilteredId = commonId.withTags(r.uniqueTags);
+        synchronized (registeredRows) {
+            Set<Meter.Id> newRowIds = new HashSet<>();
+
+            for (Row<?> row : rows) {
+                Meter.Id preFilteredId = commonId.withTags(row.uniqueTags);
                 Meter.Id rowId = registry.getMappedId(preFilteredId);
-                boolean previouslyDefined = oldRows.contains(rowId);
+                newRowIds.add(rowId);
 
-                if (overwrite && previouslyDefined) {
-                    registry.removeByPreFilterId(preFilteredId);
+                RowState existingState = registeredRows.get(rowId);
+                if (existingState != null) {
+                    if (overwrite) {
+                        existingState.setRow(row);
+                    }
                 }
-
-                if (overwrite || !previouslyDefined) {
-                    registry.gauge(preFilteredId, r.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
+                else {
+                    RowState newState = new RowState(row);
+                    registry.gauge(preFilteredId, newState, RowState::value);
+                    registeredRows.put(rowId, newState);
                 }
-
-                return rowId;
-            });
-
-            Set<Meter.Id> newRows = idStream.collect(toSet());
-
-            for (Meter.Id oldRow : oldRows) {
-                if (!newRows.contains(oldRow))
-                    registry.remove(oldRow);
             }
 
-            return newRows;
-        });
+            registeredRows.keySet().removeIf(id -> {
+                if (!newRowIds.contains(id)) {
+                    registry.remove(id);
+                    return true;
+                }
+                return false;
+            });
+        }
+    }
+
+    private static final class RowState {
+
+        private volatile Row<?> row;
+
+        RowState(Row<?> row) {
+            this.row = row;
+        }
+
+        void setRow(Row<?> row) {
+            this.row = row;
+        }
+
+        double value() {
+            Row<?> r = this.row;
+            return r != null ? r.value() : Double.NaN;
+        }
+
     }
 
     public static class Row<T> {
@@ -128,6 +155,10 @@ public class MultiGauge {
             this.uniqueTags = uniqueTags;
             this.obj = obj;
             this.valueFunction = valueFunction;
+        }
+
+        double value() {
+            return valueFunction.applyAsDouble(obj);
         }
 
         /**
