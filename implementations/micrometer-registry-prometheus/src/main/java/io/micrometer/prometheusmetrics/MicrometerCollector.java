@@ -15,6 +15,8 @@
  */
 package io.micrometer.prometheusmetrics;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -41,6 +43,8 @@ import static java.util.stream.Collectors.toList;
  * @author Jonatan Ivanov
  */
 class MicrometerCollector implements MultiCollector {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(MicrometerCollector.class);
 
     private final Map<List<String>, Child> children = new ConcurrentHashMap<>();
 
@@ -135,6 +139,10 @@ class MicrometerCollector implements MultiCollector {
                 return metricSnapshotFactory.apply(this);
             }
             catch (DuplicateLabelsException ex) {
+                logger.debug(
+                        "Duplicate data points with labels {} detected and deduplicated for metric family '{}'. This typically occurs when meters are updated (such as with MultiGauge) concurrently with a scrape.",
+                        ex.getLabels(), conventionName);
+                // Fix for https://github.com/micrometer-metrics/micrometer/issues/6851
                 Set<Labels> seenLabels = new HashSet<>();
                 dataPointSnapshots.removeIf(dataPoint -> !seenLabels.add(dataPoint.getLabels()));
                 return metricSnapshotFactory.apply(this);

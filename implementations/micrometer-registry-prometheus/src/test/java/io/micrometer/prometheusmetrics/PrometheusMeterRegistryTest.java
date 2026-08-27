@@ -928,6 +928,14 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    void duplicateTimeSeriesFromDifferentMetersThrowsOnScrape() {
+        Timer.builder("test").register(registry).record(Duration.ofMillis(10));
+        Gauge.builder("test_seconds_max", () -> 42).register(registry);
+        assertThatThrownBy(() -> registry.scrape()).isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("test_seconds_max: duplicate metric name");
+    }
+
+    @Test
     void openMetricsScrape() {
         Counter.builder("my.counter").baseUnit("bytes").register(registry);
         Timer.builder("my.timer").register(registry);
