@@ -27,8 +27,6 @@ buildscript {
             }
         }
     }
-
-    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 }
 
 plugins {
@@ -68,7 +66,6 @@ subprojects {
     apply plugin: 'net.ltgt.errorprone'
     apply plugin: 'signing'
     apply plugin: 'io.spring.javaformat'
-    apply plugin: 'com.diffplug.spotless'
 
     if (project.name != 'micrometer-bom') {
         tasks.withType(JavaCompile).configureEach {
@@ -296,12 +293,6 @@ subprojects {
             exclude '**/*.json' // comments not supported
         }
 
-        spotless {
-            kotlin {
-                ktlint().editorConfigOverride(['ktlint_standard_no-wildcard-imports': 'disabled'])
-            }
-        }
-
         // Publish resolved versions.
         plugins.withId('maven-publish') {
             publishing {
@@ -367,6 +358,14 @@ subprojects {
     }
 
     plugins.withId('org.jetbrains.kotlin.jvm') {
+        apply plugin: 'com.diffplug.spotless'
+
+        spotless {
+            kotlin {
+                ktlint().editorConfigOverride(['ktlint_standard_no-wildcard-imports': 'disabled'])
+            }
+        }
+
         // We disable the kotlinSourcesJar task since it conflicts with the sourcesJar task of the Java plugin
         // See: https://github.com/micrometer-metrics/micrometer/issues/5151
         // See: https://youtrack.jetbrains.com/issue/KT-54207/Kotlin-has-two-sources-tasks-kotlinSourcesJar-and-sourcesJar-that-archives-sources-to-the-same-artifact
