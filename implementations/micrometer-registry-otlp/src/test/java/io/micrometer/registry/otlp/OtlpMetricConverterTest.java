@@ -17,18 +17,25 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.sdk.metrics.data.MetricData;
-import io.opentelemetry.sdk.metrics.data.MetricDataType;
+import io.opentelemetry.sdk.metrics.data.*;
 import io.opentelemetry.sdk.resources.Resource;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class OtlpMetricConverterTest {
 
@@ -257,6 +264,115 @@ class OtlpMetricConverterTest {
             .singleElement()
             .satisfies(metric -> assertThat(metric.getName()).isEqualTo("test.summary"));
         assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.DOUBLE_GAUGE).isEmpty();
+    }
+
+    static class CustomDistributionSummary extends AbstractDistributionSummary
+            implements OtlpHistogramSupport, StartTimeAwareMeter {
+
+        private final HistogramSnapshot snapshot;
+
+        private final @Nullable ExponentialHistogramSnapShot expoSnapshot;
+
+        CustomDistributionSummary(Id id, Clock clock, HistogramSnapshot snapshot,
+                @Nullable ExponentialHistogramSnapShot expoSnapshot) {
+            super(id, clock, DistributionStatisticConfig.DEFAULT, 1.0, false);
+            this.snapshot = snapshot;
+            this.expoSnapshot = expoSnapshot;
+        }
+
+        @Override
+        public HistogramSnapshot takeSnapshot() {
+            return snapshot;
+        }
+
+        @Override
+        public @Nullable ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
+            return expoSnapshot;
+        }
+
+        @Override
+        public long getStartTimeNanos() {
+            return 0;
+        }
+
+        @Override
+        protected void recordNonNegative(double amount) {
+        }
+
+        @Override
+        public long count() {
+            return snapshot.count();
+        }
+
+        @Override
+        public double totalAmount() {
+            return snapshot.total();
+        }
+
+        @Override
+        public double max() {
+            return snapshot.max();
+        }
+
+    }
+
+    @Test
+    void histogramCountShouldBeSumOfBucketCounts() {
+        Meter.Id id = new Meter.Id("test.histogram", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
+        HistogramSnapshot snapshot = new HistogramSnapshot(10, 100, 20, new ValueAtPercentile[0],
+                new CountAtBucket[] { new CountAtBucket(10.0, 3.0), new CountAtBucket(20.0, 5.0),
+                        new CountAtBucket(Double.POSITIVE_INFINITY, 0) },
+                null);
+
+        CustomDistributionSummary summary = new CustomDistributionSummary(id, mockClock, snapshot, null);
+
+        otlpMetricConverter.addMeter(summary);
+        List<MetricData> metrics = otlpMetricConverter.getAllMetrics();
+
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> {
+                HistogramPointData point = metric.getHistogramData().getPoints().iterator().next();
+                // Sum of bucket counts is 3 + 5 + 0 = 8, while snapshot.count() is 10.
+                assertThat(point.getCount()).isEqualTo(8);
+            });
+    }
+
+    @Test
+    void exponentialHistogramCountShouldBeSumOfBucketCounts() {
+        Meter.Id id = new Meter.Id("test.exponential.histogram", Tags.empty(), null, null,
+                Meter.Type.DISTRIBUTION_SUMMARY);
+        HistogramSnapshot snapshot = new HistogramSnapshot(10, 100, 20, new ValueAtPercentile[0], new CountAtBucket[0],
+                null);
+
+        ExponentialHistogramSnapShot expoSnapshot = mock(ExponentialHistogramSnapShot.class);
+        when(expoSnapshot.scale()).thenReturn(2);
+        when(expoSnapshot.zeroCount()).thenReturn(1L);
+        when(expoSnapshot.zeroThreshold()).thenReturn(0.0);
+
+        ExponentialHistogramSnapShot.ExponentialBuckets positiveBuckets = mock(
+                ExponentialHistogramSnapShot.ExponentialBuckets.class);
+        when(positiveBuckets.isEmpty()).thenReturn(false);
+        when(positiveBuckets.bucketCounts()).thenReturn(Arrays.asList(2L, 5L));
+        when(positiveBuckets.offset()).thenReturn(0);
+        when(expoSnapshot.positive()).thenReturn(positiveBuckets);
+
+        CustomDistributionSummary summary = new CustomDistributionSummary(id, mockClock, snapshot, expoSnapshot);
+
+        otlpMetricConverter.addMeter(summary);
+        List<MetricData> metrics = otlpMetricConverter.getAllMetrics();
+
+        assertThat(metrics).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> {
+                ExponentialHistogramPointData point = metric.getExponentialHistogramData()
+                    .getPoints()
+                    .iterator()
+                    .next();
+                // Sum of zeroCount (1) + positive bucket counts (2 + 5 = 7) = 8, while
+                // snapshot.count() is 10.
+                assertThat(point.getCount()).isEqualTo(8);
+            });
     }
 
 }
