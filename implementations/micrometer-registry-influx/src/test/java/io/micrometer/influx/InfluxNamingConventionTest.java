@@ -84,6 +84,11 @@ class InfluxNamingConventionTest {
         assertThat(convention.tagValue("hello\nworld\n")).isEqualTo("hello\\ world\\ ");
     }
 
+    @Test
+    void carriageReturnCharReplacedInTagValues() {
+        assertThat(convention.tagValue("hello\rworld\r")).isEqualTo("hello\\ world\\ ");
+    }
+
     private static class CustomNamingConvention implements NamingConvention {
 
         @Override
