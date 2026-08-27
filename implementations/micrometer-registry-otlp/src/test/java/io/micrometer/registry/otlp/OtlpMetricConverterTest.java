@@ -315,7 +315,9 @@ class OtlpMetricConverterTest {
     void histogramCountShouldBeSumOfBucketCounts() {
         Meter.Id id = new Meter.Id("test.histogram", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
         HistogramSnapshot snapshot = new HistogramSnapshot(10, 100, 20, new ValueAtPercentile[0],
-                new CountAtBucket[] { new CountAtBucket(10.0, 3.0), new CountAtBucket(20.0, 5.0) }, null);
+                new CountAtBucket[] { new CountAtBucket(10.0, 3.0), new CountAtBucket(20.0, 5.0),
+                        new CountAtBucket(Double.POSITIVE_INFINITY, 0) },
+                null);
 
         CustomDistributionSummary summary = new CustomDistributionSummary(id, mockClock, snapshot, null);
 
