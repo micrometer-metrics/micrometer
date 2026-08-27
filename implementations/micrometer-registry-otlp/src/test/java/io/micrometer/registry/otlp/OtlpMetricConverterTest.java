@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
 import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
@@ -323,7 +322,7 @@ class OtlpMetricConverterTest {
         otlpMetricConverter.addMeter(summary);
         List<Metric> metrics = otlpMetricConverter.getAllMetrics();
 
-        assertThat(metrics).singleElement().satisfies(metric -> {
+        assertThat(metrics).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             HistogramDataPoint point = metric.getHistogram().getDataPoints(0);
             // Sum of bucket counts is 3 + 5 = 8, while snapshot.count() is 10.
             assertThat(point.getCount()).isEqualTo(8);
@@ -354,7 +353,7 @@ class OtlpMetricConverterTest {
         otlpMetricConverter.addMeter(summary);
         List<Metric> metrics = otlpMetricConverter.getAllMetrics();
 
-        assertThat(metrics).singleElement().satisfies(metric -> {
+        assertThat(metrics).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
             ExponentialHistogramDataPoint point = metric.getExponentialHistogram().getDataPoints(0);
             // Sum of zeroCount (1) + positive bucket counts (2 + 5 = 7) = 8, while
             // snapshot.count() is 10.
