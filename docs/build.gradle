@@ -113,11 +113,3 @@ jar {
 javadoc {
     enabled = false
 }
-
-tasks.withType(AbstractPublishToMaven).configureEach {
-    enabled = false
-}
-
-japicmp {
-    enabled = false
-}
