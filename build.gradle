@@ -373,7 +373,7 @@ subprojects {
     }
 
     // Do not publish some modules
-    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'micrometer-osgi-test-slf4j2', 'concurrency-tests', 'micrometer-test-aspectj-ctw', 'micrometer-test-aspectj-ltw'].find { project.name.contains(it) }) {
+    if (!['docs', 'samples', 'benchmarks', 'micrometer-osgi-test', 'micrometer-osgi-test-slf4j2', 'concurrency-tests', 'micrometer-test-aspectj-ctw', 'micrometer-test-aspectj-ltw'].find { project.name.contains(it) }) {
         apply plugin: 'com.netflix.nebula.maven-publish'
         apply plugin: 'com.netflix.nebula.maven-manifest'
         apply plugin: 'com.netflix.nebula.maven-developer'
@@ -406,16 +406,25 @@ subprojects {
             }
 
             tasks.register("testModules", Exec) {
+                onlyIf { jar.enabled || tasks.findByName('shadowJar')?.enabled }
                 dependsOn jar
-                String executablePath = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath
-                commandLine "$executablePath", '-p', "$jar.archiveFile", '--list-modules'
-                standardOutput = new ByteArrayOutputStream()
+                inputs.file(jar.archiveFile)
+                def outputFile = layout.buildDirectory.file("reports/testModules/list-modules.txt")
+                outputs.file(outputFile)
+                executable = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath.asFile.absolutePath
+                argumentProviders.add({
+                    ['-p', jar.archiveFile.get().asFile.absolutePath, '--list-modules']
+                } as CommandLineArgumentProvider)
+                def outputStream = new ByteArrayOutputStream()
+                standardOutput = outputStream
                 ignoreExitValue = true
 
                 doLast {
                     if (executionResult.get().getExitValue() != 0) {
-                        throw new GradleException("Command finished with non-zero exit value ${executionResult.get().getExitValue()}:\n$standardOutput")
+                        throw new GradleException("Command finished with non-zero exit value ${executionResult.get().getExitValue()}:\n$outputStream")
                     }
+                    outputFile.get().asFile.parentFile.mkdirs()
+                    outputFile.get().asFile.text = outputStream.toString()
                 }
             }
 
@@ -424,23 +433,14 @@ subprojects {
             if (!(project.name in [])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
 
-                tasks.register('downloadBaseline') {
-                    doLast {
-                        Set<File> baselineFiles = configurations.detachedConfiguration(dependencies.create("${project.group}:${project.name}:${compatibleVersion}@jar")).files
-                        logger.info("Downloaded for baseline comparison: $baselineFiles")
-                        assert baselineFiles.size() == 1
-                        assert baselineFiles.first().name.endsWith("${project.name}-${compatibleVersion}.jar")
-                        copy {
-                            from baselineFiles.first()
-                            into layout.buildDirectory.dir('baselineLibs')
-                        }
-                    }
-                }
-
+                String expectedJarName = "${project.name}-${compatibleVersion}.jar"
                 tasks.register("japicmp", me.champeau.gradle.japicmp.JapicmpTask) {
-                    dependsOn downloadBaseline, jar
-                    oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
-                    newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
+                    dependsOn jar
+                    oldClasspath.from(configurations.detachedConfiguration(dependencies.create("${project.group}:${project.name}:${compatibleVersion}@jar")))
+                    newClasspath.from(jar.archiveFile)
+                    doFirst {
+                        assert oldClasspath.files.any { it.name.endsWith(expectedJarName) }
+                    }
                     onlyBinaryIncompatibleModified = true
                     failOnModification = true
                     failOnSourceIncompatibility = true
