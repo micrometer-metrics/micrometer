@@ -406,16 +406,25 @@ subprojects {
             }
 
             tasks.register("testModules", Exec) {
+                onlyIf { jar.enabled || tasks.findByName('shadowJar')?.enabled }
                 dependsOn jar
-                String executablePath = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath
-                commandLine "$executablePath", '-p', "$jar.archiveFile", '--list-modules'
-                standardOutput = new ByteArrayOutputStream()
+                inputs.file(jar.archiveFile)
+                def outputFile = layout.buildDirectory.file("reports/testModules/list-modules.txt")
+                outputs.file(outputFile)
+                executable = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath.asFile.absolutePath
+                argumentProviders.add({
+                    ['-p', jar.archiveFile.get().asFile.absolutePath, '--list-modules']
+                } as CommandLineArgumentProvider)
+                def outputStream = new ByteArrayOutputStream()
+                standardOutput = outputStream
                 ignoreExitValue = true
 
                 doLast {
                     if (executionResult.get().getExitValue() != 0) {
-                        throw new GradleException("Command finished with non-zero exit value ${executionResult.get().getExitValue()}:\n$standardOutput")
+                        throw new GradleException("Command finished with non-zero exit value ${executionResult.get().getExitValue()}:\n$outputStream")
                     }
+                    outputFile.get().asFile.parentFile.mkdirs()
+                    outputFile.get().asFile.text = outputStream.toString()
                 }
             }
 
