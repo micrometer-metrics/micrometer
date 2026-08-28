@@ -41,10 +41,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -909,6 +911,47 @@ class PrometheusMeterRegistryTest {
         assertThat(registry.get("another.gauge").gauge().value()).isEqualTo(2d);
 
         executorService.shutdownNow();
+    }
+
+    @Issue("#6851")
+    @Test
+    void scrapeWhileOverwritingMultiGaugeRowsDoesNotCreateDuplicateLabels() throws Exception {
+        MultiGauge multiGauge = MultiGauge.builder("my.metric").register(registry);
+        List<MultiGauge.Row<?>> rows = IntStream.range(0, 100)
+            .mapToObj(i -> MultiGauge.Row
+                .of(Tags.of("tag1", "abc", "poll_count", Integer.toString(i), "some_other_tag", "cde"), i))
+            .collect(toList());
+
+        multiGauge.register(rows, true);
+
+        AtomicBoolean stop = new AtomicBoolean();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<?> scraperTask = executor.submit(() -> {
+            while (!stop.get()) {
+                registry.scrape();
+            }
+        });
+
+        try {
+            for (int i = 1; i < 1_000; i++) {
+                multiGauge.register(rows, true);
+            }
+        }
+        finally {
+            stop.set(true);
+            executor.shutdown();
+            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+        }
+
+        scraperTask.get();
+    }
+
+    @Test
+    void duplicateTimeSeriesFromDifferentMetersThrowsOnScrape() {
+        Timer.builder("test").register(registry).record(Duration.ofMillis(10));
+        Gauge.builder("test_seconds_max", () -> 42).register(registry);
+        assertThatThrownBy(registry::scrape).isInstanceOf(DuplicateLabelsException.class)
+            .hasMessageContaining("Duplicate labels for metric \"test_seconds_max\": {}");
     }
 
     @Test
