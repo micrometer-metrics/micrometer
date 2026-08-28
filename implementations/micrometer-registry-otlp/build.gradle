@@ -53,6 +53,7 @@ def shadowJar = tasks.named('shadowJar', ShadowJar) {
 }
 
 tasks.japicmp.dependsOn(shadowJar)
+tasks.testModules.dependsOn(shadowJar)
 
 publishing {
     publications {
