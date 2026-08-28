@@ -26,6 +26,7 @@ final class StackdriverHistogramUtil {
     // copied and modified from AbstractDistributionSummary/AbstractTimer
     static Histogram stackdriverHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
         if (distributionStatisticConfig.isPublishingPercentiles()) {
+            HdrHistogramAvailability.requireAvailable();
             return new StackdriverClientSidePercentilesHistogram(clock, distributionStatisticConfig);
         }
         if (distributionStatisticConfig.isPublishingHistogram()) {
