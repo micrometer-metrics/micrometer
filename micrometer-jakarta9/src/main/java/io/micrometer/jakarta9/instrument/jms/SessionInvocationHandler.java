@@ -19,6 +19,7 @@ import io.micrometer.observation.ObservationRegistry;
 import jakarta.jms.MessageConsumer;
 import jakarta.jms.MessageProducer;
 import jakarta.jms.Session;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -50,7 +51,7 @@ class SessionInvocationHandler implements InvocationHandler {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public @Nullable Object invoke(Object proxy, Method method, @Nullable Object @Nullable [] args) throws Throwable {
         try {
             Object result = method.invoke(this.target, args);
             if (result instanceof MessageProducer) {
@@ -70,7 +71,8 @@ class SessionInvocationHandler implements InvocationHandler {
             return result;
         }
         catch (InvocationTargetException exc) {
-            throw exc.getTargetException();
+            Throwable targetException = exc.getTargetException();
+            throw targetException != null ? targetException : exc;
         }
     }
 

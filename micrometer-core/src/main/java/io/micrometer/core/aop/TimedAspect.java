@@ -194,6 +194,9 @@ public class TimedAspect {
             declaringClass = pjp.getTarget().getClass();
         }
         Timed timed = declaringClass.getAnnotation(Timed.class);
+        if (timed == null) {
+            return pjp.proceed();
+        }
 
         return perform(pjp, timed, method);
     }
@@ -209,6 +212,9 @@ public class TimedAspect {
         if (timed == null) {
             method = pjp.getTarget().getClass().getMethod(method.getName(), method.getParameterTypes());
             timed = method.getAnnotation(Timed.class);
+            if (timed == null) {
+                return pjp.proceed();
+            }
         }
 
         return perform(pjp, timed, method);

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +34,7 @@ class WavefrontConfigTest {
     @Test
     void defaultUriImplementationWorksWithProxyUri() throws IOException {
         Properties wavefrontProps = new Properties();
-        wavefrontProps.load(this.getClass().getResourceAsStream("/valid.properties"));
+        wavefrontProps.load(Objects.requireNonNull(this.getClass().getResourceAsStream("/valid.properties")));
         WavefrontConfig config = wavefrontProps::getProperty;
         assertThatCode(config::uri).doesNotThrowAnyException();
     }
@@ -41,7 +42,7 @@ class WavefrontConfigTest {
     @Test
     void defaultUriImplementationThrowsForInvalidUri() throws IOException {
         Properties wavefrontProps = new Properties();
-        wavefrontProps.load(this.getClass().getResourceAsStream("/invalid.properties"));
+        wavefrontProps.load(Objects.requireNonNull(this.getClass().getResourceAsStream("/invalid.properties")));
         WavefrontConfig config = wavefrontProps::getProperty;
         assertThatCode(config::uri).isExactlyInstanceOf(ValidationException.class)
             .hasMessageContaining("it must be a valid URI");

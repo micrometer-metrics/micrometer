@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.internal;
 
 import io.micrometer.core.instrument.*;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -97,12 +98,12 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
     }
 
     @Override
-    public <T> Future<T> submit(Callable<T> task) {
+    public <T extends @Nullable Object> Future<T> submit(Callable<T> task) {
         return delegate.submit(wrap(task));
     }
 
     @Override
-    public <T> Future<T> submit(Runnable task, T result) {
+    public <T extends @Nullable Object> Future<T> submit(Runnable task, T result) {
         return delegate.submit(wrap(task), result);
     }
 
@@ -112,24 +113,26 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
     }
 
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+    public <T extends @Nullable Object> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
+            throws InterruptedException {
         return delegate.invokeAll(wrapAll(tasks));
     }
 
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-            throws InterruptedException {
+    public <T extends @Nullable Object> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout,
+            TimeUnit unit) throws InterruptedException {
         return delegate.invokeAll(wrapAll(tasks), timeout, unit);
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+    public <T extends @Nullable Object> T invokeAny(Collection<? extends Callable<T>> tasks)
+            throws InterruptedException, ExecutionException {
         return delegate.invokeAny(wrapAll(tasks));
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-            throws InterruptedException, ExecutionException, TimeoutException {
+    public <T extends @Nullable Object> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout,
+            TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         return delegate.invokeAny(wrapAll(tasks), timeout, unit);
     }
 
@@ -145,7 +148,7 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
     }
 
     @Override
-    public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
+    public <V extends @Nullable Object> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
         scheduledOnce.increment();
         return delegate.schedule(executionTimer.wrap(callable), delay, unit);
     }
