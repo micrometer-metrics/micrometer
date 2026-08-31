@@ -5,10 +5,16 @@ updates:
     target-branch: "main"
     schedule:
       interval: "weekly"
+    cooldown:
+      exclude:
+        - "*"
   - package-ecosystem: gradle
     directory: "/"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "1.16.x"
     milestone: 296
     ignore:
@@ -30,6 +36,9 @@ updates:
     directory: "/samples/micrometer-samples-jersey3"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "1.16.x"
     milestone: 296
     ignore:
@@ -46,6 +55,9 @@ updates:
     directory: "/samples/micrometer-samples-jooq"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "1.16.x"
     milestone: 296
     ignore:
@@ -58,6 +70,9 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "1.17.x"
     milestone: 317
     ignore:
@@ -79,6 +94,9 @@ updates:
     directory: "/samples/micrometer-samples-jersey3"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "1.17.x"
     milestone: 317
     ignore:
@@ -95,6 +113,9 @@ updates:
     directory: "/samples/micrometer-samples-jooq"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "1.17.x"
     milestone: 317
     ignore:
@@ -107,6 +128,9 @@ updates:
     directory: "/samples/micrometer-samples-caffeine3"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "1.17.x"
     milestone: 317
     ignore:
@@ -119,6 +143,9 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "main"
     milestone: 337
     ignore:
@@ -139,6 +166,9 @@ updates:
     directory: "/samples/micrometer-samples-jersey3"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "main"
     milestone: 337
     ignore:
@@ -154,6 +184,9 @@ updates:
     directory: "/samples/micrometer-samples-jooq"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "main"
     milestone: 337
     ignore:
@@ -165,6 +198,9 @@ updates:
     directory: "/samples/micrometer-samples-caffeine3"
     schedule:
       interval: daily
+    cooldown:
+      exclude:
+        - "*"
     target-branch: "main"
     milestone: 337
     ignore:
