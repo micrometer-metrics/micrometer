@@ -74,7 +74,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         .withEnv("DOCKER_INFLUXDB_INIT_ORG", "my-org")
         .withEnv("DOCKER_INFLUXDB_INIT_BUCKET", "metrics_db")
         .withEnv("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN", "my-test-token")
-        .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
+        .waitingFor(Wait.forHttp("/ready").forPort(8086).forStatusCode(200));
 
     @Container
     static GenericContainer<?> telegraf = new GenericContainer<>(TELEGRAF_IMAGE).withNetwork(network)
@@ -101,7 +101,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .increment());
 
         await().alias("Telegraf flushing and InfluxDB ingestion")
-            .atMost(5, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(
                     () -> verifyMetric("test=metric=equal", containsString("this_is_the"), containsString("tag=test")));
     }
@@ -114,7 +114,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .increment());
 
         await().alias("Telegraf flushing and InfluxDB ingestion")
-            .atMost(5, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(() -> verifyMetric("test_metric_comma", containsString("comma_key"),
                     containsString("comma_value")));
     }
@@ -127,7 +127,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .increment());
 
         await().alias("Telegraf flushing and InfluxDB ingestion")
-            .atMost(5, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(() -> verifyMetric("test_metric_space", containsString("space_key"),
                     containsString("space_value")));
     }
