@@ -136,6 +136,16 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    void duplicateTimeSeriesFromDifferentMetersFailsOnRegistration() {
+        registry.throwExceptionOnRegistrationFailure();
+
+        Timer.builder("test").register(registry).record(Duration.ofMillis(10));
+        assertThatThrownBy(() -> Gauge.builder("test_seconds_max", () -> 42).register(registry))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("test_seconds_max: duplicate metric name");
+    }
+
+    @Test
     void timersWithSameNameButOnlyOnePublishingHistogramFailToRegister() {
         registry.throwExceptionOnRegistrationFailure();
         Timer.builder("my.timer").tag("k", "v1").register(registry);
