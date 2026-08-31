@@ -1,5 +1,5 @@
 [versions]
-activemq-artemis = "2.55.0"
+activemq-artemis = "2.56.0"
 application-insights = "2.6.4"
 archunit = "1.5.0"
 asmForPlugins = "7.3.1"
