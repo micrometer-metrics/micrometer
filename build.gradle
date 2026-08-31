@@ -204,11 +204,11 @@ subprojects {
                 targetCompatibility = JavaVersion.VERSION_11
             }
 
-
             javadoc {
                 if (project.name.contains('samples') || project.name.contains("-test-aspectj")) {
                     enabled = false
-                } else {
+                }
+                else {
                     configure(options) {
                         tags(
                                 'apiNote:a:API Note:',
@@ -216,6 +216,7 @@ subprojects {
                                 'implNote:a:Implementation Note:'
                         )
                         options.addBooleanOption('Xdoclint:all,-missing', true)
+                        options.addBooleanOption('-no-fonts', true)
                     }
                 }
             }
