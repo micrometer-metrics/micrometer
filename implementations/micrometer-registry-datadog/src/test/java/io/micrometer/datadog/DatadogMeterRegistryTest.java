@@ -28,12 +28,12 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(WiremockResolver.class)
 class DatadogMeterRegistryTest {
@@ -55,12 +55,12 @@ class DatadogMeterRegistryTest {
 
             @Override
             public String apiKey() {
-                return "fake";
+                return "testApiKey";
             }
 
             @Override
             public String applicationKey() {
-                return "fake";
+                return "testApplicationKey";
             }
 
             @Override
@@ -83,8 +83,10 @@ class DatadogMeterRegistryTest {
             .increment(Math.PI);
         registry.publish();
 
-        server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withRequestBody(equalToJson(
-                "{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")));
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series")).withHeader("DD-API-KEY", equalTo("testApiKey"))
+            .withoutHeader("DD-APPLICATION-KEY")
+            .withRequestBody(equalToJson(
+                    "{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")));
 
         registry.close();
     }
@@ -105,12 +107,12 @@ class DatadogMeterRegistryTest {
 
             @Override
             public String apiKey() {
-                return "fake";
+                return "testApiKey";
             }
 
             @Override
             public String applicationKey() {
-                return "fake";
+                return "testApplicationKey";
             }
 
             @Override
@@ -133,10 +135,14 @@ class DatadogMeterRegistryTest {
             .increment(Math.PI);
         registry.publish();
 
-        server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withRequestBody(equalToJson(
-                "{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")));
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series")).withHeader("DD-API-KEY", equalTo("testApiKey"))
+            .withoutHeader("DD-APPLICATION-KEY")
+            .withRequestBody(equalToJson(
+                    "{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")));
 
-        server.verify(putRequestedFor(urlEqualTo("/api/v1/metrics/my.counter%23abc?api_key=fake&application_key=fake"))
+        server.verify(putRequestedFor(urlEqualTo("/api/v1/metrics/my.counter%23abc"))
+            .withHeader("DD-API-KEY", equalTo("testApiKey"))
+            .withHeader("DD-APPLICATION-KEY", equalTo("testApplicationKey"))
             .withRequestBody(equalToJson(
                     "{\"type\":\"count\",\"unit\":\"microsecond\",\"description\":\"metric description\"}")));
 
@@ -144,7 +150,7 @@ class DatadogMeterRegistryTest {
     }
 
     @Test
-    void postMetricMetadataWhenDescriptionIsEnabledButNull() {
+    void doNotPublishMetricMetadataWhenDescriptionIsEnabledButNull() {
         DatadogConfig config = new DatadogConfig() {
 
             @Override
@@ -154,7 +160,12 @@ class DatadogMeterRegistryTest {
 
             @Override
             public String apiKey() {
-                return "fake";
+                return "testApiKey";
+            }
+
+            @Override
+            public String applicationKey() {
+                return "testApplicationKey";
             }
         };
 
@@ -162,6 +173,38 @@ class DatadogMeterRegistryTest {
         DatadogMeterRegistry registry = DatadogMeterRegistry.builder(config).httpClient(httpSender).build();
         Meter.Id id = new Meter.Id("my.meter", Tags.empty(), null, null, Meter.Type.COUNTER);
         registry.postMetricMetadata("my.meter", new DatadogMetricMetadata(id, Statistic.COUNT, true, null));
+        verifyNoInteractions(httpSender);
+    }
+
+    @Test
+    void doNotPublishMetricMetadataWhenApplicationKeyIsNull() {
+        DatadogConfig config = new DatadogConfig() {
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "testApiKey";
+            }
+
+            @Override
+            public boolean descriptions() {
+                return true;
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+        };
+        HttpSender httpSender = mock(HttpSender.class);
+        DatadogMeterRegistry registry = DatadogMeterRegistry.builder(config).httpClient(httpSender).build();
+
+        Meter.Id id = new Meter.Id("test.meter", Tags.empty(), null, "test", Meter.Type.COUNTER);
+        registry.postMetricMetadata("test.meter", new DatadogMetricMetadata(id, Statistic.COUNT, true, null));
+        assertThat(config.applicationKey()).isNull();
         verifyNoInteractions(httpSender);
     }
 
@@ -181,7 +224,7 @@ class DatadogMeterRegistryTest {
 
             @Override
             public String apiKey() {
-                return "fake";
+                return "testApiKey";
             }
 
             @Override
@@ -203,8 +246,9 @@ class DatadogMeterRegistryTest {
             .increment(Math.PI);
         registry.publish();
 
-        server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withHeader("Content-Encoding",
-                equalTo("gzip")));
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series")).withHeader("DD-API-KEY", equalTo("testApiKey"))
+            .withoutHeader("DD-APPLICATION-KEY")
+            .withHeader("Content-Encoding", equalTo("gzip")));
 
         registry.close();
     }
@@ -225,7 +269,7 @@ class DatadogMeterRegistryTest {
 
             @Override
             public String apiKey() {
-                return "fake";
+                return "testApiKey";
             }
 
             @Override
@@ -247,7 +291,9 @@ class DatadogMeterRegistryTest {
             .increment(Math.PI);
         registry.publish();
 
-        server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withoutHeader("Content-Encoding"));
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series")).withHeader("DD-API-KEY", equalTo("testApiKey"))
+            .withoutHeader("DD-APPLICATION-KEY")
+            .withoutHeader("Content-Encoding"));
 
         registry.close();
     }
@@ -263,12 +309,12 @@ class DatadogMeterRegistryTest {
 
             @Override
             public String apiKey() {
-                return "fake";
+                return "testApiKey";
             }
 
             @Override
             public String applicationKey() {
-                return "fake";
+                return "testApplicationKey";
             }
 
             @Override
