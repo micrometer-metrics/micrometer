@@ -19,25 +19,59 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import org.jspecify.annotations.Nullable;
+
+import java.util.IdentityHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class CompositeCustomMeter extends DefaultMeter implements CompositeMeter {
+
+    private final AtomicBoolean childrenGuard = new AtomicBoolean();
+
+    private IdentityHashMap<MeterRegistry, Meter> children = new IdentityHashMap<>();
 
     CompositeCustomMeter(Id id, Type type, Iterable<Measurement> measurements) {
         super(id, type, measurements);
     }
 
     @Override
-    public void add(MeterRegistry registry) {
-        Meter.builder(getId().getName(), getType(), measure())
+    public @Nullable Meter add(MeterRegistry registry) {
+        Meter newMeter = Meter.builder(getId().getName(), getType(), measure())
             .tags(getId().getTagsAsIterable())
             .description(getId().getDescription())
             .baseUnit(getId().getBaseUnit())
             .register(registry);
+
+        for (;;) {
+            if (childrenGuard.compareAndSet(false, true)) {
+                try {
+                    IdentityHashMap<MeterRegistry, Meter> newChildren = new IdentityHashMap<>(children);
+                    Meter previous = newChildren.put(registry, newMeter);
+                    this.children = newChildren;
+                    return previous == null ? newMeter : null;
+                }
+                finally {
+                    childrenGuard.set(false);
+                }
+            }
+        }
     }
 
     @Override
-    public void remove(MeterRegistry registry) {
-        // do nothing
+    public @Nullable Meter remove(MeterRegistry registry) {
+        for (;;) {
+            if (childrenGuard.compareAndSet(false, true)) {
+                try {
+                    IdentityHashMap<MeterRegistry, Meter> newChildren = new IdentityHashMap<>(children);
+                    Meter removed = newChildren.remove(registry);
+                    this.children = newChildren;
+                    return removed;
+                }
+                finally {
+                    childrenGuard.set(false);
+                }
+            }
+        }
     }
 
 }
