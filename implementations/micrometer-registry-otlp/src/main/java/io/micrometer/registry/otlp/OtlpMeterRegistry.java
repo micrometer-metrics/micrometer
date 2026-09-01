@@ -485,6 +485,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
 
         if (distributionStatisticConfig.isPublishingPercentiles()) {
+            HdrHistogramAvailability.requireAvailable();
             return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
         }
         return NoopHistogram.INSTANCE;

@@ -54,6 +54,7 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
             boolean supportsAggregablePercentiles) {
         if (distributionStatisticConfig.isPublishingPercentiles()) {
             // hdr-based histogram
+            HdrHistogramAvailability.requireAvailable();
             return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
         }
         if (distributionStatisticConfig.isPublishingHistogram()) {
