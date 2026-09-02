@@ -141,7 +141,7 @@ public class ProcessorMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
         Gauge.builder(cpuCountConvention.getName(), runtime, Runtime::availableProcessors)
-            .tags(cpuCountConvention.getTags(null))
+            .tags(cpuCountConvention.getTags())
             .tags(extraTags)
             .description("The number of processors available to the Java virtual machine")
             .register(registry);
@@ -163,7 +163,7 @@ public class ProcessorMetrics implements MeterBinder {
 
         if (processCpuUsage != null) {
             Gauge.builder(cpuLoadConvention.getName(), operatingSystemBean, x -> invoke(processCpuUsage))
-                .tags(cpuLoadConvention.getTags(null))
+                .tags(cpuLoadConvention.getTags())
                 .tags(extraTags)
                 .description("The \"recent cpu usage\" for the Java Virtual Machine process")
                 .register(registry);
@@ -171,7 +171,7 @@ public class ProcessorMetrics implements MeterBinder {
 
         if (processCpuTime != null) {
             FunctionCounter.builder(cpuTimeConvention.getName(), operatingSystemBean, x -> invoke(processCpuTime))
-                .tags(cpuTimeConvention.getTags(null))
+                .tags(cpuTimeConvention.getTags())
                 .tags(extraTags)
                 .description("The \"cpu time\" used by the Java Virtual Machine process")
                 .baseUnit("ns")

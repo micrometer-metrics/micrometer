@@ -16,18 +16,41 @@
 package io.micrometer.core.instrument.binder.jvm.convention;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
 
 import java.lang.management.MemoryPoolMXBean;
 import java.util.function.Function;
 
 /**
- * {@link MeterConvention} for JVM memory max metrics.
+ * Convention for JVM memory max metrics.
  *
  * @see io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
  * @since 1.18.0
  */
-public interface JvmMemoryMaxMeterConvention extends MeterConvention<MemoryPoolMXBean> {
+public interface JvmMemoryMaxMeterConvention {
+
+    /**
+     * Canonical name of the meter.
+     * @return meter name
+     */
+    String getName();
+
+    /**
+     * Tags specific to this meter convention.
+     * @param memoryPoolBean the memory pool bean from which to derive tags
+     * @return tags to use with the meter
+     */
+    default Tags getTags(MemoryPoolMXBean memoryPoolBean) {
+        return Tags.empty();
+    }
+
+    /**
+     * Create a {@link JvmMemoryMaxMeterConvention} with the given name.
+     * @param name meter name
+     * @return a new convention instance
+     */
+    static JvmMemoryMaxMeterConvention of(String name) {
+        return () -> name;
+    }
 
     /**
      * Create a {@link JvmMemoryMaxMeterConvention} with the given name and tags function.
@@ -43,8 +66,8 @@ public interface JvmMemoryMaxMeterConvention extends MeterConvention<MemoryPoolM
             }
 
             @Override
-            public Tags getTags(MemoryPoolMXBean context) {
-                return tagsFunction.apply(context);
+            public Tags getTags(MemoryPoolMXBean memoryPoolBean) {
+                return tagsFunction.apply(memoryPoolBean);
             }
         };
     }

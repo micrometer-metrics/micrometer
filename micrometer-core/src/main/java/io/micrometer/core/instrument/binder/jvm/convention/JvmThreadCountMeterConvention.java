@@ -16,17 +16,40 @@
 package io.micrometer.core.instrument.binder.jvm.convention;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
 
 import java.util.function.Function;
 
 /**
- * {@link MeterConvention} for JVM thread count metrics.
+ * Convention for JVM thread count metrics.
  *
  * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
  * @since 1.18.0
  */
-public interface JvmThreadCountMeterConvention extends MeterConvention<Thread.State> {
+public interface JvmThreadCountMeterConvention {
+
+    /**
+     * Canonical name of the meter.
+     * @return meter name
+     */
+    String getName();
+
+    /**
+     * Tags specific to this meter convention.
+     * @param state the thread state from which to derive tags
+     * @return tags to use with the meter
+     */
+    default Tags getTags(Thread.State state) {
+        return Tags.empty();
+    }
+
+    /**
+     * Create a {@link JvmThreadCountMeterConvention} with the given name.
+     * @param name meter name
+     * @return a new convention instance
+     */
+    static JvmThreadCountMeterConvention of(String name) {
+        return () -> name;
+    }
 
     /**
      * Create a {@link JvmThreadCountMeterConvention} with the given name and tags
@@ -43,8 +66,8 @@ public interface JvmThreadCountMeterConvention extends MeterConvention<Thread.St
             }
 
             @Override
-            public Tags getTags(Thread.State context) {
-                return tagsFunction.apply(context);
+            public Tags getTags(Thread.State state) {
+                return tagsFunction.apply(state);
             }
         };
     }

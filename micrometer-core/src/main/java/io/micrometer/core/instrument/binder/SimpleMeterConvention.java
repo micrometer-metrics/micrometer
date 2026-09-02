@@ -26,7 +26,10 @@ import java.util.function.Function;
  *
  * @param <C> context type from which tags can be derived
  * @since 1.16.0
+ * @deprecated use specific per-convention types or their static {@code of(...)} methods
+ * instead
  */
+@Deprecated
 public class SimpleMeterConvention<C extends @Nullable Object> implements MeterConvention<C> {
 
     private final String name;

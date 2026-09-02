@@ -16,16 +16,28 @@
 package io.micrometer.core.instrument.binder.jvm.convention;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
-import org.jspecify.annotations.Nullable;
 
 /**
- * {@link MeterConvention} for JVM classes unloaded metrics.
+ * Convention for JVM classes unloaded metrics.
  *
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
  * @since 1.18.0
  */
-public interface JvmClassUnloadedMeterConvention extends MeterConvention<@Nullable Object> {
+public interface JvmClassUnloadedMeterConvention {
+
+    /**
+     * Canonical name of the meter.
+     * @return meter name
+     */
+    String getName();
+
+    /**
+     * Tags specific to this meter convention.
+     * @return tags to use with the meter
+     */
+    default Tags getTags() {
+        return Tags.empty();
+    }
 
     /**
      * Create a {@link JvmClassUnloadedMeterConvention} with the given name.
@@ -50,7 +62,7 @@ public interface JvmClassUnloadedMeterConvention extends MeterConvention<@Nullab
             }
 
             @Override
-            public Tags getTags(@Nullable Object context) {
+            public Tags getTags() {
                 return tags;
             }
         };

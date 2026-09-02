@@ -106,7 +106,7 @@ public class ClassLoaderMetrics implements MeterBinder {
         ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();
 
         Gauge.builder(classCountConvention.getName(), classLoadingBean, ClassLoadingMXBean::getLoadedClassCount)
-            .tags(classCountConvention.getTags(null))
+            .tags(classCountConvention.getTags())
             .tags(extraTags)
             .description("The number of classes that are currently loaded in the Java virtual machine")
             .baseUnit(BaseUnits.CLASSES)
@@ -114,7 +114,7 @@ public class ClassLoaderMetrics implements MeterBinder {
 
         FunctionCounter
             .builder(classUnloadedConvention.getName(), classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount)
-            .tags(classUnloadedConvention.getTags(null))
+            .tags(classUnloadedConvention.getTags())
             .tags(extraTags)
             .description("The number of classes unloaded in the Java virtual machine")
             .baseUnit(BaseUnits.CLASSES)
@@ -122,7 +122,7 @@ public class ClassLoaderMetrics implements MeterBinder {
 
         FunctionCounter
             .builder(classLoadedConvention.getName(), classLoadingBean, ClassLoadingMXBean::getTotalLoadedClassCount)
-            .tags(classLoadedConvention.getTags(null))
+            .tags(classLoadedConvention.getTags())
             .tags(extraTags)
             .description("The number of classes loaded in the Java virtual machine")
             .baseUnit(BaseUnits.CLASSES)

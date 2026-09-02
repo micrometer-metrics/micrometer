@@ -16,18 +16,41 @@
 package io.micrometer.core.instrument.binder.jvm.convention;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
 
 import java.lang.management.MemoryPoolMXBean;
 import java.util.function.Function;
 
 /**
- * {@link MeterConvention} for JVM memory committed metrics.
+ * Convention for JVM memory committed metrics.
  *
  * @see io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
  * @since 1.18.0
  */
-public interface JvmMemoryCommittedMeterConvention extends MeterConvention<MemoryPoolMXBean> {
+public interface JvmMemoryCommittedMeterConvention {
+
+    /**
+     * Canonical name of the meter.
+     * @return meter name
+     */
+    String getName();
+
+    /**
+     * Tags specific to this meter convention.
+     * @param memoryPoolBean the memory pool bean from which to derive tags
+     * @return tags to use with the meter
+     */
+    default Tags getTags(MemoryPoolMXBean memoryPoolBean) {
+        return Tags.empty();
+    }
+
+    /**
+     * Create a {@link JvmMemoryCommittedMeterConvention} with the given name.
+     * @param name meter name
+     * @return a new convention instance
+     */
+    static JvmMemoryCommittedMeterConvention of(String name) {
+        return () -> name;
+    }
 
     /**
      * Create a {@link JvmMemoryCommittedMeterConvention} with the given name and tags
@@ -44,8 +67,8 @@ public interface JvmMemoryCommittedMeterConvention extends MeterConvention<Memor
             }
 
             @Override
-            public Tags getTags(MemoryPoolMXBean context) {
-                return tagsFunction.apply(context);
+            public Tags getTags(MemoryPoolMXBean memoryPoolBean) {
+                return tagsFunction.apply(memoryPoolBean);
             }
         };
     }

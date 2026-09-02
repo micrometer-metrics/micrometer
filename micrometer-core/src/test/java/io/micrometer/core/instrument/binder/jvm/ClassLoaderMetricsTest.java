@@ -19,6 +19,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.SimpleMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmClassCountMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadedMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmClassUnloadedMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmClassLoadingMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmClassLoadingMeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -64,6 +67,41 @@ class ClassLoaderMetricsTest {
         assertThat(registry.get("jvm.class.loaded").tags(extraTags).functionCounter().count()).isPositive();
         assertThat(registry.get("jvm.class.unloaded").tags(extraTags).functionCounter().count()).isNotNegative();
         assertThat(registry.get("jvm.class.count").tags(extraTags).gauge().value()).isPositive();
+    }
+
+    @Test
+    void builderDefaults() {
+        ClassLoaderMetrics.builder().build().bindTo(registry);
+
+        assertThat(registry.get("jvm.classes.loaded").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.classes.loaded.count").functionCounter().count()).isPositive();
+        assertThat(registry.get("jvm.classes.unloaded").functionCounter().count()).isNotNegative();
+    }
+
+    @Test
+    void builderWithOpenTelemetryConventions() {
+        ClassLoaderMetrics.builder().openTelemetryConventions().build().bindTo(registry);
+
+        assertThat(registry.get("jvm.class.loaded").functionCounter().count()).isPositive();
+        assertThat(registry.get("jvm.class.unloaded").functionCounter().count()).isNotNegative();
+        assertThat(registry.get("jvm.class.count").gauge().value()).isPositive();
+    }
+
+    @Test
+    void builderWithCustomConventionsAndExtraTags() {
+        Tags extraTags = Tags.of("app", "test");
+        ClassLoaderMetrics.builder()
+            .extraTags(extraTags)
+            .classCountConvention(JvmClassCountMeterConvention.of("custom.class.count", Tags.of("type", "count")))
+            .classLoadedConvention(JvmClassLoadedMeterConvention.of("custom.class.loaded"))
+            .classUnloadedConvention(JvmClassUnloadedMeterConvention.of("custom.class.unloaded"))
+            .build()
+            .bindTo(registry);
+
+        assertThat(registry.get("custom.class.count").tags(extraTags).tag("type", "count").gauge().value())
+            .isPositive();
+        assertThat(registry.get("custom.class.loaded").tags(extraTags).functionCounter().count()).isPositive();
+        assertThat(registry.get("custom.class.unloaded").tags(extraTags).functionCounter().count()).isNotNegative();
     }
 
     @Test
