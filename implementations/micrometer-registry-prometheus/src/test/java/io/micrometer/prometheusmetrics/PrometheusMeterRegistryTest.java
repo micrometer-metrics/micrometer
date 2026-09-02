@@ -173,6 +173,22 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    void summariesWithSameNameButOnlyOnePublishingHistogramFailToRegister() {
+        registry.throwExceptionOnRegistrationFailure();
+        DistributionSummary.builder("my.summary").tag("k", "v1").register(registry);
+
+        assertThatThrownBy(() -> DistributionSummary.builder("my.summary")
+            .tag("k", "v2")
+            .publishPercentileHistogram()
+            .register(registry)).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("my_summary")
+            .hasMessageContaining("SUMMARY")
+            .hasMessageContaining("HISTOGRAM");
+
+        assertThat(registry.scrape()).contains("my_summary_count");
+    }
+
+    @Test
     void sameNameDifferentTagsWithEmptyTagsDoesNotFail() {
         AtomicBoolean failed = new AtomicBoolean(false);
         registry.config().onMeterRegistrationFailed((id, reason) -> failed.set(true));
