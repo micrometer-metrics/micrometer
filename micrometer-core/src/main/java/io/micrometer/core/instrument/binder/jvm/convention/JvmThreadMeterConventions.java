@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
 
 /**
@@ -26,5 +27,30 @@ import io.micrometer.core.instrument.binder.MeterConvention;
 public interface JvmThreadMeterConventions {
 
     MeterConvention<Thread.State> threadCountConvention();
+
+    /**
+     * Whether thread count gauges should be further broken down by daemon status. When
+     * {@code true}, {@link io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics}
+     * registers a gauge for each combination of {@link Thread.State} and daemon flag, and
+     * combines {@link #threadCountConvention()} tags with {@link #daemonTags(boolean)}.
+     * Defaults to {@code false} to preserve historical cardinality of
+     * {@code jvm.threads.states}.
+     * @return {@code true} to include the daemon dimension
+     * @since 1.17.0
+     */
+    default boolean includeDaemonTag() {
+        return false;
+    }
+
+    /**
+     * Tags describing whether a thread is a daemon thread. Only used when
+     * {@link #includeDaemonTag()} is {@code true}.
+     * @param daemon whether the thread is a daemon thread
+     * @return tags for the daemon dimension
+     * @since 1.17.0
+     */
+    default Tags daemonTags(boolean daemon) {
+        return Tags.of("daemon", Boolean.toString(daemon));
+    }
 
 }
