@@ -27,6 +27,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
+import org.jooq.Field;
+import org.jooq.Table;
+import org.jooq.TableField;
+
 /**
  * Time SQL queries passing through jOOQ.
  *
@@ -796,5 +800,18 @@ public class MetricsDSLContext extends DefaultDSLContext {
     public boolean fetchExists(Table<?> table, Condition condition) {
         return super.fetchExists(super.selectOne().from(table).where(condition));
     }
+@Override
+public <T> T fetchValue(Field<T> field) {
+    // If field belongs to a table, build the select via *this* context so
+    // instrumentation triggers exactly once.
+    if (field instanceof TableField<?, ?>) {
+        @SuppressWarnings("unchecked")
+        TableField<?, T> tf = (TableField<?, T>) field;
+        Table<?> table = tf.getTable();
+        return this.select(field).from(table).fetchOne().value1();
+    }
+    // For non-table fields, delegate directly to super to avoid an extra select(...) hop
+    return super.fetchValue(field);
+}
 
 }
