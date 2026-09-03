@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.testsupport.system.CapturedOutput;
 import io.micrometer.core.testsupport.system.OutputCaptureExtension;
@@ -615,6 +616,29 @@ class KafkaMetricsTest {
         kafkaMetrics.checkAndBindMetrics(registry);
         assertThat(registry.get("kafka.test.a").gauge().value()).isNaN();
         assertThat(output).isEmpty();
+    }
+
+    @Issue("#7541")
+    @Test
+    void shouldRemoveMeterWhenAMeterFilterTransformsTags() {
+        Map<MetricName, Metric> kafkaMetricMap = new HashMap<>();
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> kafkaMetricMap;
+        kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        registry.config().meterFilter(MeterFilter.replaceTagValues("topic", value -> value.replace('_', '.')));
+        kafkaMetrics.bindTo(registry);
+        assertThat(registry.getMeters()).hasSize(0);
+
+        MetricName aMetric = createMetricName("a", "topic", "my_topic");
+        kafkaMetricMap.put(aMetric, createKafkaMetric(aMetric));
+        kafkaMetrics.checkAndBindMetrics(registry);
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("topic", "my.topic"),
+                Tag.of("kafka.version", "unknown"));
+
+        kafkaMetricMap.clear();
+        kafkaMetrics.checkAndBindMetrics(registry);
+        assertThat(registry.getMeters()).hasSize(0);
     }
 
     private MetricName createMetricName(String name) {
