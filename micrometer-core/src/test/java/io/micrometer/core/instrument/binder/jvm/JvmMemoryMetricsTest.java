@@ -19,6 +19,9 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryCommittedMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMaxMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryUsedMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmMemoryMeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -55,6 +58,50 @@ class JvmMemoryMetricsTest {
 
         assertJvmMemoryMetrics("heap", extraTags);
         assertJvmMemoryMetrics("nonheap", extraTags);
+    }
+
+    @Test
+    void builderDefaults() {
+        JvmMemoryMetrics.builder().build().bindTo(registry);
+
+        assertJvmBufferMetrics("direct");
+        assertJvmBufferMetrics("mapped");
+
+        assertJvmMemoryMetrics("heap");
+        assertJvmMemoryMetrics("nonheap");
+    }
+
+    @Test
+    void builderWithOpenTelemetryConventions() {
+        JvmMemoryMetrics.builder().openTelemetryConventions().build().bindTo(registry);
+
+        assertJvmBufferMetrics("direct");
+        assertJvmBufferMetrics("mapped");
+
+        assertJvmMemoryMetrics("heap", Tags.empty(), true);
+        assertJvmMemoryMetrics("non_heap", Tags.empty(), true);
+    }
+
+    @Test
+    void builderWithCustomConventionsAndExtraTags() {
+        Tags extraTags = Tags.of("app", "test");
+        JvmMemoryMetrics.builder()
+            .extraTags(extraTags)
+            .memoryUsedConvention(JvmMemoryUsedMeterConvention.of("custom.memory.used",
+                    pool -> Tags.of("custom.pool", pool.getName())))
+            .memoryCommittedConvention(JvmMemoryCommittedMeterConvention.of("custom.memory.committed"))
+            .memoryMaxConvention(JvmMemoryMaxMeterConvention.of("custom.memory.max"))
+            .build()
+            .bindTo(registry);
+
+        Gauge memUsed = registry.get("custom.memory.used").tags(extraTags).tagKeys("custom.pool").gauge();
+        assertThat(memUsed.value()).isGreaterThanOrEqualTo(0);
+
+        Gauge memCommitted = registry.get("custom.memory.committed").tags(extraTags).gauge();
+        assertThat(memCommitted.value()).isNotNaN();
+
+        Gauge memMax = registry.get("custom.memory.max").tags(extraTags).gauge();
+        assertThat(memMax.value()).isNotNaN();
     }
 
     @Test

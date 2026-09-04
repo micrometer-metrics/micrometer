@@ -25,7 +25,13 @@ import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConvention
  *
  * @see io.micrometer.core.instrument.binder.system.ProcessorMetrics
  * @since 1.16.0
+ * @deprecated use individual convention types such as
+ * {@link MicrometerJvmCpuTimeMeterConvention},
+ * {@link MicrometerJvmCpuCountMeterConvention}, and
+ * {@link MicrometerJvmCpuLoadMeterConvention} instead
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class MicrometerJvmCpuMeterConventions implements JvmCpuMeterConventions {
 
     private final Tags extraTags;

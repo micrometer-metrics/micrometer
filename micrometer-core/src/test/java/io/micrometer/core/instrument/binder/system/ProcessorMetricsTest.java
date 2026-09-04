@@ -17,6 +17,9 @@ package io.micrometer.core.instrument.binder.system;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuCountMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuLoadMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuTimeMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmCpuMeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -86,6 +89,37 @@ class ProcessorMetricsTest {
         await().atMost(Duration.ofMillis(200))
             .untilAsserted(() -> assertThat(registry.get("process.cpu.usage").gauge().value()).isPositive());
         assertThat(registry.get("process.cpu.time").functionCounter().count()).isPositive();
+    }
+
+    @Test
+    void builderDefaults() {
+        ProcessorMetrics.builder().build().bindTo(registry);
+
+        assertThat(registry.get("system.cpu.count").gauge().value()).isPositive();
+        assertThat(registry.get("process.cpu.time").functionCounter().count()).isPositive();
+    }
+
+    @Test
+    void builderWithOpenTelemetryConventions() {
+        ProcessorMetrics.builder().openTelemetryConventions().build().bindTo(registry);
+
+        assertThat(registry.get("jvm.cpu.count").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.cpu.time").functionCounter().count()).isPositive();
+    }
+
+    @Test
+    void builderWithCustomConventionsAndExtraTags() {
+        Tags extraTags = Tags.of("app", "test");
+        ProcessorMetrics.builder()
+            .extraTags(extraTags)
+            .cpuCountConvention(JvmCpuCountMeterConvention.of("custom.cpu.count", Tags.of("type", "core")))
+            .cpuLoadConvention(JvmCpuLoadMeterConvention.of("custom.cpu.load"))
+            .cpuTimeConvention(JvmCpuTimeMeterConvention.of("custom.cpu.time"))
+            .build()
+            .bindTo(registry);
+
+        assertThat(registry.get("custom.cpu.count").tags(extraTags).tag("type", "core").gauge().value()).isPositive();
+        assertThat(registry.get("custom.cpu.time").tags(extraTags).functionCounter().count()).isPositive();
     }
 
     @Test
