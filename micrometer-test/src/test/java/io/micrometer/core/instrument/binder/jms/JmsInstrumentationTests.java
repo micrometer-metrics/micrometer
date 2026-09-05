@@ -156,9 +156,12 @@ class JmsInstrumentationTests {
             MessageProducer producer = session.createProducer(topic);
             producer.send(session.createTextMessage("test send"));
             assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-            assertThat(registry).hasObservationWithNameEqualTo("jms.message.process")
-                .that()
-                .hasLowCardinalityKeyValue("exception", "IllegalStateException");
+            // the listener counts the latch down before throwing, so the observation is
+            // only stopped with its error some time after the latch is released
+            await().atMost(Duration.ofSeconds(1))
+                .untilAsserted(() -> assertThat(registry).hasObservationWithNameEqualTo("jms.message.process")
+                    .that()
+                    .hasLowCardinalityKeyValue("exception", "IllegalStateException"));
         }
     }
 
