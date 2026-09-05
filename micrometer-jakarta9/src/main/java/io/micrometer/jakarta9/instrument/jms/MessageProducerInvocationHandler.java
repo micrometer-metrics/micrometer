@@ -43,16 +43,20 @@ class MessageProducerInvocationHandler implements InvocationHandler {
 
     private final ObservationRegistry registry;
 
-    MessageProducerInvocationHandler(MessageProducer target, ObservationRegistry registry) {
+    private final @Nullable JmsPublishObservationConvention customConvention;
+
+    MessageProducerInvocationHandler(MessageProducer target, ObservationRegistry registry,
+            @Nullable JmsPublishObservationConvention customConvention) {
         this.target = target;
         this.registry = registry;
+        this.customConvention = customConvention;
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if ("send".equals(method.getName()) && args[0] != null) {
             Message message = findMessageArgument(args);
-            Observation observation = JmsObservationDocumentation.JMS_MESSAGE_PUBLISH.observation(null,
+            Observation observation = JmsObservationDocumentation.JMS_MESSAGE_PUBLISH.observation(this.customConvention,
                     DEFAULT_CONVENTION, () -> new JmsPublishObservationContext(message), this.registry);
             observation.start();
             try (Observation.Scope scope = observation.openScope()) {
