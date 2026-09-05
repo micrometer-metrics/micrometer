@@ -17,6 +17,7 @@ package io.micrometer.jakarta9.instrument.jms;
 
 import io.micrometer.observation.ObservationRegistry;
 import jakarta.jms.Session;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
 
@@ -64,13 +65,38 @@ public abstract class JmsInstrumentation {
 
     /**
      * Instrument the {@link Session} given as argument for observability and record
-     * observations using the provided Observation registry.
+     * observations using the provided Observation registry and the
+     * {@link DefaultJmsPublishObservationConvention default} conventions.
      * @param session the target session to proxy for instrumentation
      * @param registry the Observation registry to use
      * @return the instrumented session that should be used to record observations
      */
     public static Session instrumentSession(Session session, ObservationRegistry registry) {
-        SessionInvocationHandler handler = new SessionInvocationHandler(session, registry);
+        return instrumentSession(session, registry, null, null);
+    }
+
+    /**
+     * Instrument the {@link Session} given as argument for observability and record
+     * observations using the provided Observation registry and custom
+     * {@link io.micrometer.observation.ObservationConvention conventions}.
+     * @param session the target session to proxy for instrumentation
+     * @param registry the Observation registry to use
+     * @param customPublishConvention the convention to apply to
+     * {@link JmsObservationDocumentation#JMS_MESSAGE_PUBLISH "jms.message.publish"}
+     * observations, or {@code null} to use the
+     * {@link DefaultJmsPublishObservationConvention default} one
+     * @param customProcessConvention the convention to apply to
+     * {@link JmsObservationDocumentation#JMS_MESSAGE_PROCESS "jms.message.process"}
+     * observations, or {@code null} to use the
+     * {@link DefaultJmsProcessObservationConvention default} one
+     * @return the instrumented session that should be used to record observations
+     * @since 1.18.0
+     */
+    public static Session instrumentSession(Session session, ObservationRegistry registry,
+            @Nullable JmsPublishObservationConvention customPublishConvention,
+            @Nullable JmsProcessObservationConvention customProcessConvention) {
+        SessionInvocationHandler handler = new SessionInvocationHandler(session, registry, customPublishConvention,
+                customProcessConvention);
         return (Session) Proxy.newProxyInstance(session.getClass().getClassLoader(), new Class[] { Session.class },
                 handler);
     }
