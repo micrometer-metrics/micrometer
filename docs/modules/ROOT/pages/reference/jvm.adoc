@@ -69,24 +69,59 @@ To use the following `ExecutorService` instances, `--add-opens java.base/java.ut
 
 See also the general xref:../concepts/meter-convention.adoc[Meter Conventions] documentation.
 
-The following `MeterBinder` implementations have a constructor to customize the convention used for some or all of the meters they produce.
-This can be used as an alternative to customizing the Meter names and tags with a `MeterFilter`.
+The following `MeterBinder` implementations provide a `builder()` to customize the convention used for some or all of the meters they produce:
 
 * `ClassLoaderMetrics`
 * `JvmMemoryMetrics`
 * `JvmThreadMetrics`
-* `ProcessorMetrics`
+* `ProcessorMetrics` (see also xref:./system.adoc#system-processor[System Processor Metrics])
+
+This can be used as an alternative to customizing Meter names and tags with a `MeterFilter`.
 
 === OpenTelemetry Semantic Conventions
 
-We provide `MeterConvention` implementations of the applicable https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/[OpenTelemetry semantic conventions for JVM metrics] that have been marked stable as of the version 1.37.0.
-These can be passed to the constructors of the above binders to change the convention from the default.
-Use the following classes:
+Micrometer provides implementations of the applicable https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/[OpenTelemetry semantic conventions for JVM metrics] that have been marked stable as of version 1.44.0.
 
-* `OpenTelemetryJvmClassLoadingMeterConventions`
-* `OpenTelemetryJvmMemoryMeterConventions`
-* `OpenTelemetryJvmThreadMeterConventions`
-* `OpenTelemetryJvmCpuMeterConventions`
+Applicable binders have builders that provide a convenience method `openTelemetryConventions()` for configuring the available OpenTelemetry semantic conventions:
+
+[source, java]
+----
+ClassLoaderMetrics.builder().openTelemetryConventions().build().bindTo(registry);
+JvmMemoryMetrics.builder().openTelemetryConventions().build().bindTo(registry);
+JvmThreadMetrics.builder().openTelemetryConventions().build().bindTo(registry);
+ProcessorMetrics.builder().openTelemetryConventions().build().bindTo(registry);
+----
+
+You can also configure individual OpenTelemetry convention implementations on each binder builder:
+
+* `ClassLoaderMetrics`:
+** `OpenTelemetryJvmClassCountMeterConvention`
+** `OpenTelemetryJvmClassLoadedMeterConvention`
+** `OpenTelemetryJvmClassUnloadedMeterConvention`
+* `JvmMemoryMetrics`:
+** `OpenTelemetryJvmMemoryUsedMeterConvention`
+** `OpenTelemetryJvmMemoryCommittedMeterConvention`
+** `OpenTelemetryJvmMemoryMaxMeterConvention`
+* `JvmThreadMetrics`:
+** `OpenTelemetryJvmThreadCountMeterConvention`
+* `ProcessorMetrics`:
+** `OpenTelemetryJvmCpuTimeMeterConvention`
+** `OpenTelemetryJvmCpuCountMeterConvention`
+** `OpenTelemetryJvmCpuLoadMeterConvention`
+
+=== Customizing Individual Conventions
+
+You can customize individual conventions using the builder and static `of(...)` factory methods on the convention interfaces:
+
+[source, java]
+----
+ClassLoaderMetrics.builder()
+    .classCountConvention(JvmClassCountMeterConvention.of("custom.class.count", Tags.of("type", "count")))
+    .classLoadedConvention(JvmClassLoadedMeterConvention.of("custom.class.loaded"))
+    .classUnloadedConvention(JvmClassUnloadedMeterConvention.of("custom.class.unloaded"))
+    .build()
+    .bindTo(registry);
+----
 
 == Java 21 Metrics
 
