@@ -102,7 +102,7 @@ class GrpcObservationTest {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         observationRegistry.observationConfig()
             .observationHandler(new ObservationTextPublisher())
-            .observationHandler(new DefaultMeterObservationHandler(meterRegistry))
+            .observationHandler(DefaultMeterObservationHandler.builder(meterRegistry).build())
             .observationHandler(serverHandler)
             .observationHandler(clientHandler);
 

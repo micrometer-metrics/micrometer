@@ -49,12 +49,19 @@ abstract class InstrumentationVerificationTests {
     /**
      * Helper method for creating a {@link TestObservationRegistry} to run the tests also
      * using the Observation API.
+     * <p>
+     * The registered handler uses the {@link DefaultMeterObservationHandler} defaults,
+     * which as of 1.18.0 do not include the active observation {@link LongTaskTimer}
+     * (named {@code <observation-name>.active}). Override this method and use
+     * {@link DefaultMeterObservationHandler.Builder#includeActiveObservationLongTaskTimer(boolean)}
+     * if your instrumentation verification needs it.
      * @return a {@link TestObservationRegistry} with a
      * {@link DefaultMeterObservationHandler} registered
      */
     protected TestObservationRegistry createObservationRegistryWithMetrics() {
         TestObservationRegistry observationRegistry = TestObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(getRegistry()));
+        observationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(getRegistry()).build());
         return observationRegistry;
     }
 

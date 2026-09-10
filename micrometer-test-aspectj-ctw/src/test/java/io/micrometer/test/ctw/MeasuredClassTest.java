@@ -48,7 +48,8 @@ class MeasuredClassTest {
 
     @BeforeEach
     void setUp() {
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        observationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(registry).build());
         // Global registry must be used because aspect gets created for us
         Metrics.addRegistry(registry);
         Observations.setRegistry(observationRegistry);

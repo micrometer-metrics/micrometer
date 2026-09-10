@@ -66,7 +66,7 @@ class MicrometerHttpClientTests {
         ObservationRegistry observationRegistry = TestObservationRegistry.create();
         observationRegistry.observationConfig()
             .observationHandler(new ObservationHandler.AllMatchingCompositeObservationHandler(headerSettingHandler(),
-                    new DefaultMeterObservationHandler(meterRegistry)));
+                    DefaultMeterObservationHandler.builder(meterRegistry).build()));
 
         HttpRequest request = HttpRequest.newBuilder()
             .GET()
