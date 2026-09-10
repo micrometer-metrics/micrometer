@@ -103,8 +103,8 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
      * returned builder does <em>not</em> create the active observation
      * {@link LongTaskTimer} (named {@code <observation-name>.active}) unless
      * {@link Builder#includeActiveObservationLongTaskTimer(boolean)} is set to
-     * {@code true}. This differs from the deprecated constructors, which always create
-     * it.
+     * {@code true}. This differs from the deprecated constructors, which create it unless
+     * {@link IgnoredMeters#LONG_TASK_TIMER} is passed.
      * @param meterRegistry the MeterRegistry in which to register meters
      * @return a new builder
      * @since 1.18.0

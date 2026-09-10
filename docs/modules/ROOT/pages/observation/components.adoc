@@ -132,8 +132,6 @@ When registered on an `ObservationRegistry`, it translates Observation lifecycle
 
 NOTE: Only low cardinality key values are used as meter tags. High cardinality key values are not included in meters because they can cause a cardinality explosion in the metrics backend.
 
-NOTE: As of 1.18.0, use `DefaultMeterObservationHandler.builder(MeterRegistry)` to create the handler; the constructors are deprecated and are planned for removal in 2.0. The deprecated constructors always create the `<observation-name>.active` `LongTaskTimer`, but the builder does not create it unless you ask for it. If you are migrating from a deprecated constructor and want to keep that meter, use `DefaultMeterObservationHandler.builder(registry).includeActiveObservationLongTaskTimer(true).build()`.
-
 The following example shows how to register `DefaultMeterObservationHandler` and the metrics it creates:
 
 [source,java,subs=+attributes]
