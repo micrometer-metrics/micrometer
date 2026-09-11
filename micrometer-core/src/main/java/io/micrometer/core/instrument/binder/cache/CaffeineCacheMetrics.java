@@ -182,8 +182,11 @@ public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache
             .register(registry);
 
         if (cache instanceof LoadingCache) {
-            // dividing these gives you a measure of load latency
-            TimeGauge.builder("cache.load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
+            // totalLoadTime() and loadCount() are ever-increasing monotonic values;
+            // FunctionTimer correctly represents them as a summary (count + total time)
+            // and allows backends to convert nanoseconds to their preferred time unit.
+            FunctionTimer.builder("cache.load.duration", cache,
+                        c -> c.stats().loadCount(), c -> c.stats().totalLoadTime(), TimeUnit.NANOSECONDS)
                 .tags(getTagsWithCacheName())
                 .description("The time the cache has spent loading new values")
                 .register(registry);
