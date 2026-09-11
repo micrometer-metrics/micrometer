@@ -18,6 +18,8 @@ package io.micrometer.core.instrument.binder.logging;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.logging.log4j.Level;
@@ -35,11 +37,14 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 /**
@@ -47,6 +52,7 @@ import static org.awaitility.Awaitility.await;
  *
  * @author Steven Sheehy
  * @author Johnny Lim
+ * @author Harsh Verma
  */
 class Log4j2MetricsTest {
 
@@ -90,6 +96,31 @@ class Log4j2MetricsTest {
     }
 
     @Test
+    void log4j2LevelMetricsWithDynamicTags() {
+        // tag::setup[]
+        List<LogInterceptor> logInterceptorList = new ArrayList<>();
+        logInterceptorList.add(event -> List
+            .of(Tag.of("exception", event.getThrown() != null ? event.getThrown().getClass().getSimpleName() : "NA")));
+        new Log4j2Metrics(emptyList(), (LoggerContext) LogManager.getContext(false), logInterceptorList)
+            .bindTo(registry);
+        // end::setup[]
+
+        assertThatThrownBy(() -> registry.get("log4j2.events").counter()).isInstanceOf(MeterNotFoundException.class);
+
+        // tag::example[]
+        Configurator.setLevel(Log4j2MetricsTest.class.getName(), Level.INFO);
+        Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
+        logger.error("error", NullPointerException::new);
+
+        assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(1.0);
+        assertThat(registry.get("log4j2.events")
+            .tags("level", "error", "exception", "NullPointerException")
+            .counter()
+            .count()).isEqualTo(1.0);
+        // end::example[]
+    }
+
+    @Test
     void filterWhenLoggerAdditivityIsFalseShouldWork() {
         Logger additivityDisabledLogger = LogManager.getLogger("additivityDisabledLogger");
         Configurator.setLevel("additivityDisabledLogger", Level.INFO);
@@ -101,7 +132,7 @@ class Log4j2MetricsTest {
 
         new Log4j2Metrics().bindTo(registry);
 
-        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
 
         additivityDisabledLogger.info("Hello, world!");
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
@@ -118,7 +149,7 @@ class Log4j2MetricsTest {
 
         new Log4j2Metrics().bindTo(registry);
 
-        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
 
         logger.info("Hello, world!");
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
@@ -131,7 +162,7 @@ class Log4j2MetricsTest {
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
         logger.isErrorEnabled();
 
-        assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
     }
 
     @Test
@@ -163,7 +194,7 @@ class Log4j2MetricsTest {
 
         new Log4j2Metrics(emptyList(), loggerContext).bindTo(registry);
 
-        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
         logger1.info("Hello, world!");
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
     }
@@ -179,7 +210,7 @@ class Log4j2MetricsTest {
 
         new Log4j2Metrics().bindTo(registry);
 
-        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
         logger.info("Hello, world!");
         logger.info("Hello, world!");
         logger.info("Hello, world!");
