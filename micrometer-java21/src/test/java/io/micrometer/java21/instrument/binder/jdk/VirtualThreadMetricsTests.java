@@ -31,6 +31,7 @@ import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 /**
@@ -114,6 +115,45 @@ class VirtualThreadMetricsTests {
         finally {
             future.cancel(true);
         }
+    }
+
+    @Test
+    void defaultConstructorIsUnchanged() {
+        try (VirtualThreadMetrics metrics = new VirtualThreadMetrics()) {
+            // no exception expected — regression guard for default ctor
+        }
+    }
+
+    @Test
+    void customPinnedThresholdConstructorAcceptsValidDuration() {
+        try (VirtualThreadMetrics metrics = new VirtualThreadMetrics(Duration.ofMillis(50))) {
+            // no exception expected
+        }
+    }
+
+    @Test
+    void customPinnedThresholdWithTagsConstructorAcceptsValidDuration() {
+        try (VirtualThreadMetrics metrics = new VirtualThreadMetrics(Duration.ofMillis(50), Tags.of("k", "v"))) {
+            // no exception expected
+        }
+    }
+
+    @Test
+    @SuppressWarnings("NullAway")
+    void customPinnedThresholdConstructorRejectsNullThreshold() {
+        assertThatThrownBy(() -> new VirtualThreadMetrics((Duration) null)).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    @SuppressWarnings("NullAway")
+    void customPinnedThresholdWithTagsConstructorRejectsNullThreshold() {
+        assertThatThrownBy(() -> new VirtualThreadMetrics(null, Tags.empty())).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void customPinnedThresholdConstructorRejectsNegativeThreshold() {
+        assertThatThrownBy(() -> new VirtualThreadMetrics(Duration.ofMillis(-1)))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
 }
