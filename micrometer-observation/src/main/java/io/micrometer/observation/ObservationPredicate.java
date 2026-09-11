@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.function.BiPredicate;
 
 /**
@@ -26,6 +28,6 @@ import java.util.function.BiPredicate;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface ObservationPredicate extends BiPredicate<String, Observation.Context> {
+public interface ObservationPredicate extends BiPredicate<@Nullable String, Observation.Context> {
 
 }

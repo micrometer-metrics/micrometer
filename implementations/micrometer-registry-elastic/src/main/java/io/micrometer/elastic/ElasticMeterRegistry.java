@@ -200,7 +200,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         if (!matcher.find()) {
             throw new IllegalArgumentException("Unexpected response body: " + responseBody);
         }
-        return Integer.parseInt(matcher.group(1));
+        String version = matcher.group(1);
+        if (version == null) {
+            throw new IllegalArgumentException("Unexpected response body: " + responseBody);
+        }
+        return Integer.parseInt(version);
     }
 
     // VisibleForTesting

@@ -175,6 +175,8 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
      * @param type The pool type to listen for.
      * @param perObject Metric registration handler when a new MBean is created.
      */
+    // Passing null handback to MBeanServer.addNotificationListener
+    @SuppressWarnings("NullAway")
     private void registerNotificationListener(String type, BiConsumer<ObjectName, Tags> perObject) {
         NotificationListener notificationListener =
                 // in notification listener, we cannot get attributes for the registered

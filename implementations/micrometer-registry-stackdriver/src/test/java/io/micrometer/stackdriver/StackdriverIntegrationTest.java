@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,7 +45,8 @@ class StackdriverIntegrationTest {
     static final StackdriverConfig CONFIG = new StackdriverConfig() {
         @Override
         public String projectId() {
-            return System.getenv("GOOGLE_CLOUD_PROJECT_ID");
+            return Objects.requireNonNull(System.getenv("GOOGLE_CLOUD_PROJECT_ID"),
+                    "GOOGLE_CLOUD_PROJECT_ID env var needs to be set!");
         }
 
         @Override

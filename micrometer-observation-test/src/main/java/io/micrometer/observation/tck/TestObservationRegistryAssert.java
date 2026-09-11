@@ -80,7 +80,8 @@ public class TestObservationRegistryAssert
                     "There must be only a single observation, however there are <%s> registered observations with names <%s>",
                     contexts.size(), observationNames(contexts));
         }
-        return new TestObservationRegistryAssertReturningObservationContextAssert(contexts.peek(), this);
+        return new TestObservationRegistryAssertReturningObservationContextAssert(
+                Objects.requireNonNull(contexts.peek()), this);
     }
 
     private void failForNoObservations() {

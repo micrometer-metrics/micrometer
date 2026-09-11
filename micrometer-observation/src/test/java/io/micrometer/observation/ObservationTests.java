@@ -88,7 +88,7 @@ class ObservationTests {
     void usingParentObservationToMatchPredicate() {
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig()
-            .observationPredicate((s, context) -> !s.equals("child") || context.getParentObservation() != null);
+            .observationPredicate((s, context) -> !"child".equals(s) || context.getParentObservation() != null);
 
         Observation childWithoutParent = Observation.createNotStarted("child", registry);
         assertThat(childWithoutParent.isNoop()).isTrue();

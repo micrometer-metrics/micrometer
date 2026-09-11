@@ -170,11 +170,16 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
         try {
             Method m = MemoryMXBean.class.getMethod("getTotalGcCpuTime");
-            if ((Long) m.invoke(memoryMXBean) >= 0) {
+            Object initialValue = m.invoke(memoryMXBean);
+            if (initialValue instanceof Long && (Long) initialValue >= 0) {
                 FunctionCounter.builder("jvm.gc.cpu.time", memoryMXBean, bean -> {
                     try {
-                        long nanos = (Long) m.invoke(bean);
-                        return nanos >= 0 ? (double) nanos : 0;
+                        Object val = m.invoke(bean);
+                        if (val instanceof Long) {
+                            long nanos = (Long) val;
+                            return nanos >= 0 ? (double) nanos : 0;
+                        }
+                        return 0;
                     }
                     catch (Exception e) {
                         return 0;

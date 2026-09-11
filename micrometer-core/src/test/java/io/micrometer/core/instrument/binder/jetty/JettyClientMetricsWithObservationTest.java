@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.jetty;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
+import org.eclipse.jetty.client.api.Request;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,9 +37,13 @@ class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
         this.httpClient.getRequestListeners().removeIf(listener -> true);
         // noinspection deprecation
         this.httpClient.getRequestListeners()
-            .add(JettyClientMetrics.builder(registry, (request, result) -> request.getURI().getPath())
+            .add(JettyClientMetrics.builder(registry, (request, result) -> getUriPath(request))
                 .observationRegistry(observationRegistry)
                 .build());
+    }
+
+    private static String getUriPath(Request request) {
+        return (request != null && request.getURI().getPath() != null) ? request.getURI().getPath() : "UNKNOWN";
     }
 
     @Test

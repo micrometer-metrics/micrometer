@@ -147,15 +147,12 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
                         e);
                 return;
             }
-        }
-        pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
-            if (detector instanceof ClockDriftPauseDetector) {
+            pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
                 ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
                 return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
                         clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
-            }
-            return null;
-        });
+            });
+        }
 
         if (pauseDetector instanceof SimplePauseDetector) {
             org.LatencyUtils.PauseDetector pauseDetector = (org.LatencyUtils.PauseDetector) this.pauseDetector;

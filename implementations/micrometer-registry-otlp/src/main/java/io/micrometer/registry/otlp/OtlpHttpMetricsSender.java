@@ -71,7 +71,8 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
 
     private String getUserAgentHeader() {
         String userAgent = "Micrometer-OTLP-Exporter-Java";
-        String version = getClass().getPackage().getImplementationVersion();
+        Package pkg = getClass().getPackage();
+        String version = pkg != null ? pkg.getImplementationVersion() : null;
         if (version != null) {
             userAgent += "/" + version;
         }

@@ -449,8 +449,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void addDistributionStatisticSamples(DistributionStatisticConfig distributionStatisticConfig,
-            MicrometerCollector collector, HistogramSupport histogramSupport, Supplier<Exemplar> lastExemplarSupplier,
-            Supplier<Exemplar[]> histogramExemplarsSupplier, List<String> tagValues, boolean forLongTaskTimer) {
+            MicrometerCollector collector, HistogramSupport histogramSupport,
+            Supplier<@Nullable Exemplar> lastExemplarSupplier,
+            Supplier<Exemplar @Nullable []> histogramExemplarsSupplier, List<String> tagValues,
+            boolean forLongTaskTimer) {
         collector.add(tagValues, (conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 

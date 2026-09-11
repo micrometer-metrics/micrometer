@@ -729,7 +729,7 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("attributes from @Timed annotation apply to builder")
         void timedAnnotation() {
-            Timed timed = AnnotationHolder.class.getAnnotation(Timed.class);
+            Timed timed = requireNonNull(AnnotationHolder.class.getAnnotation(Timed.class));
             LongTaskTimer ltt = LongTaskTimer.builder(timed).register(registry);
             Meter.Id id = ltt.getId();
             assertThat(id.getName()).isEqualTo("my.name");

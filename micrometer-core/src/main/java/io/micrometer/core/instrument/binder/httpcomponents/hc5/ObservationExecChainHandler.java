@@ -142,11 +142,11 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
 
         private final Observation observation;
 
-        private final AtomicMarkableReference<Cancellable> dependencyRef;
+        private final AtomicMarkableReference<@Nullable Cancellable> dependencyRef;
 
         ObservableCancellableDependency(Observation observation) {
             this.observation = observation;
-            this.dependencyRef = new AtomicMarkableReference<>(null, false);
+            this.dependencyRef = new AtomicMarkableReference<@Nullable Cancellable>(null, false);
         }
 
         @Override
