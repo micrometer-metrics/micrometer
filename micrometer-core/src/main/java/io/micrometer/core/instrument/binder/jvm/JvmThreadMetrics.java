@@ -178,10 +178,13 @@ public class JvmThreadMetrics implements MeterBinder {
         }
 
         /**
-         * Use OpenTelemetry semantic conventions for all meters. Individual conventions
-         * can still be overridden by calling the specific convention methods after this
-         * one.
+         * Use OpenTelemetry semantic conventions for applicable meters that have a stable
+         * semantic convention as of the version documented in
+         * {@link io.micrometer.core.instrument.binder.jvm.convention.otel the otel
+         * conventions package}. Individual conventions can still be overridden by calling
+         * the specific convention methods after this one.
          * @return this builder
+         * @see io.micrometer.core.instrument.binder.jvm.convention.otel
          */
         public Builder openTelemetryConventions() {
             this.threadCountConvention = new OpenTelemetryJvmThreadCountMeterConvention();

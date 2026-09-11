@@ -21,8 +21,9 @@ import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuCountMeterConve
  * Convention for CPU count metrics based on OpenTelemetry semantic conventions.
  *
  * @see <a href=
- * "https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/runtime/jvm-metrics.md">OpenTelemetry
- * Semantic conventions for JVM metrics v1.44.0</a>
+ * "https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmcpucount">OpenTelemetry
+ * semantic convention for jvm.cpu.count</a>
+ * @see io.micrometer.core.instrument.binder.jvm.convention.otel
  * @see io.micrometer.core.instrument.binder.system.ProcessorMetrics
  * @since 1.18.0
  */

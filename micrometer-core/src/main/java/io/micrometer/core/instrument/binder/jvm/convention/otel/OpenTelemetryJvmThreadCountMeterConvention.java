@@ -24,8 +24,9 @@ import java.util.Locale;
  * Convention for JVM thread count metrics based on OpenTelemetry semantic conventions.
  *
  * @see <a href=
- * "https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/runtime/jvm-metrics.md">OpenTelemetry
- * Semantic conventions for JVM metrics v1.44.0</a>
+ * "https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmthreadcount">OpenTelemetry
+ * semantic convention for jvm.thread.count</a>
+ * @see io.micrometer.core.instrument.binder.jvm.convention.otel
  * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
  * @since 1.18.0
  */

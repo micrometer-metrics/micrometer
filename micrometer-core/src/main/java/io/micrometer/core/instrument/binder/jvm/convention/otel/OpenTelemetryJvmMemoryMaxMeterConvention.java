@@ -25,8 +25,9 @@ import java.lang.management.MemoryType;
  * Convention for JVM memory max metrics based on OpenTelemetry semantic conventions.
  *
  * @see <a href=
- * "https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/runtime/jvm-metrics.md">OpenTelemetry
- * Semantic conventions for JVM metrics v1.44.0</a>
+ * "https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmmemorylimit">OpenTelemetry
+ * semantic convention for jvm.memory.limit</a>
+ * @see io.micrometer.core.instrument.binder.jvm.convention.otel
  * @see io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
  * @since 1.18.0
  */

@@ -22,8 +22,9 @@ import io.micrometer.core.instrument.binder.jvm.convention.JvmClassCountMeterCon
  * conventions.
  *
  * @see <a href=
- * "https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/runtime/jvm-metrics.md">OpenTelemetry
- * Semantic conventions for JVM metrics v1.44.0</a>
+ * "https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmclasscount">OpenTelemetry
+ * semantic convention for jvm.class.count</a>
+ * @see io.micrometer.core.instrument.binder.jvm.convention.otel
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
  * @since 1.18.0
  */
