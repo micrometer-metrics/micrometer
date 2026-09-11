@@ -46,8 +46,16 @@ class MeasuredClassTest {
         System.out.println("java.version: " + System.getProperty("java.version"));
     }
 
+    @SuppressWarnings("deprecation")
     @BeforeEach
     void setUp() {
+        // Intentionally uses the deprecated constructor rather than
+        // DefaultMeterObservationHandler.builder(MeterRegistry): on Java < 17 builds this
+        // module compiles against a published micrometer-core SNAPSHOT instead of the
+        // local project (see this module's build.gradle and gh-6064), so API added in the
+        // current branch is not available here. This test only needs some
+        // MeterObservationHandler to verify compile-time weaving; which constructor is
+        // used is irrelevant to what it covers.
         observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
         // Global registry must be used because aspect gets created for us
         Metrics.addRegistry(registry);

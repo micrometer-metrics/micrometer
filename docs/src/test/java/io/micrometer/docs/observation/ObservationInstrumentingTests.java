@@ -88,7 +88,7 @@ class ObservationInstrumentingTests {
     void setup() {
         // tag::setup[]
         ObservationRegistry registry = ObservationRegistry.create();
-        registry.observationConfig().observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+        registry.observationConfig().observationHandler(DefaultMeterObservationHandler.builder(meterRegistry).build());
         // end::setup[]
 
         this.registry = registry;

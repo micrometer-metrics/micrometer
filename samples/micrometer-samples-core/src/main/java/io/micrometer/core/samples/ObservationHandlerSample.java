@@ -38,7 +38,7 @@ public class ObservationHandlerSample {
     public static void main(String[] args) throws InterruptedException {
         observationRegistry.observationConfig()
             .observationHandler(new ObservationTextPublisher())
-            .observationHandler(new DefaultMeterObservationHandler(registry));
+            .observationHandler(DefaultMeterObservationHandler.builder(registry).build());
         observationRegistry.observationConfig()
             .observationConvention(new CustomObservationConvention())
             .observationPredicate(new IgnoringObservationPredicate());

@@ -80,7 +80,8 @@ public abstract class MeterRegistryCompatibilityKit {
         // assigned here rather than at initialization so subclasses can use fields in
         // their registry() implementation
         registry = registry();
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        observationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(registry).build());
     }
 
     @Test
@@ -919,19 +920,14 @@ public abstract class MeterRegistryCompatibilityKit {
                 .lowCardinalityKeyValue("staticTag", "42")
                 .start();
 
-            // created after start, LongTaskTimer won't have it
+            // added after start, but the Timer is created on stop so it has this tag
             observation.lowCardinalityKeyValue("dynamicTag", "24");
 
             clock(registry).add(1, TimeUnit.SECONDS);
             observation.event(Observation.Event.of("testEvent", "event for testing"));
 
-            LongTaskTimer longTaskTimer = registry.more().longTaskTimer("myObservation.active", "staticTag", "42");
-            assertThat(longTaskTimer.activeTasks()).isEqualTo(1);
-
             observation.stop();
             clock(registry).add(step());
-
-            assertThat(longTaskTimer.activeTasks()).isEqualTo(0);
 
             Timer timer = registry.timer("myObservation", "error", KeyValue.NONE_VALUE, "staticTag", "42", "dynamicTag",
                     "24");
@@ -942,6 +938,38 @@ public abstract class MeterRegistryCompatibilityKit {
 
             Counter counter = registry.counter("myObservation.testEvent", "staticTag", "42", "dynamicTag", "24");
             assertThat(counter.count()).isEqualTo(1.0);
+
+            // the DefaultMeterObservationHandler defaults do not include it
+            assertThat(registry.find("myObservation.active").longTaskTimers()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("record with stateful Observation instance including the active observation LongTaskTimer")
+        void recordWithObservationIncludingActiveObservationLongTaskTimer() {
+            ObservationRegistry longTaskTimerObservationRegistry = ObservationRegistry.create();
+            longTaskTimerObservationRegistry.observationConfig()
+                .observationHandler(DefaultMeterObservationHandler.builder(registry)
+                    .includeActiveObservationLongTaskTimer(true)
+                    .build());
+
+            Observation observation = Observation
+                .createNotStarted("myLongTaskObservation", longTaskTimerObservationRegistry)
+                .lowCardinalityKeyValue("staticTag", "42")
+                .start();
+
+            // created after start, LongTaskTimer won't have it
+            observation.lowCardinalityKeyValue("dynamicTag", "24");
+
+            clock(registry).add(1, TimeUnit.SECONDS);
+
+            LongTaskTimer longTaskTimer = registry.more()
+                .longTaskTimer("myLongTaskObservation.active", "staticTag", "42");
+            assertThat(longTaskTimer.activeTasks()).isEqualTo(1);
+
+            observation.stop();
+            clock(registry).add(step());
+
+            assertThat(longTaskTimer.activeTasks()).isEqualTo(0);
         }
 
         @Test
