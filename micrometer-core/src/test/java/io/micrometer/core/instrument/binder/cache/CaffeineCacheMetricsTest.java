@@ -20,9 +20,11 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.testsupport.system.CapturedOutput;
@@ -102,7 +104,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
         assertThat(meterRegistry.find("cache.load.duration").timeGauge()).isNull();
         assertThat(output).doesNotContain(
-                "The cache 'testCache' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.");
+                "The cache 'testCache' is not recording statistics. Only meters that do not require cache statistics will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.");
     }
 
     @Test
@@ -123,7 +125,58 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
         assertThat(metrics.size()).isOne();
         assertThat(meterRegistry.get("cache.size").gauge().value()).isOne();
         assertThat(output).contains(
-                "The cache 'testCache' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.");
+                "The cache 'testCache' is not recording statistics. Only meters that do not require cache statistics will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.");
+    }
+
+    @Test
+    void reportUtilizationForBoundedCache() {
+        Cache<String, String> cache = Caffeine.newBuilder().maximumSize(10).recordStats().build();
+        cache.put("a", "1");
+        cache.put("b", "2");
+
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
+
+        Gauge utilization = meterRegistry.get("cache.utilization").tags(expectedTag).gauge();
+        assertThat(utilization.value()).isEqualTo(20.0);
+        assertThat(utilization.getId().getBaseUnit()).isEqualTo(BaseUnits.PERCENT);
+    }
+
+    @Test
+    void reportUtilizationForWeightedCache() {
+        Cache<String, String> cache = Caffeine.newBuilder()
+            .maximumWeight(10)
+            .weigher((String key, String value) -> value.length())
+            .recordStats()
+            .build();
+        cache.put("a", "123");
+        cache.put("b", "12");
+
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
+
+        assertThat(meterRegistry.get("cache.utilization").tags(expectedTag).gauge().value()).isEqualTo(50.0);
+    }
+
+    @Test
+    void doesNotReportUtilizationForUnboundedCache() {
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
+
+        assertThat(meterRegistry.find("cache.utilization").tags(expectedTag).gauge()).isNull();
+    }
+
+    @Test
+    void reportUtilizationWithoutRecordStats(CapturedOutput output) {
+        Cache<String, String> cache = Caffeine.newBuilder().maximumSize(10).build();
+        cache.put("a", "1");
+
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
+
+        assertThat(meterRegistry.get("cache.utilization").tags(expectedTag).gauge().value()).isEqualTo(10.0);
+        assertThat(output).contains(
+                "The cache 'testCache' is not recording statistics. Only meters that do not require cache statistics will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.");
     }
 
     @Test
