@@ -52,7 +52,8 @@ public class JvmThreadMetrics implements MeterBinder {
     }
 
     /**
-     * Uses the default convention with the provided extra tags.
+     * Uses the default convention with the provided extra tags. If a conflict occurs
+     * between extra tags and convention tags, the convention tag takes precedence.
      * @param extraTags tags to add to each meter's tags produced by this binder
      */
     public JvmThreadMetrics(Iterable<Tag> extraTags) {
@@ -121,8 +122,8 @@ public class JvmThreadMetrics implements MeterBinder {
             threadBean.getAllThreadIds();
             for (Thread.State state : Thread.State.values()) {
                 Gauge.builder(threadCountConvention.getName(), threadBean, (bean) -> getThreadStateCount(bean, state))
-                    .tags(threadCountConvention.getTags(state))
                     .tags(extraTags)
+                    .tags(threadCountConvention.getTags(state))
                     .description("The current number of threads")
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry);
@@ -156,7 +157,8 @@ public class JvmThreadMetrics implements MeterBinder {
         }
 
         /**
-         * Extra tags to add to meters registered by this binder.
+         * Extra tags to add to meters registered by this binder. If a conflict occurs
+         * between extra tags and convention tags, the convention tag takes precedence.
          * @param extraTags tags to add
          * @return this builder
          */

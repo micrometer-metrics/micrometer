@@ -62,7 +62,8 @@ public class JvmMemoryMetrics implements MeterBinder {
     }
 
     /**
-     * Uses the default convention with the provided extra tags.
+     * Uses the default convention with the provided extra tags. If a conflict occurs
+     * between extra tags and convention tags, the convention tag takes precedence.
      * @param extraTags tags to add to each meter's tags produced by this binder
      */
     public JvmMemoryMetrics(Iterable<Tag> extraTags) {
@@ -137,8 +138,8 @@ public class JvmMemoryMetrics implements MeterBinder {
             Gauge
                 .builder(memoryUsedConvention.getName(), memoryPoolBean,
                         (mem) -> getUsageValue(mem, MemoryUsage::getUsed))
-                .tags(memoryUsedConvention.getTags(memoryPoolBean))
                 .tags(extraTags)
+                .tags(memoryUsedConvention.getTags(memoryPoolBean))
                 .description("The amount of used memory")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
@@ -146,8 +147,8 @@ public class JvmMemoryMetrics implements MeterBinder {
             Gauge
                 .builder(memoryCommittedConvention.getName(), memoryPoolBean,
                         (mem) -> getUsageValue(mem, MemoryUsage::getCommitted))
-                .tags(memoryCommittedConvention.getTags(memoryPoolBean))
                 .tags(extraTags)
+                .tags(memoryCommittedConvention.getTags(memoryPoolBean))
                 .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
@@ -155,8 +156,8 @@ public class JvmMemoryMetrics implements MeterBinder {
             Gauge
                 .builder(memoryMaxConvention.getName(), memoryPoolBean,
                         (mem) -> getUsageValue(mem, MemoryUsage::getMax))
-                .tags(memoryMaxConvention.getTags(memoryPoolBean))
                 .tags(extraTags)
+                .tags(memoryMaxConvention.getTags(memoryPoolBean))
                 .description("The maximum amount of memory in bytes that can be used for memory management")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
@@ -182,7 +183,8 @@ public class JvmMemoryMetrics implements MeterBinder {
         }
 
         /**
-         * Extra tags to add to meters registered by this binder.
+         * Extra tags to add to meters registered by this binder. If a conflict occurs
+         * between extra tags and convention tags, the convention tag takes precedence.
          * @param extraTags tags to add
          * @return this builder
          */

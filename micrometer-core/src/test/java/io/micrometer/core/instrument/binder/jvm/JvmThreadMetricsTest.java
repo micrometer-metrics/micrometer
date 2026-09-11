@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadCountMeterConvention;
@@ -115,6 +116,16 @@ class JvmThreadMetricsTest {
         assertThat(registry.get("jvm.threads.live").tags(extraTags).gauge().value()).isPositive();
         assertThat(registry.get("custom.thread.count").tags(extraTags).tag("custom.state", "RUNNABLE").gauge().value())
             .isPositive();
+    }
+
+    @Test
+    void conventionTagsTakePrecedenceOverConflictingExtraTags() {
+        Tags extraTags = Tags.of("state", "from-extra-tags");
+        new JvmThreadMetrics(extraTags).bindTo(registry);
+
+        Gauge runnableGauge = registry.get("jvm.threads.states").tag("state", "runnable").gauge();
+        assertThat(runnableGauge.value()).isPositive();
+        assertThat(runnableGauge.getId().getTag("state")).isEqualTo("runnable");
     }
 
     @Test

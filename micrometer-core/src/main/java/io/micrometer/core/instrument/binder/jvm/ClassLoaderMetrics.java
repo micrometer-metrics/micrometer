@@ -58,7 +58,9 @@ public class ClassLoaderMetrics implements MeterBinder {
     }
 
     /**
-     * Class loader metrics using the default convention with extra tags added.
+     * Class loader metrics using the default convention with extra tags added. If a
+     * conflict occurs between extra tags and convention tags, the convention tag takes
+     * precedence.
      * @param extraTags additional tags to add to metrics registered by this binder
      */
     public ClassLoaderMetrics(Iterable<Tag> extraTags) {
@@ -106,24 +108,24 @@ public class ClassLoaderMetrics implements MeterBinder {
         ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();
 
         Gauge.builder(classCountConvention.getName(), classLoadingBean, ClassLoadingMXBean::getLoadedClassCount)
-            .tags(classCountConvention.getTags())
             .tags(extraTags)
+            .tags(classCountConvention.getTags())
             .description("The number of classes that are currently loaded in the Java virtual machine")
             .baseUnit(BaseUnits.CLASSES)
             .register(registry);
 
         FunctionCounter
             .builder(classUnloadedConvention.getName(), classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount)
-            .tags(classUnloadedConvention.getTags())
             .tags(extraTags)
+            .tags(classUnloadedConvention.getTags())
             .description("The number of classes unloaded in the Java virtual machine")
             .baseUnit(BaseUnits.CLASSES)
             .register(registry);
 
         FunctionCounter
             .builder(classLoadedConvention.getName(), classLoadingBean, ClassLoadingMXBean::getTotalLoadedClassCount)
-            .tags(classLoadedConvention.getTags())
             .tags(extraTags)
+            .tags(classLoadedConvention.getTags())
             .description("The number of classes loaded in the Java virtual machine")
             .baseUnit(BaseUnits.CLASSES)
             .register(registry);
@@ -148,7 +150,8 @@ public class ClassLoaderMetrics implements MeterBinder {
         }
 
         /**
-         * Extra tags to add to meters registered by this binder.
+         * Extra tags to add to meters registered by this binder. If a conflict occurs
+         * between extra tags and convention tags, the convention tag takes precedence.
          * @param extraTags tags to add
          * @return this builder
          */

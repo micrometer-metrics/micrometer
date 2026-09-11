@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuCountMeterConvention;
@@ -120,6 +121,20 @@ class ProcessorMetricsTest {
 
         assertThat(registry.get("custom.cpu.count").tags(extraTags).tag("type", "core").gauge().value()).isPositive();
         assertThat(registry.get("custom.cpu.time").tags(extraTags).functionCounter().count()).isPositive();
+    }
+
+    @Test
+    void conventionTagsTakePrecedenceOverConflictingExtraTags() {
+        Tags extraTags = Tags.of("type", "from-extra-tags");
+        ProcessorMetrics.builder()
+            .extraTags(extraTags)
+            .cpuCountConvention(JvmCpuCountMeterConvention.of("custom.cpu.count", Tags.of("type", "from-convention")))
+            .build()
+            .bindTo(registry);
+
+        Gauge cpuCountGauge = registry.get("custom.cpu.count").tag("type", "from-convention").gauge();
+        assertThat(cpuCountGauge.value()).isPositive();
+        assertThat(cpuCountGauge.getId().getTag("type")).isEqualTo("from-convention");
     }
 
     @Test

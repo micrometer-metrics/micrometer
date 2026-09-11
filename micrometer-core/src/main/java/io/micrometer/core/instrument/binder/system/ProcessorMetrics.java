@@ -86,7 +86,8 @@ public class ProcessorMetrics implements MeterBinder {
     }
 
     /**
-     * Uses the default convention with the provided extra tags.
+     * Uses the default convention with the provided extra tags. If a conflict occurs
+     * between extra tags and convention tags, the convention tag takes precedence.
      * @param extraTags tags to add to each meter's tags produced by this binder
      */
     public ProcessorMetrics(Iterable<Tag> extraTags) {
@@ -141,8 +142,8 @@ public class ProcessorMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
         Gauge.builder(cpuCountConvention.getName(), runtime, Runtime::availableProcessors)
-            .tags(cpuCountConvention.getTags())
             .tags(extraTags)
+            .tags(cpuCountConvention.getTags())
             .description("The number of processors available to the Java virtual machine")
             .register(registry);
 
@@ -163,16 +164,16 @@ public class ProcessorMetrics implements MeterBinder {
 
         if (processCpuUsage != null) {
             Gauge.builder(cpuLoadConvention.getName(), operatingSystemBean, x -> invoke(processCpuUsage))
-                .tags(cpuLoadConvention.getTags())
                 .tags(extraTags)
+                .tags(cpuLoadConvention.getTags())
                 .description("The \"recent cpu usage\" for the Java Virtual Machine process")
                 .register(registry);
         }
 
         if (processCpuTime != null) {
             FunctionCounter.builder(cpuTimeConvention.getName(), operatingSystemBean, x -> invoke(processCpuTime))
-                .tags(cpuTimeConvention.getTags())
                 .tags(extraTags)
+                .tags(cpuTimeConvention.getTags())
                 .description("The \"cpu time\" used by the Java Virtual Machine process")
                 .baseUnit("ns")
                 .register(registry);
@@ -237,7 +238,8 @@ public class ProcessorMetrics implements MeterBinder {
         }
 
         /**
-         * Extra tags to add to meters registered by this binder.
+         * Extra tags to add to meters registered by this binder. If a conflict occurs
+         * between extra tags and convention tags, the convention tag takes precedence.
          * @param extraTags tags to add
          * @return this builder
          */

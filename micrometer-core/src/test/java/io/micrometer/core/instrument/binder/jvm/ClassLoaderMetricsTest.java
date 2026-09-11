@@ -105,6 +105,19 @@ class ClassLoaderMetricsTest {
     }
 
     @Test
+    void conventionTagsTakePrecedenceOverConflictingExtraTags() {
+        Tags extraTags = Tags.of("type", "from-extra-tags");
+        ClassLoaderMetrics.builder()
+            .extraTags(extraTags)
+            .classCountConvention(
+                    JvmClassCountMeterConvention.of("custom.class.count", Tags.of("type", "from-convention")))
+            .build()
+            .bindTo(registry);
+
+        assertThat(registry.get("custom.class.count").tag("type", "from-convention").gauge().value()).isPositive();
+    }
+
+    @Test
     void customConventions() {
         new ClassLoaderMetrics(new MyClassLoaderConventions()).bindTo(registry);
 

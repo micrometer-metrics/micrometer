@@ -105,6 +105,16 @@ class JvmMemoryMetricsTest {
     }
 
     @Test
+    void conventionTagsTakePrecedenceOverConflictingExtraTags() {
+        Tags extraTags = Tags.of("area", "from-extra-tags", "id", "from-extra-tags");
+        new JvmMemoryMetrics(extraTags).bindTo(registry);
+
+        Gauge heapUsed = registry.get("jvm.memory.used").tag("area", "heap").gauge();
+        assertThat(heapUsed.value()).isGreaterThanOrEqualTo(0);
+        assertThat(heapUsed.getId().getTag("area")).isEqualTo("heap");
+    }
+
+    @Test
     void otelMemoryMetrics() {
         Tags extraTags = Tags.empty();
         new JvmMemoryMetrics(extraTags, new OpenTelemetryJvmMemoryMeterConventions(extraTags)).bindTo(registry);
