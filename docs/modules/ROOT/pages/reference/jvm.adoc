@@ -95,19 +95,19 @@ ProcessorMetrics.builder().openTelemetryConventions().build().bindTo(registry);
 You can also configure individual OpenTelemetry convention implementations on each binder builder:
 
 * `ClassLoaderMetrics`:
-** `OpenTelemetryJvmClassCountMeterConvention`
-** `OpenTelemetryJvmClassLoadedMeterConvention`
-** `OpenTelemetryJvmClassUnloadedMeterConvention`
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmclasscount[`OpenTelemetryJvmClassCountMeterConvention`]
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmclassloaded[`OpenTelemetryJvmClassLoadedMeterConvention`]
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmclassunloaded[`OpenTelemetryJvmClassUnloadedMeterConvention`]
 * `JvmMemoryMetrics`:
-** `OpenTelemetryJvmMemoryUsedMeterConvention`
-** `OpenTelemetryJvmMemoryCommittedMeterConvention`
-** `OpenTelemetryJvmMemoryMaxMeterConvention`
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmmemoryused[`OpenTelemetryJvmMemoryUsedMeterConvention`]
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmmemorycommitted[`OpenTelemetryJvmMemoryCommittedMeterConvention`]
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmmemorylimit[`OpenTelemetryJvmMemoryMaxMeterConvention`]
 * `JvmThreadMetrics`:
-** `OpenTelemetryJvmThreadCountMeterConvention`
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmthreadcount[`OpenTelemetryJvmThreadCountMeterConvention`]
 * `ProcessorMetrics`:
-** `OpenTelemetryJvmCpuTimeMeterConvention`
-** `OpenTelemetryJvmCpuCountMeterConvention`
-** `OpenTelemetryJvmCpuLoadMeterConvention`
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmcputime[`OpenTelemetryJvmCpuTimeMeterConvention`]
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmcpucount[`OpenTelemetryJvmCpuCountMeterConvention`]
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmcpurecent_utilization[`OpenTelemetryJvmCpuLoadMeterConvention`]
 
 === Customizing Individual Conventions
 
