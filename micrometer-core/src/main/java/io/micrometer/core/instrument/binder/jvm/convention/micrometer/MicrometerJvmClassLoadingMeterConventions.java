@@ -25,7 +25,13 @@ import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterC
  *
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
  * @since 1.16.0
+ * @deprecated use individual convention types such as
+ * {@link MicrometerJvmClassCountMeterConvention},
+ * {@link MicrometerJvmClassLoadedMeterConvention}, and
+ * {@link MicrometerJvmClassUnloadedMeterConvention} instead
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class MicrometerJvmClassLoadingMeterConventions implements JvmClassLoadingMeterConventions {
 
     private final Tags extraTags;

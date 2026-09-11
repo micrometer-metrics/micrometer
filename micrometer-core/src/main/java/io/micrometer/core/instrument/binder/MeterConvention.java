@@ -38,9 +38,11 @@ import org.jspecify.annotations.Nullable;
  *
  * @param <C> context type used to derive tags
  * @since 1.16.0
+ * @deprecated use specific per-convention interfaces instead
  */
 // Work around NullAway. C might be Void, and thus we pass null to getTags.
 @NullUnmarked
+@Deprecated
 public interface MeterConvention<C extends @Nullable Object> {
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 VMware, Inc.
+ * Copyright 2026 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jvm.convention;
+package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuCountMeterConvention;
 
 /**
- * Get {@link MeterConvention} for thread related metrics.
+ * Historical convention used in Micrometer for CPU count metrics.
  *
- * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
- * @since 1.16.0
- * @deprecated use {@link JvmThreadCountMeterConvention} with
- * {@link io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics.Builder} instead
+ * @see io.micrometer.core.instrument.binder.system.ProcessorMetrics
+ * @since 1.18.0
  */
-@Deprecated
-public interface JvmThreadMeterConventions {
+public class MicrometerJvmCpuCountMeterConvention implements JvmCpuCountMeterConvention {
 
-    MeterConvention<Thread.State> threadCountConvention();
+    @Override
+    public String getName() {
+        return "system.cpu.count";
+    }
 
 }

@@ -27,7 +27,10 @@ import java.util.Locale;
  *
  * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
  * @since 1.16.0
+ * @deprecated use {@link MicrometerJvmThreadCountMeterConvention} instead
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class MicrometerJvmThreadMeterConventions implements JvmThreadMeterConventions {
 
     private final Tags extraTags;

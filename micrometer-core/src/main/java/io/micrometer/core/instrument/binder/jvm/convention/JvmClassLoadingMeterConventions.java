@@ -22,7 +22,12 @@ import io.micrometer.core.instrument.binder.MeterConvention;
  *
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
  * @since 1.16.0
+ * @deprecated use individual convention types such as
+ * {@link JvmClassCountMeterConvention}, {@link JvmClassLoadedMeterConvention}, and
+ * {@link JvmClassUnloadedMeterConvention} with
+ * {@link io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics.Builder} instead
  */
+@Deprecated
 public interface JvmClassLoadingMeterConventions {
 
     MeterConvention<Object> loadedConvention();
