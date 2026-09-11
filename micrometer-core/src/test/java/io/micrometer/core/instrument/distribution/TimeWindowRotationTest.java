@@ -57,4 +57,32 @@ class TimeWindowRotationTest {
                 DistributionStatisticConfig.builder().expiry(Duration.ofMillis(9)).bufferLength(10).build());
     }
 
+    @ParameterizedTest
+    @MethodSource("histogramTypes")
+    void samplesRecordedAfterLongIdleGapAreNotDiscarded(
+            Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) throws Exception {
+        MockClock clock = new MockClock();
+        try (AbstractTimeWindowHistogram<?, ?> histogram = newHistogram(histogramType, clock,
+                DistributionStatisticConfig.builder()
+                    .serviceLevelObjectives(10.0)
+                    .expiry(Duration.ofMinutes(1))
+                    .bufferLength(3)
+                    .build()
+                    .merge(DistributionStatisticConfig.DEFAULT))) {
+
+            // Record once, then stay idle far longer than the whole ring buffer spans. A single
+            // rotation must clear the buffer and fast-forward; if it only lags one buffer-length
+            // per call it re-wipes the buffer on every subsequent record and destroys the burst.
+            histogram.recordDouble(1);
+            clock.add(Duration.ofMinutes(10));
+
+            // A burst that all falls within the same window after the gap.
+            for (int i = 0; i < 5; i++) {
+                histogram.recordDouble(1);
+            }
+
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(10.0, 5));
+        }
+    }
+
 }
