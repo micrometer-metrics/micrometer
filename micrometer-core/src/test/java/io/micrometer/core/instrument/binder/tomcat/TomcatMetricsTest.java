@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.tomcat;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -30,6 +31,7 @@ import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.TooManyActiveSessionsException;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.coyote.RequestGroupInfo;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -38,12 +40,15 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.jupiter.api.Test;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,6 +56,7 @@ import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -67,12 +73,18 @@ class TomcatMetricsTest {
 
     private static final int PROCESSING_TIME_IN_MILLIS = 10;
 
+    private static final AtomicInteger TEST_DOMAIN_COUNTER = new AtomicInteger();
+
     // tag::setup[]
     SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     // end::setup[]
 
     private int port;
+
+    private static String nextTestDomain() {
+        return "TomcatMetricsTest-" + TEST_DOMAIN_COUNTER.incrementAndGet();
+    }
 
     @Test
     void managerBasedMetrics() {
@@ -387,6 +399,247 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(1.0);
+    }
+
+    @Test
+    @Issue("#7535")
+    void globalRequestMetrics_areRegisteredForBothHttp11AndHttp2UpgradeMBeans() throws Exception {
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        String domain = nextTestDomain();
+
+        ObjectName http11 = new ObjectName(domain + ":type=GlobalRequestProcessor,name=\"http-nio-0\"");
+        ObjectName http2 = new ObjectName(domain + ":type=GlobalRequestProcessor,name=\"http-nio-0\",Upgrade=\"h2c\"");
+
+        try {
+            mBeanServer.registerMBean(new FakeGlobalRequestProcessor(1, 2, 3, 4, 5, 6), http11);
+            mBeanServer.registerMBean(new FakeGlobalRequestProcessor(7, 8, 9, 10, 11, 12), http2);
+
+            try (TomcatMetrics binder = new TomcatMetrics(null, Tags.empty(), mBeanServer)) {
+                binder.setJmxDomain(domain);
+                binder.bindTo(registry);
+
+                Collection<Meter> received = registry.find("tomcat.global.received").meters();
+                assertThat(received)
+                    .as("both the HTTP/1.1 and the HTTP/2 GlobalRequestProcessor MBeans must be exposed")
+                    .hasSize(2);
+                assertThat(received).extracting(m -> m.getId().getTag("name")).containsOnly("http-nio-0");
+                assertThat(received).extracting(m -> m.getId().getTag("upgrade"))
+                    .as("the upgrade tag distinguishes HTTP/2 from HTTP/1.1; HTTP/1.1 uses the 'none' placeholder so the label set stays consistent")
+                    .containsExactlyInAnyOrder("none", "h2c");
+            }
+        }
+        finally {
+            safeUnregister(mBeanServer, http11);
+            safeUnregister(mBeanServer, http2);
+        }
+    }
+
+    @Test
+    @Issue("#7535")
+    void globalRequestMetrics_skipNonRequestGroupInfoMBeans() throws Exception {
+        // Tomcat registers UpgradeGroupInfo (servlet upgrades such as WebSocket) under
+        // the
+        // same :type=GlobalRequestProcessor,name=...,Upgrade=... ObjectName shape used by
+        // HTTP/2's RequestGroupInfo. The binder must skip the former — its attribute set
+        // is incompatible and would produce NaN/0 series.
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        String domain = nextTestDomain();
+
+        ObjectName websocket = new ObjectName(
+                domain + ":type=GlobalRequestProcessor,name=\"http-nio-0\",Upgrade=\"websocket\"");
+
+        try {
+            mBeanServer.registerMBean(new FakeUpgradeGroupInfo(), websocket);
+
+            try (TomcatMetrics binder = new TomcatMetrics(null, Tags.empty(), mBeanServer)) {
+                binder.setJmxDomain(domain);
+                binder.bindTo(registry);
+
+                assertThat(registry.find("tomcat.global.received").meters())
+                    .as("MBeans matching the ObjectName pattern but not RequestGroupInfo must be skipped")
+                    .isEmpty();
+                assertThat(registry.find("tomcat.global.request").meters()).isEmpty();
+                assertThat(registry.find("tomcat.global.error").meters()).isEmpty();
+            }
+        }
+        finally {
+            safeUnregister(mBeanServer, websocket);
+        }
+    }
+
+    @Test
+    @Issue("#7535")
+    void globalRequestMetrics_areRegisteredEventuallyForLateMBeans() throws Exception {
+        // Exercises the MBeanServer notification-listener path: bindTo runs before any
+        // matching MBean is present, so the registration must happen via the listener
+        // when the per-protocol MBeans appear later.
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        String domain = nextTestDomain();
+
+        ObjectName http11 = new ObjectName(domain + ":type=GlobalRequestProcessor,name=\"http-nio-0\"");
+        ObjectName http2 = new ObjectName(domain + ":type=GlobalRequestProcessor,name=\"http-nio-0\",Upgrade=\"h2c\"");
+
+        CountDownLatch latch = new CountDownLatch(2);
+        registry.config().onMeterAdded(m -> {
+            if ("tomcat.global.received".equals(m.getId().getName())) {
+                latch.countDown();
+            }
+        });
+
+        try (TomcatMetrics binder = new TomcatMetrics(null, Tags.empty(), mBeanServer)) {
+            // setJmxDomain bypasses the embedded/standalone autodetect that would
+            // otherwise fail without a real Tomcat MBean present
+            binder.setJmxDomain(domain);
+            binder.bindTo(registry);
+
+            try {
+                mBeanServer.registerMBean(new FakeGlobalRequestProcessor(1, 2, 3, 4, 5, 6), http11);
+                mBeanServer.registerMBean(new FakeGlobalRequestProcessor(7, 8, 9, 10, 11, 12), http2);
+
+                assertThat(latch.await(5, TimeUnit.SECONDS))
+                    .as("the registration-notification path must register meters for both protocols")
+                    .isTrue();
+
+                Collection<Meter> received = registry.find("tomcat.global.received").meters();
+                assertThat(received).hasSize(2);
+                assertThat(received).extracting(m -> m.getId().getTag("upgrade"))
+                    .containsExactlyInAnyOrder("none", "h2c");
+            }
+            finally {
+                safeUnregister(mBeanServer, http11);
+                safeUnregister(mBeanServer, http2);
+            }
+        }
+    }
+
+    private static void safeUnregister(MBeanServer mBeanServer, ObjectName name) throws Exception {
+        if (mBeanServer.isRegistered(name)) {
+            mBeanServer.unregisterMBean(name);
+        }
+    }
+
+    public interface FakeGlobalRequestProcessorMBean {
+
+        long getBytesSent();
+
+        long getBytesReceived();
+
+        int getRequestCount();
+
+        int getErrorCount();
+
+        long getProcessingTime();
+
+        long getMaxTime();
+
+    }
+
+    /**
+     * Registered as a Standard MBean via {@link FakeGlobalRequestProcessorMBean} so the
+     * fixture lives in the platform server without a running Tomcat. The Standard MBean
+     * convention exposes the attribute as {@code RequestCount} (capitalized); the
+     * production {@code isRequestGroupInfo} guard uses
+     * {@code equalsIgnoreCase("requestCount")}, which matches both this naming and
+     * Tomcat's {@code BaseModelMBean} wrapping (lowercase {@code requestCount}).
+     * Extending {@link RequestGroupInfo} is only to align getter return types with the
+     * parent so the overrides compile ({@code int} for request/error counts).
+     */
+    public static class FakeGlobalRequestProcessor extends RequestGroupInfo implements FakeGlobalRequestProcessorMBean {
+
+        private final long bytesSent;
+
+        private final long bytesReceived;
+
+        private final int requestCount;
+
+        private final int errorCount;
+
+        private final long processingTime;
+
+        private final long maxTime;
+
+        public FakeGlobalRequestProcessor(long bytesSent, long bytesReceived, int requestCount, int errorCount,
+                long processingTime, long maxTime) {
+            this.bytesSent = bytesSent;
+            this.bytesReceived = bytesReceived;
+            this.requestCount = requestCount;
+            this.errorCount = errorCount;
+            this.processingTime = processingTime;
+            this.maxTime = maxTime;
+        }
+
+        @Override
+        public long getBytesSent() {
+            return bytesSent;
+        }
+
+        @Override
+        public long getBytesReceived() {
+            return bytesReceived;
+        }
+
+        @Override
+        public int getRequestCount() {
+            return requestCount;
+        }
+
+        @Override
+        public int getErrorCount() {
+            return errorCount;
+        }
+
+        @Override
+        public long getProcessingTime() {
+            return processingTime;
+        }
+
+        @Override
+        public long getMaxTime() {
+            return maxTime;
+        }
+
+    }
+
+    public interface FakeUpgradeGroupInfoMBean {
+
+        long getBytesSent();
+
+        long getBytesReceived();
+
+        long getMsgsSent();
+
+        long getMsgsReceived();
+
+    }
+
+    /**
+     * Mirrors the shape of Tomcat's {@code UpgradeGroupInfo} (used by WebSocket and other
+     * servlet upgrades): same ObjectName pattern as the per-connector aggregator, but a
+     * different attribute set. Intentionally does NOT extend {@link RequestGroupInfo} so
+     * the binder's guard skips it.
+     */
+    public static class FakeUpgradeGroupInfo implements FakeUpgradeGroupInfoMBean {
+
+        @Override
+        public long getBytesSent() {
+            return 0;
+        }
+
+        @Override
+        public long getBytesReceived() {
+            return 0;
+        }
+
+        @Override
+        public long getMsgsSent() {
+            return 0;
+        }
+
+        @Override
+        public long getMsgsReceived() {
+            return 0;
+        }
+
     }
 
 }
