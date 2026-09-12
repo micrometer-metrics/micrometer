@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledForJreRange;
@@ -52,6 +53,11 @@ class ExecutorServiceMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private Iterable<Tag> userTags = Tags.of("userTagKey", "userTagValue");
+
+    @AfterEach
+    void tearDown() {
+        ExecutorServiceMetrics.disableConsistentForkJoinPoolBaseUnits();
+    }
 
     @DisplayName("Normal executor can be instrumented after being initialized")
     @ParameterizedTest
@@ -233,6 +239,66 @@ class ExecutorServiceMetricsTest {
         registry.get(expectedMetricPrefix + "executor.running").tags(userTags).tag("name", "fjp").gauge();
         registry.get(expectedMetricPrefix + "executor.parallelism").tags(userTags).tag("name", "fjp").gauge();
         registry.get(expectedMetricPrefix + "executor.pool.size").tags(userTags).tag("name", "fjp").gauge();
+    }
+
+    @Issue("#7089")
+    @DisplayName("ForkJoinPool metrics have consistent base units when enableConsistentForkJoinPoolBaseUnits is called")
+    @ParameterizedTest
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
+    void forkJoinPoolWithConsistentBaseUnits(String metricPrefix, String expectedMetricPrefix) {
+        ExecutorServiceMetrics.enableConsistentForkJoinPoolBaseUnits();
+        var fjp = new ForkJoinPool(1);
+        monitorExecutorService("fjp", metricPrefix, fjp);
+
+        assertThat(registry.get(expectedMetricPrefix + "executor.active")
+            .tags(userTags)
+            .tag("name", "fjp")
+            .gauge()
+            .getId()
+            .getBaseUnit()).isEqualTo("threads");
+        assertThat(registry.get(expectedMetricPrefix + "executor.queued")
+            .tags(userTags)
+            .tag("name", "fjp")
+            .gauge()
+            .getId()
+            .getBaseUnit()).isEqualTo("tasks");
+        assertThat(registry.get(expectedMetricPrefix + "executor.running")
+            .tags(userTags)
+            .tag("name", "fjp")
+            .gauge()
+            .getId()
+            .getBaseUnit()).isEqualTo("threads");
+        assertThat(registry.get(expectedMetricPrefix + "executor.steals")
+            .tags(userTags)
+            .tag("name", "fjp")
+            .functionCounter()
+            .getId()
+            .getBaseUnit()).isEqualTo("tasks");
+
+        fjp.shutdown();
+    }
+
+    @Issue("#7089")
+    @DisplayName("ForkJoinPool metrics do not have base units for active/queued/running/steals by default")
+    @Test
+    void forkJoinPoolDefaultBaseUnits() {
+        var fjp = new ForkJoinPool(1);
+        ExecutorServiceMetrics.monitor(registry, fjp, "fjp", userTags);
+
+        assertThat(registry.get("executor.active").tags(userTags).tag("name", "fjp").gauge().getId().getBaseUnit())
+            .isNull();
+        assertThat(registry.get("executor.queued").tags(userTags).tag("name", "fjp").gauge().getId().getBaseUnit())
+            .isNull();
+        assertThat(registry.get("executor.running").tags(userTags).tag("name", "fjp").gauge().getId().getBaseUnit())
+            .isNull();
+        assertThat(registry.get("executor.steals")
+            .tags(userTags)
+            .tag("name", "fjp")
+            .functionCounter()
+            .getId()
+            .getBaseUnit()).isNull();
+
+        fjp.shutdown();
     }
 
     @DisplayName("ScheduledExecutorService can be monitored with a default set of metrics")
