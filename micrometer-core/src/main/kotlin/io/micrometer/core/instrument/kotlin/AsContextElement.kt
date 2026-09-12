@@ -19,6 +19,8 @@ package io.micrometer.core.instrument.kotlin
 import io.micrometer.context.ContextRegistry
 import io.micrometer.observation.Observation
 import io.micrometer.observation.ObservationRegistry
+import kotlinx.coroutines.withContext
+import java.util.function.Supplier
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -43,4 +45,44 @@ fun CoroutineContext.currentObservation(): Observation? {
         return element.currentObservation
     }
     return null
+}
+
+/**
+ * Observes the given [block] within an [Observation] named [name].
+ *
+ * @since 1.18.0
+ */
+fun <T> ObservationRegistry.observe(name: String, block: () -> T): T {
+    return Observation.createNotStarted(name, this).observe(Supplier { block() })
+}
+
+/**
+ * Observes the given suspending [block] within an [Observation] named [name].
+ *
+ * @since 1.18.0
+ */
+suspend fun <T> ObservationRegistry.observeSuspend(name: String, block: suspend () -> T): T {
+    return Observation.createNotStarted(name, this).observeSuspend(block)
+}
+
+/**
+ * Suspending equivalent of [Observation.observe], keeping this [Observation] current across
+ * coroutine suspension and resumption.
+ *
+ * @since 1.18.0
+ */
+suspend fun <T> Observation.observeSuspend(block: suspend () -> T): T {
+    start()
+    return try {
+        openScope().use {
+            withContext(observationRegistry.asContextElement()) {
+                block()
+            }
+        }
+    } catch (error: Throwable) {
+        error(error)
+        throw error
+    } finally {
+        stop()
+    }
 }
