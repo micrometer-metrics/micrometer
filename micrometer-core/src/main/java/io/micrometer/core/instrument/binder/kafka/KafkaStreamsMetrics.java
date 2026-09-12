@@ -16,12 +16,24 @@
 package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MultiGauge;
+import io.micrometer.core.instrument.MultiGauge.Row;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import org.apache.kafka.common.Metric;
+import org.apache.kafka.common.MetricName;
 import org.apache.kafka.streams.KafkaStreams;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
 
 /**
  * Kafka Streams metrics binder.
@@ -43,6 +55,14 @@ import java.util.concurrent.ScheduledExecutorService;
 @Incubating(since = "1.4.0")
 public class KafkaStreamsMetrics extends KafkaMetrics {
 
+    private static final String STREAM_METRICS_GROUP = "stream-metrics";
+
+    private static final String STATE_METRIC_NAME = "state";
+
+    private final KafkaStreams kafkaStreams;
+
+    private @Nullable MultiGauge stateGauge;
+
     /**
      * {@link KafkaStreams} metrics binder
      * @param kafkaStreams instance to be instrumented
@@ -50,6 +70,7 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags) {
         super(kafkaStreams::metrics, tags);
+        this.kafkaStreams = kafkaStreams;
     }
 
     /**
@@ -58,6 +79,7 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams) {
         super(kafkaStreams::metrics);
+        this.kafkaStreams = kafkaStreams;
     }
 
     /**
@@ -73,6 +95,7 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
         super(kafkaStreams::metrics, tags, scheduler);
+        this.kafkaStreams = kafkaStreams;
     }
 
     /**
@@ -100,6 +123,57 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, ScheduledExecutorService scheduler,
             Duration refreshInterval) {
         super(kafkaStreams::metrics, tags, scheduler, refreshInterval);
+        this.kafkaStreams = kafkaStreams;
+    }
+
+    /**
+     * Registers a gauge reporting the current {@link KafkaStreams.State application
+     * state}.
+     * <p>
+     * The Kafka client reports the state as an enum, which Micrometer cannot publish as a
+     * numeric value, so it is normally filtered out. Following the <a href=
+     * "https://github.com/prometheus/OpenMetrics/blob/main/specification/OpenMetrics.md#stateset-1">OpenMetrics
+     * StateSet</a> pattern, this registers one time series per possible state, tagged
+     * with {@code state}; the current state has value {@code 1} and all others {@code 0}.
+     * This avoids depending on the non-public numeric ordering of the state enum.
+     */
+    @Override
+    void prepareToBindMetrics(MeterRegistry registry) {
+        super.prepareToBindMetrics(registry);
+        MetricName stateMetricName = findStateMetricName();
+        if (stateMetricName == null) {
+            return;
+        }
+        MultiGauge gauge = MultiGauge.builder(meterName(stateMetricName))
+            .tags(meterTags(stateMetricName))
+            .description("The current state of the Kafka Streams client")
+            .register(registry);
+        List<Row<KafkaStreams.State>> rows = Arrays.stream(KafkaStreams.State.values())
+            .map(state -> Row.of(Tags.of("state", state.name()), state,
+                    candidate -> kafkaStreams.state() == candidate ? 1 : 0))
+            .collect(Collectors.toList());
+        gauge.register(rows);
+        this.stateGauge = gauge;
+    }
+
+    private @Nullable MetricName findStateMetricName() {
+        Map<MetricName, ? extends Metric> metrics = kafkaStreams.metrics();
+        for (MetricName name : metrics.keySet()) {
+            if (STREAM_METRICS_GROUP.equals(name.group()) && STATE_METRIC_NAME.equals(name.name())) {
+                return name;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void close() {
+        if (stateGauge != null) {
+            // remove the per-state gauges this binder registered
+            stateGauge.register(emptyList());
+            stateGauge = null;
+        }
+        super.close();
     }
 
 }
