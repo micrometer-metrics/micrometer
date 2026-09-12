@@ -20,6 +20,7 @@ import io.micrometer.observation.ObservationRegistry;
 import jakarta.jms.Message;
 import jakarta.jms.MessageConsumer;
 import jakarta.jms.MessageListener;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -44,9 +45,13 @@ class MessageConsumerInvocationHandler implements InvocationHandler {
 
     private final ObservationRegistry registry;
 
-    MessageConsumerInvocationHandler(MessageConsumer target, ObservationRegistry registry) {
+    private final @Nullable JmsProcessObservationConvention customConvention;
+
+    MessageConsumerInvocationHandler(MessageConsumer target, ObservationRegistry registry,
+            @Nullable JmsProcessObservationConvention customConvention) {
         this.target = target;
         this.registry = registry;
+        this.customConvention = customConvention;
     }
 
     @Override
@@ -54,7 +59,8 @@ class MessageConsumerInvocationHandler implements InvocationHandler {
         try {
             if ("setMessageListener".equals(method.getName()) && args[0] != null) {
                 MessageListener listener = (MessageListener) args[0];
-                return method.invoke(this.target, new ObservedMessageListener(listener, this.registry));
+                return method.invoke(this.target,
+                        new ObservedMessageListener(listener, this.registry, this.customConvention));
             }
             return method.invoke(this.target, args);
         }
@@ -69,14 +75,18 @@ class MessageConsumerInvocationHandler implements InvocationHandler {
 
         private final ObservationRegistry registry;
 
-        ObservedMessageListener(MessageListener delegate, ObservationRegistry registry) {
+        private final @Nullable JmsProcessObservationConvention customConvention;
+
+        ObservedMessageListener(MessageListener delegate, ObservationRegistry registry,
+                @Nullable JmsProcessObservationConvention customConvention) {
             this.delegate = delegate;
             this.registry = registry;
+            this.customConvention = customConvention;
         }
 
         @Override
         public void onMessage(Message message) {
-            Observation observation = JmsObservationDocumentation.JMS_MESSAGE_PROCESS.observation(null,
+            Observation observation = JmsObservationDocumentation.JMS_MESSAGE_PROCESS.observation(this.customConvention,
                     DEFAULT_CONVENTION, () -> new JmsProcessObservationContext(message), this.registry);
             observation.observe(() -> {
                 delegate.onMessage(message);

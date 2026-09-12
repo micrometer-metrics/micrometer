@@ -20,7 +20,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import io.micrometer.common.KeyValues;
 import io.micrometer.jakarta9.instrument.jms.JmsInstrumentation;
+import io.micrometer.jakarta9.instrument.jms.JmsProcessObservationContext;
+import io.micrometer.jakarta9.instrument.jms.JmsProcessObservationConvention;
+import io.micrometer.jakarta9.instrument.jms.JmsPublishObservationContext;
+import io.micrometer.jakarta9.instrument.jms.JmsPublishObservationConvention;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import jakarta.jms.*;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
@@ -34,6 +39,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.jspecify.annotations.Nullable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -156,15 +162,67 @@ class JmsInstrumentationTests {
             MessageProducer producer = session.createProducer(topic);
             producer.send(session.createTextMessage("test send"));
             assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-            assertThat(registry).hasObservationWithNameEqualTo("jms.message.process")
+            // the listener counts the latch down before throwing, so the observation is
+            // only stopped with its error some time after the latch is released
+            await().atMost(Duration.ofSeconds(1))
+                .untilAsserted(() -> assertThat(registry).hasObservationWithNameEqualTo("jms.message.process")
+                    .that()
+                    .hasLowCardinalityKeyValue("exception", "IllegalStateException"));
+        }
+    }
+
+    @Test
+    void shouldUseCustomPublishObservationConvention() throws Exception {
+        try (Session session = createInstrumentedSession(new CustomPublishObservationConvention(), null)) {
+            Topic topic = session.createTopic("test.send");
+            MessageProducer producer = session.createProducer(topic);
+            producer.send(session.createTextMessage("test content"));
+            assertThat(registry).hasObservationWithNameEqualTo("jms.message.publish")
                 .that()
-                .hasLowCardinalityKeyValue("exception", "IllegalStateException");
+                .hasContextualNameEqualTo("custom publish")
+                .hasLowCardinalityKeyValue("custom.publish.key", "custom.publish.value");
+        }
+    }
+
+    @Test
+    void shouldUseCustomProcessObservationConvention() throws Exception {
+        try (Session session = createInstrumentedSession(null, new CustomProcessObservationConvention())) {
+            Topic topic = session.createTopic("test.send");
+            CountDownLatch latch = new CountDownLatch(1);
+            MessageConsumer consumer = session.createConsumer(topic);
+            consumer.setMessageListener(message -> latch.countDown());
+            MessageProducer producer = session.createProducer(topic);
+            producer.send(session.createTextMessage("test send"));
+            assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+            await().atMost(Duration.ofSeconds(1))
+                .untilAsserted(() -> assertThat(registry).hasObservationWithNameEqualTo("jms.message.process")
+                    .that()
+                    .hasContextualNameEqualTo("custom process")
+                    .hasLowCardinalityKeyValue("custom.process.key", "custom.process.value"));
+        }
+    }
+
+    @Test
+    void shouldUseDefaultConventionsWhenCustomOnesAreNull() throws Exception {
+        try (Session session = createInstrumentedSession(null, null)) {
+            Topic topic = session.createTopic("test.send");
+            MessageProducer producer = session.createProducer(topic);
+            producer.send(session.createTextMessage("test content"));
+            assertThat(registry).hasObservationWithNameEqualTo("jms.message.publish")
+                .that()
+                .hasContextualNameEqualTo("test.send publish");
         }
     }
 
     private Session createInstrumentedSession() throws JMSException {
         Session session = jmsConnection.createSession();
         return JmsInstrumentation.instrumentSession(session, registry);
+    }
+
+    private Session createInstrumentedSession(@Nullable JmsPublishObservationConvention publishConvention,
+            @Nullable JmsProcessObservationConvention processConvention) throws JMSException {
+        Session session = jmsConnection.createSession();
+        return JmsInstrumentation.instrumentSession(session, registry, publishConvention, processConvention);
     }
 
     @AfterEach
@@ -177,6 +235,44 @@ class JmsInstrumentationTests {
     interface SessionConsumer {
 
         void accept(Session session) throws JMSException;
+
+    }
+
+    static class CustomPublishObservationConvention implements JmsPublishObservationConvention {
+
+        @Override
+        public String getName() {
+            return "jms.message.publish";
+        }
+
+        @Override
+        public String getContextualName(JmsPublishObservationContext context) {
+            return "custom publish";
+        }
+
+        @Override
+        public KeyValues getLowCardinalityKeyValues(JmsPublishObservationContext context) {
+            return KeyValues.of("custom.publish.key", "custom.publish.value");
+        }
+
+    }
+
+    static class CustomProcessObservationConvention implements JmsProcessObservationConvention {
+
+        @Override
+        public String getName() {
+            return "jms.message.process";
+        }
+
+        @Override
+        public String getContextualName(JmsProcessObservationContext context) {
+            return "custom process";
+        }
+
+        @Override
+        public KeyValues getLowCardinalityKeyValues(JmsProcessObservationContext context) {
+            return KeyValues.of("custom.process.key", "custom.process.value");
+        }
 
     }
 
