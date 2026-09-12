@@ -70,6 +70,29 @@ class JvmThreadMetricsTest {
     }
 
     @Test
+    void getThreadStateCountWithDaemonFilter() {
+        ThreadMXBean threadBean = mock(ThreadMXBean.class);
+        long[] threadIds = { 1L, 2L, 3L };
+        when(threadBean.getAllThreadIds()).thenReturn(threadIds);
+        ThreadInfo daemonRunnable = mock(ThreadInfo.class);
+        when(daemonRunnable.getThreadState()).thenReturn(Thread.State.RUNNABLE);
+        when(daemonRunnable.isDaemon()).thenReturn(true);
+        ThreadInfo nonDaemonRunnable = mock(ThreadInfo.class);
+        when(nonDaemonRunnable.getThreadState()).thenReturn(Thread.State.RUNNABLE);
+        when(nonDaemonRunnable.isDaemon()).thenReturn(false);
+        ThreadInfo daemonWaiting = mock(ThreadInfo.class);
+        when(daemonWaiting.getThreadState()).thenReturn(Thread.State.WAITING);
+        when(daemonWaiting.isDaemon()).thenReturn(true);
+        when(threadBean.getThreadInfo(threadIds))
+            .thenReturn(new ThreadInfo[] { daemonRunnable, nonDaemonRunnable, daemonWaiting });
+
+        assertThat(JvmThreadMetrics.getThreadStateCount(threadBean, Thread.State.RUNNABLE, true)).isEqualTo(1);
+        assertThat(JvmThreadMetrics.getThreadStateCount(threadBean, Thread.State.RUNNABLE, false)).isEqualTo(1);
+        assertThat(JvmThreadMetrics.getThreadStateCount(threadBean, Thread.State.WAITING, true)).isEqualTo(1);
+        assertThat(JvmThreadMetrics.getThreadStateCount(threadBean, Thread.State.WAITING, false)).isEqualTo(0);
+    }
+
+    @Test
     void extraTagsAreApplied() {
         Tags extraTags = Tags.of("extra", "tag");
         new JvmThreadMetrics(extraTags).bindTo(registry);
@@ -79,6 +102,8 @@ class JvmThreadMetricsTest {
         assertThat(registry.get("jvm.threads.peak").tags(extraTags).gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.states").tags(extraTags).tag("state", "runnable").gauge().value())
             .isPositive();
+        // Default Micrometer convention does not add a daemon dimension
+        assertThat(registry.find("jvm.threads.states").tagKeys("daemon").gauges()).isEmpty();
     }
 
     @Test
@@ -89,15 +114,15 @@ class JvmThreadMetricsTest {
         assertThat(registry.get("jvm.threads.live").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.daemon").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.peak").gauge().value()).isPositive();
-        assertThat(registry.get("jvm.thread.count").tag("jvm.thread.state", "runnable").gauge().value()).isPositive();
+        assertThat(runnableThreadCount()).isPositive();
+        assertThat(daemonAndNonDaemonRunnableCountsSum()).isEqualTo(runnableThreadCount());
 
         createBlockedThread();
-        assertThat(registry.get("jvm.thread.count").tag("jvm.thread.state", "blocked").gauge().value()).isPositive();
-        assertThat(registry.get("jvm.thread.count").tag("jvm.thread.state", "waiting").gauge().value()).isPositive();
+        assertThat(threadCount("blocked")).isPositive();
+        assertThat(threadCount("waiting")).isPositive();
 
         createTimedWaitingThread();
-        assertThat(registry.get("jvm.thread.count").tag("jvm.thread.state", "timed_waiting").gauge().value())
-            .isPositive();
+        assertThat(threadCount("timed_waiting")).isPositive();
         assertThat(registry.get("jvm.threads.started").functionCounter().count()).isGreaterThan(initialThreadCount);
     }
 
@@ -110,23 +135,90 @@ class JvmThreadMetricsTest {
         assertThat(registry.get("jvm.threads.live").tags(extraTags).gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.daemon").tags(extraTags).gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.peak").tags(extraTags).gauge().value()).isPositive();
-        assertThat(registry.get("jvm.thread.count").tags(extraTags).tag("jvm.thread.state", "runnable").gauge().value())
-            .isPositive();
+        assertThat(threadCount(extraTags, "runnable")).isPositive();
 
         createBlockedThread();
-        assertThat(registry.get("jvm.thread.count").tags(extraTags).tag("jvm.thread.state", "blocked").gauge().value())
-            .isPositive();
-        assertThat(registry.get("jvm.thread.count").tags(extraTags).tag("jvm.thread.state", "waiting").gauge().value())
-            .isPositive();
+        assertThat(threadCount(extraTags, "blocked")).isPositive();
+        assertThat(threadCount(extraTags, "waiting")).isPositive();
 
         createTimedWaitingThread();
-        assertThat(registry.get("jvm.thread.count")
-            .tags(extraTags)
-            .tag("jvm.thread.state", "timed_waiting")
-            .gauge()
-            .value()).isPositive();
+        assertThat(threadCount(extraTags, "timed_waiting")).isPositive();
         assertThat(registry.get("jvm.threads.started").tags(extraTags).functionCounter().count())
             .isGreaterThan(initialThreadCount);
+    }
+
+    @Test
+    void otelThreadCountIncludesDaemonTag() {
+        new JvmThreadMetrics(Tags.empty(), new OpenTelemetryJvmThreadMeterConventions(Tags.empty())).bindTo(registry);
+
+        // Both daemon series exist for each state (OpenTelemetry recommended attributes)
+        assertThat(registry.get("jvm.thread.count")
+            .tag("jvm.thread.state", "runnable")
+            .tag("jvm.thread.daemon", "true")
+            .gauge()
+            .value()).isNotNegative();
+        assertThat(registry.get("jvm.thread.count")
+            .tag("jvm.thread.state", "runnable")
+            .tag("jvm.thread.daemon", "false")
+            .gauge()
+            .value()).isNotNegative();
+
+        Thread daemon = new Thread(() -> sleep(5));
+        daemon.setDaemon(true);
+        daemon.setName("micrometer-daemon-test");
+        daemon.start();
+        sleep(1);
+
+        assertThat(registry.get("jvm.thread.count")
+            .tag("jvm.thread.state", "timed_waiting")
+            .tag("jvm.thread.daemon", "true")
+            .gauge()
+            .value()).isPositive();
+    }
+
+    private double runnableThreadCount() {
+        return threadCount("runnable");
+    }
+
+    private double daemonAndNonDaemonRunnableCountsSum() {
+        return registry.get("jvm.thread.count")
+            .tag("jvm.thread.state", "runnable")
+            .tag("jvm.thread.daemon", "true")
+            .gauge()
+            .value()
+                + registry.get("jvm.thread.count")
+                    .tag("jvm.thread.state", "runnable")
+                    .tag("jvm.thread.daemon", "false")
+                    .gauge()
+                    .value();
+    }
+
+    private double threadCount(String state) {
+        return registry.get("jvm.thread.count")
+            .tag("jvm.thread.state", state)
+            .tag("jvm.thread.daemon", "true")
+            .gauge()
+            .value()
+                + registry.get("jvm.thread.count")
+                    .tag("jvm.thread.state", state)
+                    .tag("jvm.thread.daemon", "false")
+                    .gauge()
+                    .value();
+    }
+
+    private double threadCount(Tags extraTags, String state) {
+        return registry.get("jvm.thread.count")
+            .tags(extraTags)
+            .tag("jvm.thread.state", state)
+            .tag("jvm.thread.daemon", "true")
+            .gauge()
+            .value()
+                + registry.get("jvm.thread.count")
+                    .tags(extraTags)
+                    .tag("jvm.thread.state", state)
+                    .tag("jvm.thread.daemon", "false")
+                    .gauge()
+                    .value();
     }
 
     private void createTimedWaitingThread() {

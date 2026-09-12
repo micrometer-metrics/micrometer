@@ -25,8 +25,13 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmThreadMeterConventions;
+import org.jspecify.annotations.Nullable;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
 
@@ -39,6 +44,23 @@ import static java.util.Collections.emptyList;
  * @author Johnny Lim
  */
 public class JvmThreadMetrics implements MeterBinder {
+
+    /**
+     * {@link ThreadInfo#isDaemon()} was added in Java 9. Resolved reflectively so this
+     * binder remains compatible with Java 8 bytecode.
+     */
+    private static final @Nullable MethodHandle THREAD_INFO_IS_DAEMON;
+
+    static {
+        MethodHandle isDaemon = null;
+        try {
+            isDaemon = MethodHandles.publicLookup()
+                .findVirtual(ThreadInfo.class, "isDaemon", MethodType.methodType(boolean.class));
+        }
+        catch (NoSuchMethodException | IllegalAccessException ignored) {
+        }
+        THREAD_INFO_IS_DAEMON = isDaemon;
+    }
 
     private final Tags extraTags;
 
@@ -100,12 +122,29 @@ public class JvmThreadMetrics implements MeterBinder {
         try {
             threadBean.getAllThreadIds();
             MeterConvention<Thread.State> threadCountConvention = conventions.threadCountConvention();
+            boolean includeDaemon = conventions.includeDaemonTag();
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder(threadCountConvention.getName(), threadBean, (bean) -> getThreadStateCount(bean, state))
-                    .tags(threadCountConvention.getTags(state))
-                    .description("The current number of threads")
-                    .baseUnit(BaseUnits.THREADS)
-                    .register(registry);
+                if (includeDaemon) {
+                    for (boolean daemon : new boolean[] { false, true }) {
+                        Tags tags = threadCountConvention.getTags(state).and(conventions.daemonTags(daemon));
+                        Gauge
+                            .builder(threadCountConvention.getName(), threadBean,
+                                    (bean) -> getThreadStateCount(bean, state, daemon))
+                            .tags(tags)
+                            .description("The current number of threads")
+                            .baseUnit(BaseUnits.THREADS)
+                            .register(registry);
+                    }
+                }
+                else {
+                    Gauge
+                        .builder(threadCountConvention.getName(), threadBean,
+                                (bean) -> getThreadStateCount(bean, state))
+                        .tags(threadCountConvention.getTags(state))
+                        .description("The current number of threads")
+                        .baseUnit(BaseUnits.THREADS)
+                        .register(registry);
+                }
             }
         }
         catch (Error error) {
@@ -119,6 +158,29 @@ public class JvmThreadMetrics implements MeterBinder {
         return Arrays.stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
             .filter(threadInfo -> threadInfo != null && threadInfo.getThreadState() == state)
             .count();
+    }
+
+    // VisibleForTesting
+    static long getThreadStateCount(ThreadMXBean threadBean, Thread.State state, boolean daemon) {
+        return Arrays.stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
+            .filter(threadInfo -> threadInfo != null && threadInfo.getThreadState() == state
+                    && isDaemon(threadInfo) == daemon)
+            .count();
+    }
+
+    private static boolean isDaemon(ThreadInfo threadInfo) {
+        if (THREAD_INFO_IS_DAEMON == null) {
+            // Java 8: ThreadInfo#isDaemon is unavailable; cannot classify by daemon.
+            // Count as non-daemon so at least one series receives the total for the
+            // state.
+            return false;
+        }
+        try {
+            return (boolean) THREAD_INFO_IS_DAEMON.invoke(threadInfo);
+        }
+        catch (Throwable ex) {
+            throw new IllegalStateException("Unexpected error invoking ThreadInfo#isDaemon()", ex);
+        }
     }
 
 }
