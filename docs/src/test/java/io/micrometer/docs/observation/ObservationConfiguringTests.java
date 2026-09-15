@@ -73,7 +73,7 @@ class ObservationConfiguringTests {
                 return context;
             })
             // Example of using metrics
-            .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+            .observationHandler(DefaultMeterObservationHandler.builder(meterRegistry).build());
 
         // Observation will be ignored because of the name
         then(Observation.start("to.ignore", () -> new MyContext("don't ignore"), registry).isNoop()).isTrue();

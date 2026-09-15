@@ -367,7 +367,8 @@ class MicrometerHttpRequestExecutorTest {
 
     private ObservationRegistry createObservationRegistry() {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        observationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(registry).build());
         return observationRegistry;
     }
 

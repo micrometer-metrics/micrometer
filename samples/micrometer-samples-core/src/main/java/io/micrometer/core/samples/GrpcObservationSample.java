@@ -47,7 +47,7 @@ public class GrpcObservationSample {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         observationRegistry.observationConfig()
             .observationHandler(new ObservationTextPublisher())
-            .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+            .observationHandler(DefaultMeterObservationHandler.builder(meterRegistry).build());
 
         HealthStatusManager service = new HealthStatusManager();
 

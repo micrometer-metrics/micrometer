@@ -37,7 +37,10 @@ class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
     @BeforeEach
     @Override
     void beforeEach() throws Exception {
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        observationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(registry)
+                .includeActiveObservationLongTaskTimer(true)
+                .build());
         super.beforeEach();
     }
 

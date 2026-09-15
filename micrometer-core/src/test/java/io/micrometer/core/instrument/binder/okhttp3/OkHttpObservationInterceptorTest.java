@@ -83,7 +83,8 @@ class OkHttpObservationInterceptorTest {
     @BeforeEach
     void setup() {
         observationRegistry.observationConfig().observationHandler(testHandler);
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        observationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(registry).build());
         observationRegistry.observationConfig().observationHandler(new PropagatingHandler());
     }
 
