@@ -32,8 +32,6 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link HighCardinalityTagsDetector}
@@ -217,9 +215,12 @@ class HighCardinalityTagsDetectorTests {
         for (int i = 0; i < 6; i++) {
             meters.add(registry.counter("highest", "index", String.valueOf(i)));
         }
-        MeterRegistry orderedRegistry = mock(MeterRegistry.class);
-        when(orderedRegistry.getMeters()).thenReturn(meters);
-        return orderedRegistry;
+        return new SimpleMeterRegistry() {
+            @Override
+            public List<Meter> getMeters() {
+                return meters;
+            }
+        };
     }
 
     private static class TestMeterNameConsumer implements Consumer<String> {
