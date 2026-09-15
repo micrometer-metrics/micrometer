@@ -196,6 +196,11 @@ public class ClassLoaderMetrics implements MeterBinder {
          * {@link io.micrometer.core.instrument.binder.jvm.convention.otel the otel
          * conventions package}. Individual conventions can still be overridden by calling
          * the specific convention methods after this one.
+         * <p>
+         * In future minor releases, this method may configure additional conventions as
+         * new OpenTelemetry semantic conventions for this binder become stable. If strict
+         * metric stability across library upgrades is required, configure individual
+         * conventions explicitly instead of using this convenience method.
          * @return this builder
          * @see io.micrometer.core.instrument.binder.jvm.convention.otel
          */

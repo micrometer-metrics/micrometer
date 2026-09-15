@@ -92,6 +92,8 @@ JvmThreadMetrics.builder().openTelemetryConventions().build().bindTo(registry);
 ProcessorMetrics.builder().openTelemetryConventions().build().bindTo(registry);
 ----
 
+NOTE: The `openTelemetryConventions()` convenience method may configure additional conventions in future minor releases as new OpenTelemetry semantic conventions become stable and are supported by Micrometer. If you require strict metric stability across library upgrades, configure individual conventions explicitly instead.
+
 You can also configure individual OpenTelemetry convention implementations on each binder builder:
 
 * `ClassLoaderMetrics`:
