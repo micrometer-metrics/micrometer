@@ -23,10 +23,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link HighCardinalityTagsDetector}
@@ -124,6 +131,95 @@ class HighCardinalityTagsDetectorTests {
                 assertThat(meterInfo.getName()).isEqualTo(meterName);
                 assertThat(meterInfo.getCount()).isEqualTo(meterCount);
             }));
+    }
+
+    @Test
+    void defaultSelectionKeepsFirstCandidateRatherThanHighestCount() {
+        MeterRegistry orderedRegistry = orderedRegistry();
+        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector.Builder(orderedRegistry)
+            .threshold(3)
+            .build()) {
+            assertThat(detector.findFirst()).contains("first");
+        }
+    }
+
+    @Test
+    void customSelectionReceivesOnlyCandidatesAboveThreshold() {
+        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector.Builder(orderedRegistry())
+            .threshold(3)
+            .highCardinalityMeterInfoSelector(candidates -> {
+                List<HighCardinalityMeterInfo> infos = candidates.collect(java.util.stream.Collectors.toList());
+                assertThat(infos).extracting(HighCardinalityMeterInfo::getName).containsExactly("first", "highest");
+                return infos.stream().max(Comparator.comparingLong(HighCardinalityMeterInfo::getCount));
+            })
+            .build()) {
+            assertThat(detector.findFirstHighCardinalityMeterInfo()).hasValueSatisfying(info -> {
+                assertThat(info.getName()).isEqualTo("highest");
+                assertThat(info.getCount()).isEqualTo(6);
+            });
+            // A second call must pass a fresh stream, including through the legacy API.
+            assertThat(detector.findFirst()).contains("highest");
+        }
+    }
+
+    @Test
+    void customSelectionCanSuppressNotification() {
+        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector.Builder(orderedRegistry())
+            .threshold(3)
+            .highCardinalityMeterInfoSelector(candidates -> Optional.empty())
+            .build()) {
+            assertThat(detector.findFirst()).isEmpty();
+        }
+    }
+
+    @Test
+    void customSelectionHandlesEmptyCandidateStream() {
+        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector.Builder(orderedRegistry())
+            .threshold(6)
+            .highCardinalityMeterInfoSelector(
+                    candidates -> candidates.max(Comparator.comparingLong(HighCardinalityMeterInfo::getCount)))
+            .build()) {
+            assertThat(detector.findFirstHighCardinalityMeterInfo()).isEmpty();
+        }
+    }
+
+    @Test
+    void scheduledChecksUseCustomSelection() {
+        TestMeterInfoConsumer consumer = new TestMeterInfoConsumer();
+        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector.Builder(orderedRegistry())
+            .threshold(3)
+            .highCardinalityMeterInfoSelector(
+                    candidates -> candidates.max(Comparator.comparingLong(HighCardinalityMeterInfo::getCount)))
+            .highCardinalityMeterInfoConsumer(consumer)
+            .build()) {
+            detector.start();
+            await().atMost(Duration.ofSeconds(1))
+                .untilAsserted(() -> assertThat(consumer.meterInfo).isNotNull()
+                    .satisfies(info -> assertThat(info.getName()).isEqualTo("highest")));
+        }
+    }
+
+    @Test
+    @SuppressWarnings("NullAway")
+    void nullSelectorIsRejected() {
+        assertThatNullPointerException()
+            .isThrownBy(() -> new HighCardinalityTagsDetector.Builder(registry).highCardinalityMeterInfoSelector(null));
+    }
+
+    private MeterRegistry orderedRegistry() {
+        List<Meter> meters = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            meters.add(registry.counter("at.threshold", "index", String.valueOf(i)));
+        }
+        for (int i = 0; i < 4; i++) {
+            meters.add(registry.counter("first", "index", String.valueOf(i)));
+        }
+        for (int i = 0; i < 6; i++) {
+            meters.add(registry.counter("highest", "index", String.valueOf(i)));
+        }
+        MeterRegistry orderedRegistry = mock(MeterRegistry.class);
+        when(orderedRegistry.getMeters()).thenReturn(meters);
+        return orderedRegistry;
     }
 
     private static class TestMeterNameConsumer implements Consumer<String> {
