@@ -104,6 +104,7 @@ You can also configure individual OpenTelemetry convention implementations on ea
 ** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmmemoryused[`OpenTelemetryJvmMemoryUsedMeterConvention`]
 ** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmmemorycommitted[`OpenTelemetryJvmMemoryCommittedMeterConvention`]
 ** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmmemorylimit[`OpenTelemetryJvmMemoryMaxMeterConvention`]
+** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmmemoryused_after_last_gc[`OpenTelemetryJvmMemoryUsedAfterLastGcMeterConvention`]
 * `JvmThreadMetrics`:
 ** https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/#metric-jvmthreadcount[`OpenTelemetryJvmThreadCountMeterConvention`]
 * `ProcessorMetrics`:

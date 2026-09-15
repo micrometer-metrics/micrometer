@@ -25,8 +25,9 @@ import java.lang.management.MemoryPoolMXBean;
  * @see io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
  * @since 1.16.0
  * @deprecated use individual convention types such as
- * {@link JvmMemoryUsedMeterConvention}, {@link JvmMemoryCommittedMeterConvention}, and
- * {@link JvmMemoryMaxMeterConvention} with
+ * {@link JvmMemoryUsedMeterConvention}, {@link JvmMemoryCommittedMeterConvention},
+ * {@link JvmMemoryMaxMeterConvention}, and
+ * {@link JvmMemoryUsedAfterLastGcMeterConvention} with
  * {@link io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics.Builder} instead
  */
 @Deprecated

@@ -33,8 +33,9 @@ import java.lang.management.MemoryType;
  * @since 1.16.0
  * @deprecated use individual convention types such as
  * {@link OpenTelemetryJvmMemoryUsedMeterConvention},
- * {@link OpenTelemetryJvmMemoryCommittedMeterConvention}, and
- * {@link OpenTelemetryJvmMemoryMaxMeterConvention} instead
+ * {@link OpenTelemetryJvmMemoryCommittedMeterConvention},
+ * {@link OpenTelemetryJvmMemoryMaxMeterConvention}, and
+ * {@link OpenTelemetryJvmMemoryUsedAfterLastGcMeterConvention} instead
  */
 @Deprecated
 @SuppressWarnings("deprecation")

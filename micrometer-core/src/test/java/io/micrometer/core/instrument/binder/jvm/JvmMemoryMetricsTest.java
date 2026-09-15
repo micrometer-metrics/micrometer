@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryCommittedMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMaxMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryUsedAfterLastGcMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryUsedMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmMemoryMeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Michael Weirauch
  */
+@GcTest
 class JvmMemoryMetricsTest {
 
     MeterRegistry registry = new SimpleMeterRegistry();
@@ -69,6 +71,9 @@ class JvmMemoryMetricsTest {
 
         assertJvmMemoryMetrics("heap");
         assertJvmMemoryMetrics("nonheap");
+
+        assertThat(registry.get("jvm.memory.used_after_last_gc").gauges()).isNotEmpty()
+            .allSatisfy(gauge -> assertThat(gauge.value()).isGreaterThanOrEqualTo(0));
     }
 
     @Test
@@ -80,6 +85,9 @@ class JvmMemoryMetricsTest {
 
         assertJvmMemoryMetrics("heap", Tags.empty(), true);
         assertJvmMemoryMetrics("non_heap", Tags.empty(), true);
+
+        assertThat(registry.get("jvm.memory.used_after_last_gc").tags("jvm.memory.type", "heap").gauges()).isNotEmpty()
+            .allSatisfy(gauge -> assertThat(gauge.value()).isGreaterThanOrEqualTo(0));
     }
 
     @Test
@@ -91,6 +99,8 @@ class JvmMemoryMetricsTest {
                     pool -> Tags.of("custom.pool", pool.getName())))
             .memoryCommittedConvention(JvmMemoryCommittedMeterConvention.of("custom.memory.committed"))
             .memoryMaxConvention(JvmMemoryMaxMeterConvention.of("custom.memory.max"))
+            .memoryUsedAfterLastGcConvention(
+                    JvmMemoryUsedAfterLastGcMeterConvention.of("custom.memory.used_after_last_gc"))
             .build()
             .bindTo(registry);
 
@@ -102,6 +112,27 @@ class JvmMemoryMetricsTest {
 
         Gauge memMax = registry.get("custom.memory.max").tags(extraTags).gauge();
         assertThat(memMax.value()).isNotNaN();
+
+        assertThat(registry.get("custom.memory.used_after_last_gc").tags(extraTags).gauges()).isNotEmpty()
+            .allSatisfy(gauge -> assertThat(gauge.value()).isGreaterThanOrEqualTo(0));
+    }
+
+    @Test
+    void memoryUsedAfterLastGc() {
+        new JvmMemoryMetrics().bindTo(registry);
+
+        assertThat(registry.get("jvm.memory.used_after_last_gc").gauges()).isNotEmpty()
+            .allSatisfy(gauge -> assertThat(gauge.value()).isGreaterThanOrEqualTo(0));
+
+        System.gc();
+
+        assertThat(registry.get("jvm.memory.used_after_last_gc").gauges()).isNotEmpty()
+            .allSatisfy(gauge -> assertThat(gauge.value()).isGreaterThanOrEqualTo(0))
+            .anySatisfy(gauge -> assertThat(gauge.value()).isPositive());
+
+        registry.get("jvm.memory.used_after_last_gc").gauges().forEach(gauge -> {
+            assertThat(gauge.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
+        });
     }
 
     @Test
