@@ -1,7 +1,56 @@
-[[meter-convention]]
-= Meter Convention
+[[meter-conventions]]
+= Meter Conventions
 
-While `MeterFilter` can be used to customize the name and tags (collectively, the convention) of Meters in any instrumentation, it can be more convenient and robust to customize the convention for a common instrumentation more directly.
-This is the purpose of the `MeterConvention`.
+While `MeterFilter` can be used to customize the name and tags (collectively, the convention) of meters in any instrumentation, configuring meter conventions directly on binders allows you to customize the meters before registration.
 
-For examples of its usage in instrumentation provided by Micrometer as well as examples of different implementations of a convention for an instrumentation, see the xref:../reference/jvm.adoc#meter-conventions[JVM metrics].
+== Overview
+
+A meter convention interface defines the canonical name and tags for a specific meter.
+Each meter has a dedicated convention interface (such as `JvmMemoryUsedMeterConvention` or `JvmClassCountMeterConvention`).
+
+`MeterBinder` implementations that support meter conventions provide a `builder()` API to configure:
+
+* Individual meter conventions
+* Common or extra tags applied across all meters produced by the binder
+* Standard convention presets (such as OpenTelemetry semantic conventions)
+
+== Customizing Meter Conventions
+
+Convention interfaces may provide static `of(...)` factory methods to conveniently create custom conventions inline without implementing full classes:
+
+[source, java]
+----
+ClassLoaderMetrics metrics = ClassLoaderMetrics.builder()
+    .classCountConvention(JvmClassCountMeterConvention.of("custom.class.count", Tags.of("type", "count")))
+    .classLoadedConvention(JvmClassLoadedMeterConvention.of("custom.class.loaded"))
+    .classUnloadedConvention(JvmClassUnloadedMeterConvention.of("custom.class.unloaded"))
+    .build();
+----
+
+For conventions that derive tags from a runtime context object (such as `MemoryPoolMXBean` or `Thread.State`), the `of(...)` factory method accepts a function that maps the context to `Tags`:
+
+[source, java]
+----
+JvmMemoryMetrics metrics = JvmMemoryMetrics.builder()
+    .memoryUsedConvention(JvmMemoryUsedMeterConvention.of("custom.memory.used",
+            pool -> Tags.of("custom.pool", pool.getName())))
+    .build();
+----
+
+== Semantic Conventions
+
+Micrometer provides convention implementations, including defaults based on historical Micrometer conventions and implementations following OpenTelemetry semantic conventions.
+
+For examples of available conventions and OpenTelemetry configuration, see xref:../reference/jvm.adoc#meter-conventions[JVM metrics].
+
+== Relationship with Naming Conventions
+
+A meter convention is distinct from a xref:./naming.adoc[Naming Convention]:
+
+* **Meter Convention**: Defines the canonical metric name and semantic tag keys and values for a specific meter before it is registered (for example, `jvm.memory.used` with tag `jvm.memory.type=heap`).
+* **Naming Convention (`NamingConvention`)**: Transforms that canonical name and tag keys into the syntax and format required by a specific monitoring system (for example, `jvm_memory_used_bytes` for Prometheus vs. `jvmMemoryUsed` for Atlas).
+
+== When to Use Meter Conventions vs. Observation Conventions
+
+* Use **Meter Conventions** for instrumentation instrumented directly with the metrics API, such as gauges, state-derived function counters, or resource meters (for example, JVM memory, thread states, CPU load).
+* If you are timing an operation or instrumenting a request lifecycle, use the xref:../observation/introduction.adoc[Observation API] and xref:../observation/components.adoc#micrometer-observation-convention-example[Observation Conventions] instead.

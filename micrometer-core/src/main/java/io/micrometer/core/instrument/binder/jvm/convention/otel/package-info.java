@@ -15,7 +15,9 @@
  */
 
 /**
- * OpenTelemetry semantic convention-related classes for JVM metrics.
+ * OpenTelemetry semantic convention implementations for JVM metrics based on <a href=
+ * "https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/runtime/jvm-metrics.md">OpenTelemetry
+ * Semantic Conventions for JVM metrics v1.44.0</a>.
  */
 @NullMarked
 package io.micrometer.core.instrument.binder.jvm.convention.otel;
