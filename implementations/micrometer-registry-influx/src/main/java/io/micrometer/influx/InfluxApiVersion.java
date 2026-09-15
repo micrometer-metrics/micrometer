@@ -53,8 +53,9 @@ public enum InfluxApiVersion {
         @Override
         String writeEndpoint(final InfluxConfig config) throws UnsupportedEncodingException {
             String bucket = URLEncoder.encode(config.bucket(), "UTF-8");
-            String org = URLEncoder.encode(config.org(), "UTF-8");
-            return config.uri() + "/api/v2/write?precision=ms&bucket=" + bucket + "&org=" + org;
+            String org = config.org();
+            String orgParam = org != null ? "&org=" + URLEncoder.encode(org, "UTF-8") : "";
+            return config.uri() + "/api/v2/write?precision=ms&bucket=" + bucket + orgParam;
         }
 
         @Override

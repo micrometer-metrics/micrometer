@@ -36,6 +36,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import javax.servlet.Servlet;
@@ -316,11 +317,11 @@ class TomcatMetricsTest {
         });
     }
 
-    void runTomcat(HttpServlet servlet, Callable<Void> doWithTomcat) throws Exception {
+    void runTomcat(HttpServlet servlet, Callable<@Nullable Void> doWithTomcat) throws Exception {
         runTomcat(Collections.singleton(servlet), doWithTomcat);
     }
 
-    void runTomcat(Collection<Servlet> servlets, Callable<Void> doWithTomcat) throws Exception {
+    void runTomcat(Collection<Servlet> servlets, Callable<@Nullable Void> doWithTomcat) throws Exception {
         Tomcat server = new Tomcat();
         try {
             StandardHost host = new StandardHost();

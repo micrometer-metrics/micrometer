@@ -71,7 +71,8 @@ class Jetty12ClientTimingInstrumentationVerificationTests
     private HttpClient createHttpClient(boolean withObservationRegistry) {
         HttpClient httpClient = new HttpClient();
         JettyClientMetrics.Builder builder = JettyClientMetrics.builder(getRegistry(),
-                (request, result) -> request.getHeaders().get(HEADER_URI_PATTERN));
+                (request, result) -> request != null && request.getHeaders().get(HEADER_URI_PATTERN) != null
+                        ? request.getHeaders().get(HEADER_URI_PATTERN) : "UNKNOWN");
         if (withObservationRegistry) {
             builder.observationRegistry(getObservationRegistry());
         }

@@ -44,7 +44,10 @@ class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
     @Override
     protected void addInstrumentingListener() {
         this.httpClient.getRequestListeners()
-            .addListener(JettyClientMetrics.builder(registry, (request, result) -> request.getURI().getPath())
+            .addListener(JettyClientMetrics
+                .builder(registry,
+                        (request, result) -> (request != null && request.getURI().getPath() != null)
+                                ? request.getURI().getPath() : "UNKNOWN")
                 .observationRegistry(observationRegistry)
                 .build());
     }

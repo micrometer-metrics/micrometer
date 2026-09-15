@@ -182,20 +182,29 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             return Stream.of(metricDatum);
         }
 
+        private void addMetricDatum(Stream.Builder<MetricDatum> builder, @Nullable MetricDatum datum) {
+            if (datum != null) {
+                builder.add(datum);
+            }
+        }
+
         private Stream<MetricDatum> counterData(Counter counter) {
-            return Stream.of(metricDatum(counter.getId(), "count", StandardUnit.COUNT, counter.count()));
+            MetricDatum metricDatum = metricDatum(counter.getId(), "count", StandardUnit.COUNT, counter.count());
+            return metricDatum != null ? Stream.of(metricDatum) : Stream.empty();
         }
 
         // VisibleForTesting
         Stream<MetricDatum> timerData(Timer timer) {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
-            metrics
-                .add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
+            addMetricDatum(metrics,
+                    metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
-            metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, (double) count));
+            addMetricDatum(metrics, metricDatum(timer.getId(), "count", StandardUnit.COUNT, (double) count));
             if (count > 0) {
-                metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
-                metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
+                addMetricDatum(metrics,
+                        metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
+                addMetricDatum(metrics,
+                        metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
             }
             return metrics.build();
         }
@@ -203,19 +212,22 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> summaryData(DistributionSummary summary) {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
-            metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
+            addMetricDatum(metrics, metricDatum(summary.getId(), "sum", summary.totalAmount()));
             long count = summary.count();
-            metrics.add(metricDatum(summary.getId(), "count", StandardUnit.COUNT, (double) count));
+            addMetricDatum(metrics, metricDatum(summary.getId(), "count", StandardUnit.COUNT, (double) count));
             if (count > 0) {
-                metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
-                metrics.add(metricDatum(summary.getId(), "max", summary.max()));
+                addMetricDatum(metrics, metricDatum(summary.getId(), "avg", summary.mean()));
+                addMetricDatum(metrics, metricDatum(summary.getId(), "max", summary.max()));
             }
             return metrics.build();
         }
 
         private Stream<MetricDatum> longTaskTimerData(LongTaskTimer longTaskTimer) {
-            return Stream.of(metricDatum(longTaskTimer.getId(), "activeTasks", longTaskTimer.activeTasks()),
+            Stream.Builder<MetricDatum> metrics = Stream.builder();
+            addMetricDatum(metrics, metricDatum(longTaskTimer.getId(), "activeTasks", longTaskTimer.activeTasks()));
+            addMetricDatum(metrics,
                     metricDatum(longTaskTimer.getId(), "duration", longTaskTimer.duration(getBaseTimeUnit())));
+            return metrics.build();
         }
 
         private Stream<MetricDatum> timeGaugeData(TimeGauge gauge) {
@@ -245,10 +257,10 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             double count = timer.count();
-            metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, count));
-            metrics.add(metricDatum(timer.getId(), "sum", sum));
+            addMetricDatum(metrics, metricDatum(timer.getId(), "count", StandardUnit.COUNT, count));
+            addMetricDatum(metrics, metricDatum(timer.getId(), "sum", sum));
             if (count > 0) {
-                metrics.add(metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
+                addMetricDatum(metrics, metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
             }
             return metrics.build();
         }

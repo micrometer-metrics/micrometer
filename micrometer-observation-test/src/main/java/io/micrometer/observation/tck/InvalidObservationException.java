@@ -79,6 +79,9 @@ public class InvalidObservationException extends RuntimeException {
             this.stackTrace = findRelevantStackTraceElements(currentStackTrace);
         }
 
+        // NullAway models Arrays.copyOfRange return type as nullable due to potential
+        // null padding
+        @SuppressWarnings("NullAway")
         private StackTraceElement[] findRelevantStackTraceElements(StackTraceElement[] stackTrace) {
             int index = findFirstRelevantStackTraceElementIndex(stackTrace);
             if (index == -1) {

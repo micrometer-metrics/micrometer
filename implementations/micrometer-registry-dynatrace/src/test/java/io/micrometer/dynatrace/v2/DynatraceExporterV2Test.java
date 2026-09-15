@@ -406,10 +406,10 @@ class DynatraceExporterV2Test {
             .compile("^.+,.+,min=(?<min>.+),max=(?<max>.+),sum=(?<sum>.+),count=(?<count>.+) \\d+$")
             .matcher(lines.get(0));
         assertThat(matcher.matches()).isTrue();
-        double min = Double.parseDouble(matcher.group("min"));
-        double max = Double.parseDouble(matcher.group("max"));
-        double sum = Double.parseDouble(matcher.group("sum"));
-        int count = Integer.parseInt(matcher.group("count"));
+        double min = Double.parseDouble(Objects.requireNonNull(matcher.group("min")));
+        double max = Double.parseDouble(Objects.requireNonNull(matcher.group("max")));
+        double sum = Double.parseDouble(Objects.requireNonNull(matcher.group("sum")));
+        int count = Integer.parseInt(Objects.requireNonNull(matcher.group("count")));
         double mean = sum / count;
         assertThat(min).isLessThanOrEqualTo(mean);
         assertThat(mean).isLessThanOrEqualTo(max);
@@ -601,7 +601,7 @@ class DynatraceExporterV2Test {
         Counter counter = meterRegistry.counter("my.counter");
         counter.increment(12d);
         meterRegistry.gauge("my.gauge", 42d);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = Objects.requireNonNull(meterRegistry.find("my.gauge").gauge());
         Timer timer = meterRegistry.timer("my.timer");
         timer.record(22, MILLISECONDS);
         clock.add(config.step());

@@ -21,6 +21,7 @@ import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -355,7 +356,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
                 Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(query)) {
             if (resultSet.next()) {
-                return Optional.of(resultSetGetter.get(resultSet));
+                return Optional.ofNullable(resultSetGetter.get(resultSet));
             }
         }
         catch (SQLException ignored) {
@@ -414,7 +415,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     @FunctionalInterface
     interface ResultSetGetter<T> {
 
-        T get(ResultSet resultSet) throws SQLException;
+        @Nullable T get(ResultSet resultSet) throws SQLException;
 
     }
 
@@ -438,7 +439,11 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
                             VERSION_PATTERN.pattern());
                     return EMPTY;
                 }
-                final String[] versionArr = matcher.group(1).split("\\.", 3);
+                String group1 = matcher.group(1);
+                if (group1 == null) {
+                    return EMPTY;
+                }
+                final String[] versionArr = group1.split("\\.", 3);
                 if (versionArr.length == 1) {
                     return new Version(Integer.parseInt(versionArr[0]));
                 }
@@ -475,7 +480,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (!(o instanceof Version))
                 return false;
             Version version = (Version) o;

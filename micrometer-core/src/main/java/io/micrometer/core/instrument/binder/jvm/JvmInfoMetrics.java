@@ -31,11 +31,16 @@ public class JvmInfoMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         Gauge.builder("jvm.info", () -> 1L)
             .description("JVM version info")
-            .tags("version", System.getProperty("java.runtime.version", "unknown"), "vendor",
-                    System.getProperty("java.vm.vendor", "unknown"), "runtime",
-                    System.getProperty("java.runtime.name", "unknown"))
+            .tags("version", getSystemProperty("java.runtime.version", "unknown"), "vendor",
+                    getSystemProperty("java.vm.vendor", "unknown"), "runtime",
+                    getSystemProperty("java.runtime.name", "unknown"))
             .strongReference(true)
             .register(registry);
+    }
+
+    private static String getSystemProperty(String key, String defaultValue) {
+        String value = System.getProperty(key, defaultValue);
+        return value != null ? value : defaultValue;
     }
 
 }

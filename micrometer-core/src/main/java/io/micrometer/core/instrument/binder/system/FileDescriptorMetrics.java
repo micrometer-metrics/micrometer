@@ -102,7 +102,13 @@ public class FileDescriptorMetrics implements MeterBinder {
 
     private double invoke(@Nullable Method method) {
         try {
-            return method != null ? (double) (long) method.invoke(osBean) : Double.NaN;
+            if (method != null) {
+                Object result = method.invoke(osBean);
+                if (result instanceof Number) {
+                    return ((Number) result).doubleValue();
+                }
+            }
+            return Double.NaN;
         }
         catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             return Double.NaN;

@@ -47,7 +47,8 @@ class ProcessorMetricsTest {
         new ProcessorMetrics().bindTo(registry);
         // end::setup[]
         assertThat(registry.get("system.cpu.count").gauge().value()).isPositive();
-        if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
+        String osName = System.getProperty("os.name");
+        if (osName != null && osName.toLowerCase(Locale.ROOT).contains("win")) {
             assertThat(registry.find("system.load.average.1m").gauge()).describedAs("Not present on windows").isNull();
         }
         else {
@@ -94,7 +95,8 @@ class ProcessorMetricsTest {
         new ProcessorMetrics(extraTags, new OpenTelemetryJvmCpuMeterConventions(extraTags)).bindTo(registry);
 
         assertThat(registry.get("jvm.cpu.count").gauge().value()).isPositive();
-        if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
+        String osName = System.getProperty("os.name");
+        if (osName != null && osName.toLowerCase(Locale.ROOT).contains("win")) {
             assertThat(registry.find("jvm.cpu.recent_utilization").gauge()).describedAs("Not present on windows")
                 .isNull();
         }
@@ -110,7 +112,8 @@ class ProcessorMetricsTest {
         new ProcessorMetrics(extraTags, new OpenTelemetryJvmCpuMeterConventions(extraTags)).bindTo(registry);
 
         assertThat(registry.get("jvm.cpu.count").tags(extraTags).gauge().value()).isPositive();
-        if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
+        String osName = System.getProperty("os.name");
+        if (osName != null && osName.toLowerCase(Locale.ROOT).contains("win")) {
             assertThat(registry.find("jvm.cpu.recent_utilization").tags(extraTags).gauge())
                 .describedAs("Not present on windows")
                 .isNull();

@@ -49,8 +49,8 @@ class MessageProducerInvocationHandler implements InvocationHandler {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if ("send".equals(method.getName()) && args[0] != null) {
+    public @Nullable Object invoke(Object proxy, Method method, @Nullable Object @Nullable [] args) throws Throwable {
+        if ("send".equals(method.getName()) && args != null && args[0] != null) {
             Message message = findMessageArgument(args);
             Observation observation = JmsObservationDocumentation.JMS_MESSAGE_PUBLISH.observation(null,
                     DEFAULT_CONVENTION, () -> new JmsPublishObservationContext(message), this.registry);
@@ -59,8 +59,13 @@ class MessageProducerInvocationHandler implements InvocationHandler {
                 return method.invoke(this.target, args);
             }
             catch (InvocationTargetException exc) {
-                observation.error(exc.getTargetException());
-                throw exc.getTargetException();
+                Throwable targetException = exc.getTargetException();
+                if (targetException != null) {
+                    observation.error(targetException);
+                    throw targetException;
+                }
+                observation.error(exc);
+                throw exc;
             }
             catch (Throwable error) {
                 observation.error(error);
@@ -74,11 +79,15 @@ class MessageProducerInvocationHandler implements InvocationHandler {
             return method.invoke(this.target, args);
         }
         catch (InvocationTargetException exc) {
-            throw exc.getTargetException();
+            Throwable targetException = exc.getTargetException();
+            throw targetException != null ? targetException : exc;
         }
     }
 
-    private @Nullable Message findMessageArgument(Object[] args) {
+    private @Nullable Message findMessageArgument(@Nullable Object @Nullable [] args) {
+        if (args == null) {
+            return null;
+        }
         for (Object arg : args) {
             if (arg instanceof Message) {
                 return (Message) arg;
