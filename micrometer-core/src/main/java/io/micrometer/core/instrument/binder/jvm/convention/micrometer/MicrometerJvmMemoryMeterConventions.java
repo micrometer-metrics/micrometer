@@ -30,8 +30,9 @@ import java.lang.management.MemoryType;
  * @since 1.16.0
  * @deprecated use individual convention types such as
  * {@link MicrometerJvmMemoryUsedMeterConvention},
- * {@link MicrometerJvmMemoryCommittedMeterConvention}, and
- * {@link MicrometerJvmMemoryMaxMeterConvention} instead
+ * {@link MicrometerJvmMemoryCommittedMeterConvention},
+ * {@link MicrometerJvmMemoryMaxMeterConvention}, and
+ * {@link MicrometerJvmMemoryUsedAfterLastGcMeterConvention} instead
  */
 @Deprecated
 @SuppressWarnings("deprecation")
