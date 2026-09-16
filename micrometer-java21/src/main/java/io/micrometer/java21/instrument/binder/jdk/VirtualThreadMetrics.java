@@ -101,6 +101,7 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
                 .findVirtual(clazz, "getQueuedVirtualThreadCount", MethodType.methodType(long.class));
 
             Gauge.builder(METER_NAME_PREFIX + "parallelism", platformMXBean, o -> invoke(getParallelism, o))
+                .baseUnit(BaseUnits.THREADS)
                 .description("Virtual thread scheduler's target parallelism")
                 .register(registry);
 
