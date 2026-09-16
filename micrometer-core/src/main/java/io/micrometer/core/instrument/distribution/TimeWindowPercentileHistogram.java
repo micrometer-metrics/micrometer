@@ -31,6 +31,11 @@ import java.util.Set;
  * <p>
  * A histogram implementation that supports the computation of percentiles by Micrometer
  * for publishing to a monitoring system.
+ * <p>
+ * This class is backed by HdrHistogram, which is an optional dependency of Micrometer.
+ * Loading this class fails with a {@link NoClassDefFoundError} when HdrHistogram is not
+ * on the runtime classpath, so callers should consult {@link HdrHistogramAvailability}
+ * before instantiating it.
  *
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
