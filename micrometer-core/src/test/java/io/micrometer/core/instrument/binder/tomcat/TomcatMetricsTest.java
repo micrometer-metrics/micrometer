@@ -323,86 +323,6 @@ class TomcatMetricsTest {
         });
     }
 
-    void runTomcat(HttpServlet servlet, Callable<Void> doWithTomcat) throws Exception {
-        runTomcat(Collections.singleton(servlet), doWithTomcat);
-    }
-
-    void runTomcat(Collection<Servlet> servlets, Callable<Void> doWithTomcat) throws Exception {
-        runTomcat(servlets, false, doWithTomcat);
-    }
-
-    void runTomcat(Collection<Servlet> servlets, boolean enableHttp2, Callable<Void> doWithTomcat) throws Exception {
-        Tomcat server = new Tomcat();
-        try {
-            StandardHost host = new StandardHost();
-            host.setName("localhost");
-            server.setHost(host);
-            server.setPort(0);
-            if (enableHttp2) {
-                server.getConnector().addUpgradeProtocol(new Http2Protocol());
-            }
-            server.start();
-
-            this.port = server.getConnector().getLocalPort();
-
-            Context context = server.addContext("", null);
-            int i = 0;
-            for (Servlet servlet : servlets) {
-                server.addServlet("", "servlet" + i, servlet);
-                context.addServletMappingDecoded("/" + i + "/*", "servlet" + i);
-                i++;
-            }
-
-            doWithTomcat.call();
-
-        }
-        finally {
-            server.stop();
-            server.destroy();
-
-        }
-    }
-
-    private void checkMbeansInitialState() {
-        assertThat(registry.get("tomcat.global.sent").functionCounter().count()).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS))
-            .isEqualTo(0.0);
-        assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
-        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
-        assertThat(registry.get("tomcat.connections.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
-        assertThat(registry.get("tomcat.connections.keepalive.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
-        assertThat(registry.get("tomcat.connections.config.max").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(0.0);
-    }
-
-    private void checkMbeansAfterRequests(long expectedSentBytes) {
-        await().atMost(5, TimeUnit.SECONDS)
-            .until(() -> registry.get("tomcat.global.sent").functionCounter().count() == expectedSentBytes);
-        assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(10.0);
-        assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(1.0);
-        assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(2.0);
-        assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS))
-            .isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
-        assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS))
-            .isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
-        assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
-        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("tomcat.connections.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
-        assertThat(registry.get("tomcat.connections.keepalive.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
-        assertThat(registry.get("tomcat.connections.config.max").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(1.0);
-    }
-
     @Test
     @Issue("#7535")
     void globalRequestMetrics_areRegisteredForBothHttp11AndHttp2WithRealTomcat() throws Exception {
@@ -501,6 +421,86 @@ class TomcatMetricsTest {
 
             return null;
         });
+    }
+
+    void runTomcat(HttpServlet servlet, Callable<Void> doWithTomcat) throws Exception {
+        runTomcat(Collections.singleton(servlet), doWithTomcat);
+    }
+
+    void runTomcat(Collection<Servlet> servlets, Callable<Void> doWithTomcat) throws Exception {
+        runTomcat(servlets, false, doWithTomcat);
+    }
+
+    void runTomcat(Collection<Servlet> servlets, boolean enableHttp2, Callable<Void> doWithTomcat) throws Exception {
+        Tomcat server = new Tomcat();
+        try {
+            StandardHost host = new StandardHost();
+            host.setName("localhost");
+            server.setHost(host);
+            server.setPort(0);
+            if (enableHttp2) {
+                server.getConnector().addUpgradeProtocol(new Http2Protocol());
+            }
+            server.start();
+
+            this.port = server.getConnector().getLocalPort();
+
+            Context context = server.addContext("", null);
+            int i = 0;
+            for (Servlet servlet : servlets) {
+                server.addServlet("", "servlet" + i, servlet);
+                context.addServletMappingDecoded("/" + i + "/*", "servlet" + i);
+                i++;
+            }
+
+            doWithTomcat.call();
+
+        }
+        finally {
+            server.stop();
+            server.destroy();
+
+        }
+    }
+
+    private void checkMbeansInitialState() {
+        assertThat(registry.get("tomcat.global.sent").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS))
+            .isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.keepalive.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.config.max").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(0.0);
+    }
+
+    private void checkMbeansAfterRequests(long expectedSentBytes) {
+        await().atMost(5, TimeUnit.SECONDS)
+            .until(() -> registry.get("tomcat.global.sent").functionCounter().count() == expectedSentBytes);
+        assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(10.0);
+        assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(2.0);
+        assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS))
+            .isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
+        assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS))
+            .isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
+        assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.connections.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.keepalive.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.config.max").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(1.0);
     }
 
     public static class TestUpgradeHandler implements HttpUpgradeHandler {

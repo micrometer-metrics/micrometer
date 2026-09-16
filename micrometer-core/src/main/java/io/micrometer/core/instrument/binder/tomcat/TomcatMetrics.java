@@ -245,7 +245,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
             // The Upgrade key disambiguates the HTTP/2 RequestGroupInfo from the
             // HTTP/1.1 one that shares the same connector name; surface it as a tag so
             // both series can register and stay distinguishable.
-            Iterable<Tag> tagsWithUpgrade = Tags.concat(allTags, "upgrade", upgradeTagValue(name));
+            Tags tagsWithUpgrade = Tags.concat(allTags, "upgrade", upgradeTagValue(name));
 
             FunctionCounter
                 .builder("tomcat.global.sent", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "bytesSent")))
