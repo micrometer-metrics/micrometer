@@ -1,3 +1,5 @@
+description = "MeterRegistry implementation for AppOptics. This module is deprecated for removal due to AppOptics' End of Life Announcement."
+
 dependencies {
     api project(':micrometer-core')
 

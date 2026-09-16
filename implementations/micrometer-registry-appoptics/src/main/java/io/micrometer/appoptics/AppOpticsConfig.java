@@ -30,7 +30,9 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  *
  * @author Hunter Sherman
  * @since 1.1.0
+ * @deprecated since 1.18.0 for removal due to AppOptics' End of Life
  */
+@Deprecated
 public interface AppOpticsConfig extends StepRegistryConfig {
 
     // https://docs.appoptics.com/api/#create-a-measurement

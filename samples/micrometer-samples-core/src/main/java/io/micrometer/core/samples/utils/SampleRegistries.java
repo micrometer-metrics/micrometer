@@ -73,6 +73,8 @@ public class SampleRegistries {
                 "Pick some other method on SampleRegistries to ship sample metrics to the system of your choice");
     }
 
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public static AppOpticsMeterRegistry appOptics(String apiToken) {
         return new AppOpticsMeterRegistry(new AppOpticsConfig() {
             @Override

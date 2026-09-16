@@ -27,7 +27,9 @@ import java.util.regex.Pattern;
  *
  * @author Jon Schneider
  * @since 1.1.0
+ * @deprecated since 1.18.0 for removal due to AppOptics' End of Life
  */
+@Deprecated
 public class AppOpticsNamingConvention implements NamingConvention {
 
     private static final int MAX_NAME_LENGTH = 255;
