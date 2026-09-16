@@ -115,44 +115,50 @@ class ObservationHandlerTests {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         ObservationRegistry registry = ObservationRegistry.create();
         // Register DefaultMeterObservationHandler to create metrics from observations
-        registry.observationConfig().observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+        registry.observationConfig().observationHandler(DefaultMeterObservationHandler.builder(meterRegistry).build());
 
         // Perform an observation
         Observation observation = Observation.createNotStarted("my.operation", registry)
             .lowCardinalityKeyValue("region", "us-east-1");
-        observation.start(); // LongTaskTimer "my.operation.active" starts here
+        observation.start();
         observation.event(Observation.Event.of("my.event")); // Counter
                                                              // "my.operation.my.event"
                                                              // incremented
-        observation.stop(); // Timer "my.operation" and LongTaskTimer stop
+        observation.stop(); // Timer "my.operation" is recorded here
 
         // Verify metrics were created:
         // Timer: my.operation (with tags: region=us-east-1, error=none)
         assertThat(meterRegistry.get("my.operation").timer().count()).isEqualTo(1);
         // Counter: my.operation.my.event (with tags: region=us-east-1)
         assertThat(meterRegistry.get("my.operation.my.event").counter().count()).isEqualTo(1);
+        // No LongTaskTimer, since it is not included by default
+        assertThat(meterRegistry.find("my.operation.active").longTaskTimer()).isNull();
         // end::default_meter_handler[]
     }
 
     @Test
-    void default_meter_observation_handler_ignore_long_task_timer() {
-        // tag::default_meter_handler_ignore_ltt[]
+    void default_meter_observation_handler_with_long_task_timer() {
+        // tag::default_meter_handler_with_ltt[]
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         ObservationRegistry registry = ObservationRegistry.create();
-        // You can disable the LongTaskTimer if you don't need it
+        // Opt in to the LongTaskTimer that tracks in-progress observations
         registry.observationConfig()
-            .observationHandler(new DefaultMeterObservationHandler(meterRegistry,
-                    DefaultMeterObservationHandler.IgnoredMeters.LONG_TASK_TIMER));
+            .observationHandler(DefaultMeterObservationHandler.builder(meterRegistry)
+                .includeActiveObservationLongTaskTimer(true)
+                .build());
 
-        Observation.createNotStarted("my.operation", registry)
+        Observation observation = Observation.createNotStarted("my.operation", registry)
             .lowCardinalityKeyValue("region", "us-east-1")
-            .start()
-            .stop();
+            .start(); // LongTaskTimer "my.operation.active" starts here
 
-        // Timer is created, but no LongTaskTimer
+        // While the observation is in progress, it is tracked as an active task
+        assertThat(meterRegistry.get("my.operation.active").longTaskTimer().activeTasks()).isEqualTo(1);
+
+        observation.stop(); // Timer "my.operation" and LongTaskTimer stop
+
         assertThat(meterRegistry.get("my.operation").timer().count()).isEqualTo(1);
-        assertThat(meterRegistry.find("my.operation.active").longTaskTimer()).isNull();
-        // end::default_meter_handler_ignore_ltt[]
+        assertThat(meterRegistry.get("my.operation.active").longTaskTimer().activeTasks()).isZero();
+        // end::default_meter_handler_with_ltt[]
     }
 
     @Test
@@ -181,7 +187,8 @@ class ObservationHandlerTests {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         // add metrics
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        observationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(registry).build());
         observationRegistry.observationConfig().observationConvention(new GlobalTaxObservationConvention());
         // This will be applied to all observations
         observationRegistry.observationConfig().observationFilter(new CloudObservationFilter());

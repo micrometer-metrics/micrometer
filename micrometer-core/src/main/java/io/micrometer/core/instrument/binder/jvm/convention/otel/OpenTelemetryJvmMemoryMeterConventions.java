@@ -31,7 +31,14 @@ import java.lang.management.MemoryType;
  * Semantic conventions for JVM metrics v1.37.0</a>
  * @see io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
  * @since 1.16.0
+ * @deprecated use individual convention types such as
+ * {@link OpenTelemetryJvmMemoryUsedMeterConvention},
+ * {@link OpenTelemetryJvmMemoryCommittedMeterConvention},
+ * {@link OpenTelemetryJvmMemoryMaxMeterConvention}, and
+ * {@link OpenTelemetryJvmMemoryUsedAfterLastGcMeterConvention} instead
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class OpenTelemetryJvmMemoryMeterConventions extends MicrometerJvmMemoryMeterConventions {
 
     public OpenTelemetryJvmMemoryMeterConventions(Tags extraTags) {

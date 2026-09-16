@@ -22,8 +22,20 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryCommittedMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMaxMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMeterConventions;
-import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmMemoryMeterConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryUsedAfterLastGcMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryUsedMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmMemoryCommittedMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmMemoryMaxMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmMemoryUsedAfterLastGcMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmMemoryUsedMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmMemoryCommittedMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmMemoryMaxMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmMemoryUsedAfterLastGcMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmMemoryUsedMeterConvention;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.management.*;
 
@@ -41,18 +53,29 @@ public class JvmMemoryMetrics implements MeterBinder {
 
     private final Tags extraTags;
 
-    private final JvmMemoryMeterConventions conventions;
+    private final JvmMemoryUsedMeterConvention memoryUsedConvention;
+
+    private final JvmMemoryCommittedMeterConvention memoryCommittedConvention;
+
+    private final JvmMemoryMaxMeterConvention memoryMaxConvention;
+
+    private final JvmMemoryUsedAfterLastGcMeterConvention memoryUsedAfterLastGcConvention;
 
     public JvmMemoryMetrics() {
-        this(Tags.empty(), new MicrometerJvmMemoryMeterConventions());
+        this(Tags.empty(), new MicrometerJvmMemoryUsedMeterConvention(),
+                new MicrometerJvmMemoryCommittedMeterConvention(), new MicrometerJvmMemoryMaxMeterConvention(),
+                new MicrometerJvmMemoryUsedAfterLastGcMeterConvention());
     }
 
     /**
-     * Uses the default convention with the provided extra tags.
+     * Uses the default convention with the provided extra tags. If a conflict occurs
+     * between extra tags and convention tags, the convention tag takes precedence.
      * @param extraTags tags to add to each meter's tags produced by this binder
      */
     public JvmMemoryMetrics(Iterable<Tag> extraTags) {
-        this(extraTags, new MicrometerJvmMemoryMeterConventions(Tags.of(extraTags)));
+        this(Tags.of(extraTags), new MicrometerJvmMemoryUsedMeterConvention(),
+                new MicrometerJvmMemoryCommittedMeterConvention(), new MicrometerJvmMemoryMaxMeterConvention(),
+                new MicrometerJvmMemoryUsedAfterLastGcMeterConvention());
     }
 
     /**
@@ -63,10 +86,38 @@ public class JvmMemoryMetrics implements MeterBinder {
      * @param extraTags these will be added to meters not covered by the convention
      * @param conventions custom conventions for applicable metrics
      * @since 1.16.0
+     * @deprecated use {@link #builder()} to provide individual conventions
      */
+    @Deprecated
     public JvmMemoryMetrics(Iterable<? extends Tag> extraTags, JvmMemoryMeterConventions conventions) {
         this.extraTags = Tags.of(extraTags);
-        this.conventions = conventions;
+        MeterConvention<MemoryPoolMXBean> used = conventions.getMemoryUsedConvention();
+        this.memoryUsedConvention = JvmMemoryUsedMeterConvention.of(used.getName(), used::getTags);
+        MeterConvention<MemoryPoolMXBean> committed = conventions.getMemoryCommittedConvention();
+        this.memoryCommittedConvention = JvmMemoryCommittedMeterConvention.of(committed.getName(), committed::getTags);
+        MeterConvention<MemoryPoolMXBean> max = conventions.getMemoryMaxConvention();
+        this.memoryMaxConvention = JvmMemoryMaxMeterConvention.of(max.getName(), max::getTags);
+        this.memoryUsedAfterLastGcConvention = new MicrometerJvmMemoryUsedAfterLastGcMeterConvention();
+    }
+
+    private JvmMemoryMetrics(Tags extraTags, JvmMemoryUsedMeterConvention memoryUsedConvention,
+            JvmMemoryCommittedMeterConvention memoryCommittedConvention,
+            JvmMemoryMaxMeterConvention memoryMaxConvention,
+            JvmMemoryUsedAfterLastGcMeterConvention memoryUsedAfterLastGcConvention) {
+        this.extraTags = extraTags;
+        this.memoryUsedConvention = memoryUsedConvention;
+        this.memoryCommittedConvention = memoryCommittedConvention;
+        this.memoryMaxConvention = memoryMaxConvention;
+        this.memoryUsedAfterLastGcConvention = memoryUsedAfterLastGcConvention;
+    }
+
+    /**
+     * Create a new builder for {@link JvmMemoryMetrics}.
+     * @return a new builder
+     * @since 1.18.0
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -94,33 +145,155 @@ public class JvmMemoryMetrics implements MeterBinder {
         }
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
-            MeterConvention<MemoryPoolMXBean> memoryUsedConvention = conventions.getMemoryUsedConvention();
             Gauge
                 .builder(memoryUsedConvention.getName(), memoryPoolBean,
                         (mem) -> getUsageValue(mem, MemoryUsage::getUsed))
+                .tags(extraTags)
                 .tags(memoryUsedConvention.getTags(memoryPoolBean))
                 .description("The amount of used memory")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
-            MeterConvention<MemoryPoolMXBean> memoryCommittedConvention = conventions.getMemoryCommittedConvention();
             Gauge
                 .builder(memoryCommittedConvention.getName(), memoryPoolBean,
                         (mem) -> getUsageValue(mem, MemoryUsage::getCommitted))
+                .tags(extraTags)
                 .tags(memoryCommittedConvention.getTags(memoryPoolBean))
                 .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
-            MeterConvention<MemoryPoolMXBean> memoryMaxConvention = conventions.getMemoryMaxConvention();
             Gauge
                 .builder(memoryMaxConvention.getName(), memoryPoolBean,
                         (mem) -> getUsageValue(mem, MemoryUsage::getMax))
+                .tags(extraTags)
                 .tags(memoryMaxConvention.getTags(memoryPoolBean))
                 .description("The maximum amount of memory in bytes that can be used for memory management")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
+
+            if (memoryPoolBean.getCollectionUsage() != null) {
+                Gauge.builder(memoryUsedAfterLastGcConvention.getName(), memoryPoolBean, pool -> {
+                    MemoryUsage collectionUsage = pool.getCollectionUsage();
+                    return collectionUsage != null ? collectionUsage.getUsed() : Double.NaN;
+                })
+                    .tags(extraTags)
+                    .tags(memoryUsedAfterLastGcConvention.getTags(memoryPoolBean))
+                    .description(
+                            "Measure of memory used, as measured after the most recent garbage collection event on this pool.")
+                    .baseUnit(BaseUnits.BYTES)
+                    .register(registry);
+            }
         }
+    }
+
+    /**
+     * Builder for {@link JvmMemoryMetrics}.
+     *
+     * @since 1.18.0
+     */
+    public static class Builder {
+
+        private Tags extraTags = Tags.empty();
+
+        private @Nullable JvmMemoryUsedMeterConvention memoryUsedConvention;
+
+        private @Nullable JvmMemoryCommittedMeterConvention memoryCommittedConvention;
+
+        private @Nullable JvmMemoryMaxMeterConvention memoryMaxConvention;
+
+        private @Nullable JvmMemoryUsedAfterLastGcMeterConvention memoryUsedAfterLastGcConvention;
+
+        Builder() {
+        }
+
+        /**
+         * Extra tags to add to meters registered by this binder. If a conflict occurs
+         * between extra tags and convention tags, the convention tag takes precedence.
+         * @param extraTags tags to add
+         * @return this builder
+         */
+        public Builder extraTags(Iterable<? extends Tag> extraTags) {
+            this.extraTags = Tags.of(extraTags);
+            return this;
+        }
+
+        /**
+         * Custom convention for the memory used meter.
+         * @param convention the convention to use
+         * @return this builder
+         */
+        public Builder memoryUsedConvention(JvmMemoryUsedMeterConvention convention) {
+            this.memoryUsedConvention = convention;
+            return this;
+        }
+
+        /**
+         * Custom convention for the memory committed meter.
+         * @param convention the convention to use
+         * @return this builder
+         */
+        public Builder memoryCommittedConvention(JvmMemoryCommittedMeterConvention convention) {
+            this.memoryCommittedConvention = convention;
+            return this;
+        }
+
+        /**
+         * Custom convention for the memory max meter.
+         * @param convention the convention to use
+         * @return this builder
+         */
+        public Builder memoryMaxConvention(JvmMemoryMaxMeterConvention convention) {
+            this.memoryMaxConvention = convention;
+            return this;
+        }
+
+        /**
+         * Custom convention for the memory used after last GC meter.
+         * @param convention the convention to use
+         * @return this builder
+         */
+        public Builder memoryUsedAfterLastGcConvention(JvmMemoryUsedAfterLastGcMeterConvention convention) {
+            this.memoryUsedAfterLastGcConvention = convention;
+            return this;
+        }
+
+        /**
+         * Use OpenTelemetry semantic conventions for applicable meters that have a stable
+         * semantic convention as of the version documented in
+         * {@link io.micrometer.core.instrument.binder.jvm.convention.otel the otel
+         * conventions package}. Individual conventions can still be overridden by calling
+         * the specific convention methods after this one.
+         * <p>
+         * In future minor releases, this method may configure additional conventions as
+         * new OpenTelemetry semantic conventions for this binder become stable. If strict
+         * metric stability across library upgrades is required, configure individual
+         * conventions explicitly instead of using this convenience method.
+         * @return this builder
+         * @see io.micrometer.core.instrument.binder.jvm.convention.otel
+         */
+        public Builder openTelemetryConventions() {
+            this.memoryUsedConvention = new OpenTelemetryJvmMemoryUsedMeterConvention();
+            this.memoryCommittedConvention = new OpenTelemetryJvmMemoryCommittedMeterConvention();
+            this.memoryMaxConvention = new OpenTelemetryJvmMemoryMaxMeterConvention();
+            this.memoryUsedAfterLastGcConvention = new OpenTelemetryJvmMemoryUsedAfterLastGcMeterConvention();
+            return this;
+        }
+
+        /**
+         * Build a new {@link JvmMemoryMetrics} instance.
+         * @return a new {@link JvmMemoryMetrics}
+         */
+        public JvmMemoryMetrics build() {
+            return new JvmMemoryMetrics(extraTags,
+                    memoryUsedConvention != null ? memoryUsedConvention : new MicrometerJvmMemoryUsedMeterConvention(),
+                    memoryCommittedConvention != null ? memoryCommittedConvention
+                            : new MicrometerJvmMemoryCommittedMeterConvention(),
+                    memoryMaxConvention != null ? memoryMaxConvention : new MicrometerJvmMemoryMaxMeterConvention(),
+                    memoryUsedAfterLastGcConvention != null ? memoryUsedAfterLastGcConvention
+                            : new MicrometerJvmMemoryUsedAfterLastGcMeterConvention());
+        }
+
     }
 
 }

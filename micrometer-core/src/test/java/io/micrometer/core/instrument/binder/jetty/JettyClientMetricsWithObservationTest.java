@@ -32,7 +32,10 @@ class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
     @Override
     void beforeEach() throws Exception {
         super.beforeEach();
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        observationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(registry)
+                .includeActiveObservationLongTaskTimer(true)
+                .build());
         this.httpClient.getRequestListeners().removeIf(listener -> true);
         // noinspection deprecation
         this.httpClient.getRequestListeners()

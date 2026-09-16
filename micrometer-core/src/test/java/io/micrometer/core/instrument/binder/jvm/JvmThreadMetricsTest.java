@@ -15,8 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadCountMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmThreadMeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -79,6 +81,51 @@ class JvmThreadMetricsTest {
         assertThat(registry.get("jvm.threads.peak").tags(extraTags).gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.states").tags(extraTags).tag("state", "runnable").gauge().value())
             .isPositive();
+    }
+
+    @Test
+    void builderDefaults() {
+        JvmThreadMetrics.builder().build().bindTo(registry);
+
+        assertThat(registry.get("jvm.threads.live").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.daemon").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.peak").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.states").tag("state", "runnable").gauge().value()).isPositive();
+    }
+
+    @Test
+    void builderWithOpenTelemetryConventions() {
+        JvmThreadMetrics.builder().openTelemetryConventions().build().bindTo(registry);
+
+        assertThat(registry.get("jvm.threads.live").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.daemon").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.peak").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.thread.count").tag("jvm.thread.state", "runnable").gauge().value()).isPositive();
+    }
+
+    @Test
+    void builderWithCustomConventionsAndExtraTags() {
+        Tags extraTags = Tags.of("app", "test");
+        JvmThreadMetrics.builder()
+            .extraTags(extraTags)
+            .threadCountConvention(JvmThreadCountMeterConvention.of("custom.thread.count",
+                    state -> Tags.of("custom.state", state.name())))
+            .build()
+            .bindTo(registry);
+
+        assertThat(registry.get("jvm.threads.live").tags(extraTags).gauge().value()).isPositive();
+        assertThat(registry.get("custom.thread.count").tags(extraTags).tag("custom.state", "RUNNABLE").gauge().value())
+            .isPositive();
+    }
+
+    @Test
+    void conventionTagsTakePrecedenceOverConflictingExtraTags() {
+        Tags extraTags = Tags.of("state", "from-extra-tags");
+        new JvmThreadMetrics(extraTags).bindTo(registry);
+
+        Gauge runnableGauge = registry.get("jvm.threads.states").tag("state", "runnable").gauge();
+        assertThat(runnableGauge.value()).isPositive();
+        assertThat(runnableGauge.getId().getTag("state")).isEqualTo("runnable");
     }
 
     @Test

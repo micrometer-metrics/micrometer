@@ -28,7 +28,13 @@ import io.micrometer.core.instrument.binder.jvm.convention.micrometer.Micrometer
  * Semantic conventions for JVM metrics v1.37.0</a>
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
  * @since 1.16.0
+ * @deprecated use individual convention types such as
+ * {@link OpenTelemetryJvmClassCountMeterConvention},
+ * {@link OpenTelemetryJvmClassLoadedMeterConvention}, and
+ * {@link OpenTelemetryJvmClassUnloadedMeterConvention} instead
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class OpenTelemetryJvmClassLoadingMeterConventions extends MicrometerJvmClassLoadingMeterConventions {
 
     public OpenTelemetryJvmClassLoadingMeterConventions() {

@@ -1,5 +1,5 @@
 [versions]
-activemq-artemis = "2.56.0"
+activemq-artemis = "2.57.0"
 application-insights = "2.6.4"
 archunit = "1.5.0"
 asmForPlugins = "7.3.1"
@@ -7,7 +7,7 @@ aspectjweaver = "1.9.25.1"
 assertj = "3.27.7"
 awaitility = "4.3.0"
 caffeine = "2.9.3"
-cloudwatch2 = "2.54.13"
+cloudwatch2 = "2.54.19"
 colt = "1.2.0"
 dagger = "2.60.1"
 dropwizard-metrics = "4.2.40"
@@ -53,10 +53,10 @@ log4j = "2.26.1"
 maven-resolver = "1.9.27"
 mockito5 = "5.18.0"
 mongo = "4.11.5"
-netty = "4.2.17.Final"
+netty = "4.2.18.Final"
 newrelic-api = "5.14.0"
 okhttp = "4.12.0"
-opentelemetry = "1.65.0"
+opentelemetry = "1.66.0"
 postgre = "42.7.13"
 prometheus = "1.8.0"
 prometheusSimpleClient = "0.16.0"
@@ -64,7 +64,7 @@ reactor = "2022.0.22"
 rest-assured = "5.5.7"
 signalfx = "1.0.49"
 slf4j = "1.7.36"
-spectator-atlas = "1.10.6"
+spectator-atlas = "1.10.7"
 spring5 = "5.3.39"
 spring6 = "6.2.19"
 spring-javaformat = "0.0.48"
@@ -102,7 +102,7 @@ errorprone = { module = "com.google.errorprone:error_prone_core", version = "2.5
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
 felixScr = "org.apache.felix:org.apache.felix.scr:2.2.18"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
-googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.88.0" }
+googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.88.1" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
 googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.52.0"}
 grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }

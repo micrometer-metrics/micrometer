@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.tomcat;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -30,6 +31,7 @@ import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.TooManyActiveSessionsException;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.coyote.http2.Http2Protocol;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -38,12 +40,17 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.jupiter.api.Test;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpUpgradeHandler;
+import javax.servlet.http.WebConnection;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
@@ -316,17 +323,124 @@ class TomcatMetricsTest {
         });
     }
 
+    @Test
+    @Issue("#7535")
+    void globalRequestMetrics_areRegisteredForBothHttp11AndHttp2WithRealTomcat() throws Exception {
+        HttpServlet servlet = new HttpServlet() {
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+                resp.getOutputStream().write("ok".getBytes(StandardCharsets.UTF_8));
+            }
+        };
+
+        runTomcat(Collections.singleton(servlet), true, () -> {
+            TomcatMetrics.monitor(registry, null);
+
+            Collection<Meter> received = registry.find("tomcat.global.received").meters();
+            assertThat(received).as("both the HTTP/1.1 and the HTTP/2 GlobalRequestProcessor MBeans must be exposed")
+                .hasSize(2);
+            assertThat(received).extracting(m -> m.getId().getTag("upgrade"))
+                .as("the upgrade tag distinguishes HTTP/2 from HTTP/1.1; HTTP/1.1 uses the 'none' placeholder so the label set stays consistent")
+                .containsExactlyInAnyOrder("none", "h2c");
+
+            return null;
+        });
+    }
+
+    @Test
+    @Issue("#7535")
+    void globalRequestMetrics_skipNonRequestGroupInfoMBeans() throws Exception {
+        HttpServlet servlet = new HttpServlet() {
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+                    throws ServletException, IOException {
+                resp.setHeader("Upgrade", "websocket");
+                resp.setStatus(HttpServletResponse.SC_SWITCHING_PROTOCOLS);
+                req.upgrade(TestUpgradeHandler.class);
+            }
+        };
+
+        runTomcat(servlet, () -> {
+            try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+                HttpGet get = new HttpGet("http://localhost:" + this.port + "/0");
+                get.setHeader("Connection", "Upgrade");
+                get.setHeader("Upgrade", "websocket");
+                try (CloseableHttpResponse ignored = httpClient.execute(get)) {
+                    // response consumed
+                }
+                catch (IOException expected) {
+                    // Protocol switch may reset the connection
+                }
+            }
+
+            MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+            assertThat(mBeanServer.queryNames(new ObjectName("*:type=GlobalRequestProcessor,*"), null))
+                .as("Tomcat must have registered an UpgradeGroupInfo MBean")
+                .anyMatch(name -> "websocket".equals(name.getKeyProperty("Upgrade")));
+
+            TomcatMetrics.monitor(registry, null);
+
+            Collection<Meter> received = registry.find("tomcat.global.received").meters();
+            assertThat(received).hasSize(1);
+            assertThat(received).extracting(m -> m.getId().getTag("upgrade")).containsExactly("none");
+
+            return null;
+        });
+    }
+
+    @Test
+    @Issue("#7535")
+    void globalRequestMetrics_areRegisteredEventuallyForLateMBeansWithRealTomcat() throws Exception {
+        // Exercises the MBeanServer notification-listener path: TomcatMetrics is bound
+        // before Tomcat starts, so meters must be registered via the listener when the
+        // per-protocol MBeans appear later.
+        TomcatMetrics.monitor(registry, null);
+
+        CountDownLatch latch = new CountDownLatch(2);
+        registry.config().onMeterAdded(m -> {
+            if ("tomcat.global.received".equals(m.getId().getName())) {
+                latch.countDown();
+            }
+        });
+
+        HttpServlet servlet = new HttpServlet() {
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+                resp.getOutputStream().write("ok".getBytes(StandardCharsets.UTF_8));
+            }
+        };
+
+        runTomcat(Collections.singleton(servlet), true, () -> {
+            assertThat(latch.await(5, TimeUnit.SECONDS))
+                .as("the registration-notification path must register meters for both protocols")
+                .isTrue();
+
+            Collection<Meter> received = registry.find("tomcat.global.received").meters();
+            assertThat(received).hasSize(2);
+            assertThat(received).extracting(m -> m.getId().getTag("upgrade")).containsExactlyInAnyOrder("none", "h2c");
+
+            return null;
+        });
+    }
+
     void runTomcat(HttpServlet servlet, Callable<Void> doWithTomcat) throws Exception {
         runTomcat(Collections.singleton(servlet), doWithTomcat);
     }
 
     void runTomcat(Collection<Servlet> servlets, Callable<Void> doWithTomcat) throws Exception {
+        runTomcat(servlets, false, doWithTomcat);
+    }
+
+    void runTomcat(Collection<Servlet> servlets, boolean enableHttp2, Callable<Void> doWithTomcat) throws Exception {
         Tomcat server = new Tomcat();
         try {
             StandardHost host = new StandardHost();
             host.setName("localhost");
             server.setHost(host);
             server.setPort(0);
+            if (enableHttp2) {
+                server.getConnector().addUpgradeProtocol(new Http2Protocol());
+            }
             server.start();
 
             this.port = server.getConnector().getLocalPort();
@@ -387,6 +501,24 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(1.0);
+    }
+
+    public static class TestUpgradeHandler implements HttpUpgradeHandler {
+
+        @Override
+        public void init(WebConnection wc) {
+            try {
+                wc.close();
+            }
+            catch (Exception expected) {
+                // connection close cleanup
+            }
+        }
+
+        @Override
+        public void destroy() {
+        }
+
     }
 
 }

@@ -44,6 +44,8 @@ public class DefaultMeterObservationHandlerBenchmark {
 
     ObservationRegistry observationRegistry;
 
+    ObservationRegistry longTaskTimerObservationRegistry;
+
     ObservationRegistry noopRegistry;
 
     Timer timer;
@@ -53,7 +55,12 @@ public class DefaultMeterObservationHandlerBenchmark {
         this.timer = Timer.builder("cached.timer").tag("abc", "123").register(meterRegistry);
         this.observationRegistry = ObservationRegistry.create();
         this.observationRegistry.observationConfig()
-            .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+            .observationHandler(DefaultMeterObservationHandler.builder(meterRegistry).build());
+        this.longTaskTimerObservationRegistry = ObservationRegistry.create();
+        this.longTaskTimerObservationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(meterRegistry)
+                .includeActiveObservationLongTaskTimer(true)
+                .build());
         this.noopRegistry = ObservationRegistry.create();
     }
 
@@ -117,6 +124,16 @@ public class DefaultMeterObservationHandlerBenchmark {
     @Benchmark
     public Observation observation() {
         Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
+            .lowCardinalityKeyValue("abc", "123")
+            .start();
+        observation.stop();
+
+        return observation;
+    }
+
+    @Benchmark
+    public Observation observationWithActiveObservationLongTaskTimer() {
+        Observation observation = Observation.createNotStarted("test.obs.ltt", longTaskTimerObservationRegistry)
             .lowCardinalityKeyValue("abc", "123")
             .start();
         observation.stop();

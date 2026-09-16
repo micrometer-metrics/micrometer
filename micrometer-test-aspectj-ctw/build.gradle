@@ -5,23 +5,15 @@ plugins {
 
 description = 'AspectJ compile-time weaving test for Micrometer aspects'
 
+// when project is built with jdk <17, aspectj compilation does not happen on micrometer-core
+// skip this module when building with jdk <17
 if (!javaLanguageVersion.canCompileOrRun(17)) {
-    repositories {
-        maven { url 'https://repo.spring.io/snapshot' }
-    }
+    project.tasks.configureEach { task -> task.enabled = false }
 }
 
 dependencies {
-    if (javaLanguageVersion.canCompileOrRun(17)) {
-        aspect project(':micrometer-core')
-        implementation libs.aspectjrt
-    }
-    else {
-        // Use the latest Micrometer SNAPSHOT (built with Java 17+)
-        // and the latest AspectJ that supports Java versions before 17
-        aspect 'io.micrometer:micrometer-core:latest.integration'
-        implementation 'org.aspectj:aspectjrt:1.9.20.1'
-    }
+    aspect project(':micrometer-core')
+    implementation libs.aspectjrt
 
     testImplementation libs.assertj
 }

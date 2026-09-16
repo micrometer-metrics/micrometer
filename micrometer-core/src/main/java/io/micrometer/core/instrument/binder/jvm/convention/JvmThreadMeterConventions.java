@@ -22,7 +22,10 @@ import io.micrometer.core.instrument.binder.MeterConvention;
  *
  * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
  * @since 1.16.0
+ * @deprecated use {@link JvmThreadCountMeterConvention} with
+ * {@link io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics.Builder} instead
  */
+@Deprecated
 public interface JvmThreadMeterConventions {
 
     MeterConvention<Thread.State> threadCountConvention();
