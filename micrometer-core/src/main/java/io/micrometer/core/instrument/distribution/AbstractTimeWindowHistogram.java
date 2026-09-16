@@ -201,7 +201,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     }
 
     private void rotate() {
-        long timeSinceLastRotateMillis = clock.wallTime() - lastRotateTimestampMillis;
+        long wallTime = clock.wallTime();
+        long timeSinceLastRotateMillis = wallTime - lastRotateTimestampMillis;
         if (timeSinceLastRotateMillis < durationBetweenRotatesMillis) {
             // Need to wait more for next rotation.
             return;
@@ -215,6 +216,20 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         try {
             int iterations = 0;
             synchronized (this) {
+                if (timeSinceLastRotateMillis >= durationBetweenRotatesMillis * ringBuffer.length) {
+                    // Time since the last rotation is enough to clear the whole ring buffer.
+                    // Reset every bucket once and fast-forward, otherwise a later rotation would
+                    // still lag behind and wipe freshly recorded samples on the next call.
+                    for (T bucket : ringBuffer) {
+                        resetBucket(bucket);
+                    }
+                    currentBucket = 0;
+                    lastRotateTimestampMillis = wallTime - timeSinceLastRotateMillis % durationBetweenRotatesMillis;
+                    resetAccumulatedHistogram();
+                    accumulatedHistogramStale = true;
+                    return;
+                }
+
                 do {
                     resetBucket(ringBuffer[currentBucket]);
                     if (++currentBucket >= ringBuffer.length) {
