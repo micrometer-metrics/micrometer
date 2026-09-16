@@ -37,6 +37,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
  * @author Johnny Lim
  * @author Hunter Sherman
  */
+@SuppressWarnings("deprecation")
 class AppOpticsMeterRegistryTest {
 
     private final AppOpticsConfig config = new AppOpticsConfig() {

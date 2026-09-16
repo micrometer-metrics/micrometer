@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * Deprecated since 1.18.0 due to AppOptics' End of Life Announcement.
+ */
 @NullMarked
+@Deprecated
 package io.micrometer.appoptics;
 
 import org.jspecify.annotations.NullMarked;

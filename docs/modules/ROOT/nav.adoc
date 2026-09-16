@@ -17,7 +17,7 @@
 ** xref:concepts/meter-convention.adoc[Meter Conventions]
 ** xref:concepts/high-cardinality-tags-detector.adoc[High Cardinality Tags Detector]
 * xref:implementations.adoc[Implementations]
-** xref:implementations/appOptics.adoc[AppOptics]
+** xref:implementations/appOptics.adoc[AppOptics] (deprecated)
 ** xref:implementations/atlas.adoc[Atlas]
 ** xref:implementations/azure-monitor.adoc[Azure Monitor]
 ** xref:implementations/cloudwatch.adoc[CloudWatch]

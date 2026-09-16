@@ -46,7 +46,9 @@ import static java.util.stream.Collectors.joining;
  * @author Jon Schneider
  * @author Johnny Lim
  * @since 1.1.0
+ * @deprecated since 1.18.0 for removal due to AppOptics' End of Life
  */
+@Deprecated
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("appoptics-metrics-publisher");
@@ -72,6 +74,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     protected AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory,
             HttpSender httpClient) {
         super(config, clock);
+        logger.warn("AppOptics is EOL and AppOpticsMeterRegistry is deprecated for removal.");
 
         config().namingConvention(new AppOpticsNamingConvention());
 

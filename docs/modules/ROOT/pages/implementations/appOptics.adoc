@@ -2,6 +2,8 @@
 :sectnums:
 :system: appoptics
 
+CAUTION: This module has been deprecated for removal because of https://documentation.solarwinds.com/en/success_center/observability/content/migrate-ao/ao-eol.htm[AppOptics' End of Life Announcement].
+
 AppOptics is a dimensional time-series SaaS with built-in dashboarding.
 
 include::_install.adoc[]

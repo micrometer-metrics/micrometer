@@ -24,6 +24,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("deprecation")
 class AppOpticsConfigTest {
 
     private final Map<String, String> props = new HashMap<>();
