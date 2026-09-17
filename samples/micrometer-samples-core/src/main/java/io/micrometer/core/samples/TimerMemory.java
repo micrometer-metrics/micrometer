@@ -17,7 +17,7 @@ package io.micrometer.core.samples;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.samples.utils.SampleRegistries;
+import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 public class TimerMemory {
 
     public static void main(String[] args) throws InterruptedException {
-        MeterRegistry registry = SampleRegistries.wavefront();
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
         Timer t = null;
 
