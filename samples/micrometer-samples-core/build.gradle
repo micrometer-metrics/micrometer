@@ -12,7 +12,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback12Version")
     implementation(libs.slf4jApi)
 
-    ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'otlp'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'otlp'].each { sys ->
         implementation project(":micrometer-registry-$sys")
     }
 

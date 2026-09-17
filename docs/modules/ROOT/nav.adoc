@@ -37,7 +37,6 @@
 ** xref:implementations/signalFx.adoc[SignalFx] (deprecated)
 ** xref:implementations/stackdriver.adoc[Stackdriver]
 ** xref:implementations/statsD.adoc[statsD]
-** xref:implementations/wavefront.adoc[Wavefront]
 * xref:reference.adoc[Reference Instrumentations]
 ** xref:reference/cache.adoc[Cache]
 ** xref:reference/commons-pool.adoc[Commons Pool]

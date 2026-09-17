@@ -70,7 +70,6 @@ spring6 = "6.2.19"
 spring-javaformat = "0.0.48"
 testcontainers = "1.21.4"
 tomcat = "8.5.100"
-wavefront = "3.4.3"
 wiremock = "2.35.2"
 wiremock-junit5 = "1.3.1"
 
@@ -201,7 +200,6 @@ testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.
 testcontainers-mongodb = { module = "org.testcontainers:mongodb", version.ref = "testcontainers" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 tomcatEmbed = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcat" }
-wavefront = { module = "com.wavefront:wavefront-sdk-java", version.ref = "wavefront" }
 wiremock = { module = "com.github.tomakehurst:wiremock-jre8-standalone", version.ref = "wiremock" }
 wiremockJunit5 = { module = "ru.lanwen.wiremock:wiremock-junit5", version.ref = "wiremock-junit5" }
 

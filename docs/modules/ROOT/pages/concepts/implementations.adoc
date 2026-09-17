@@ -10,7 +10,7 @@ Micrometer contains a core module with an instrumentation https://en.wikipedia.o
 |Dimensional
 |Hierarchical
 
-|AppOptics, Atlas, Azure Monitor, Cloudwatch, Datadog, Datadog StatsD, Dynatrace, Elastic, Humio, Influx, KairosDB, New Relic, Prometheus, SignalFx, Sysdig StatsD, Telegraf StatsD, Wavefront
+|AppOptics, Atlas, Azure Monitor, Cloudwatch, Datadog, Datadog StatsD, Dynatrace, Elastic, Humio, Influx, KairosDB, New Relic, Prometheus, SignalFx, Sysdig StatsD, Telegraf StatsD
 |Graphite, Ganglia, JMX, Etsy StatsD
 |===
 
@@ -23,7 +23,7 @@ Micrometer contains a core module with an instrumentation https://en.wikipedia.o
 |Server-side
 
 |AppOptics, Atlas, Azure Monitor, Datadog, Dynatrace, Elastic, Graphite, Ganglia, Humio, Influx, JMX, Kairos, New Relic, all StatsD flavors, SignalFx
-|Prometheus, Wavefront footnote:[As of 1.2.0, Micrometer sends cumulative values to Wavefront.]
+|Prometheus
 |===
 
 * *Publishing*. Some systems expect to poll applications for metrics at their leisure, while others expect metrics to be pushed to them on a regular interval.
@@ -33,7 +33,7 @@ Micrometer contains a core module with an instrumentation https://en.wikipedia.o
 |Client pushes
 |Server polls
 
-|AppOptics, Atlas, Azure Monitor, Datadog, Dynatrace, Elastic, Graphite, Ganglia, Humio, Influx, JMX, Kairos, New Relic, SignalFx, Wavefront
+|AppOptics, Atlas, Azure Monitor, Datadog, Dynatrace, Elastic, Graphite, Ganglia, Humio, Influx, JMX, Kairos, New Relic, SignalFx
 |Prometheus, all StatsD flavors
 |===
 
