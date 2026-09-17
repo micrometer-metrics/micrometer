@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -58,11 +59,12 @@ class HighCardinalityTagsDetectorTests {
 
         // @formatter:off
         // tag::registry_integration_builder[]
-        registry.config().withHighCardinalityTagsDetector(r ->
-            new HighCardinalityTagsDetector.Builder(r)
+        registry.config().withHighCardinalityTagsDetector(registry ->
+            HighCardinalityTagsDetector.builder(registry)
                 .threshold(1000) // 1000 different meters with the same name
                 .delay(Duration.ofMinutes(5)) // check ~every 5 minutes
-                .highCardinalityMeterInfoConsumer(info -> alert("Nooo!"))
+                .firstHighCardinalityMeterInfoConsumer(ignored -> alert("Nooo!"))
+                // .allHighCardinalityMeterInfoConsumer(...) in case you want info for all of them
                 .build()
         );
         // end::registry_integration_builder[]
@@ -72,35 +74,35 @@ class HighCardinalityTagsDetectorTests {
     @Test
     void oneTimeCheck() {
         // tag::one_time_check[]
-        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector.Builder(registry).threshold(10)
+        try (HighCardinalityTagsDetector detector = HighCardinalityTagsDetector.builder(registry)
+            .threshold(10)
             .build()) {
             // Create meters with a high cardinality tag (uid)
             for (int i = 0; i < 15; i++) {
                 registry.counter("requests", "uid", String.valueOf(i)).increment();
             }
 
-            assertThat(detector.findFirst()).isNotEmpty().get().isEqualTo("requests");
+            assertThat(detector.findAllHighCardinalityMeterInfo()).isNotEmpty().hasSize(1);
             assertThat(detector.findFirstHighCardinalityMeterInfo()).isNotEmpty().get().satisfies(info -> {
                 assertThat(info.getName()).isEqualTo("requests");
                 assertThat(info.getCount()).isEqualTo(15);
             });
-
         }
         // detector.close() is implicit here but don't forget to close it otherwise!
         // end::one_time_check[]
     }
 
     @Test
-    void customConsumer() {
+    void customFirstHighCardinalityMeterInfoConsumer() {
         for (int i = 0; i < 15; i++) {
-            registry.counter("requests", "uid", String.valueOf(i)).increment();
+            registry.counter("http.requests", "uid", String.valueOf(i)).increment();
         }
 
         // @formatter:off
         // tag::custom_consumer_config[]
-        registry.config().withHighCardinalityTagsDetector(r ->
-            new HighCardinalityTagsDetector.Builder(r).threshold(10)
-                .highCardinalityMeterInfoConsumer(this::recordHighCardinalityEvent)
+        registry.config().withHighCardinalityTagsDetector(registry ->
+            HighCardinalityTagsDetector.builder(registry).threshold(10)
+                .firstHighCardinalityMeterInfoConsumer(this::recordHighCardinalityEvent)
                 .build()
         );
         // end::custom_consumer_config[]
@@ -112,10 +114,44 @@ class HighCardinalityTagsDetectorTests {
 
     // tag::custom_consumer[]
     void recordHighCardinalityEvent(HighCardinalityTagsDetector.HighCardinalityMeterInfo info) {
-        alert("High cardinality detected in " + info.getName() + " with " + info.getCount() + " meters!");
+        alert("High cardinality detected: " + toString(info));
         registry.counter("highCardinality.detections", "meter", info.getName()).increment();
     }
     // end::custom_consumer[]
+
+    @Test
+    void customAllHighCardinalityMeterInfoConsumer() {
+        for (int i = 0; i < 15; i++) {
+            registry.counter("http.requests", "uid", String.valueOf(i)).increment();
+            registry.counter("db.calls", "uid", String.valueOf(i)).increment();
+        }
+
+        // @formatter:off
+        // tag::custom_all_consumer_config[]
+        registry.config().withHighCardinalityTagsDetector(registry ->
+            HighCardinalityTagsDetector.builder(registry).threshold(10)
+                .allHighCardinalityMeterInfoConsumer(this::recordHighCardinalityEvent)
+                .build()
+        );
+        // end::custom_all_consumer_config[]
+        // @formatter:on
+
+        await().atMost(Duration.ofSeconds(1))
+            .untilAsserted(() -> assertThat(registry.get("highCardinality.detections").counter().count()).isEqualTo(1));
+    }
+
+    // tag::custom_all_consumer[]
+    void recordHighCardinalityEvent(List<HighCardinalityTagsDetector.HighCardinalityMeterInfo> infoList) {
+        alert("High cardinality detected: " + infoList.stream().map(this::toString).toList());
+        for (HighCardinalityTagsDetector.HighCardinalityMeterInfo info : infoList) {
+            registry.counter("highCardinality.detections", "meter", info.getName()).increment();
+        }
+    }
+    // end::custom_all_consumer[]
+
+    private String toString(HighCardinalityTagsDetector.HighCardinalityMeterInfo info) {
+        return String.format("%s (%d)", info.getName(), info.getCount());
+    }
 
     private void alert(String message) {
         System.out.println(message);
