@@ -54,6 +54,26 @@ MessageConsumer consumer = session.createConsumer(topic);
 consumer.setMessageListener(message -> consumeMessage(message));
 ----
 
+=== Customizing the observations
+
+By default, the observations are created with the `DefaultJmsPublishObservationConvention` and
+`DefaultJmsProcessObservationConvention` conventions. If you need to change the observation name,
+the contextual name or the `KeyValues` that are recorded, you can provide your own conventions:
+
+[source,java]
+----
+import io.micrometer.jakarta9.instrument.jms.JmsInstrumentation;
+
+Session original = ...
+ObservationRegistry registry = ...
+JmsPublishObservationConvention publishConvention = ...
+JmsProcessObservationConvention processConvention = ...
+Session session = JmsInstrumentation.instrumentSession(original, registry, publishConvention, processConvention);
+----
+
+Passing `null` for either convention makes the instrumentation fall back to the default one, so you can
+customize only the observations you are interested in.
+
 == Observations
 
 This instrumentation will create 2 types of observations:

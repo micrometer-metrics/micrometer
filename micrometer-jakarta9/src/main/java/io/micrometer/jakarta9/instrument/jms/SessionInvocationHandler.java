@@ -19,6 +19,7 @@ import io.micrometer.observation.ObservationRegistry;
 import jakarta.jms.MessageConsumer;
 import jakarta.jms.MessageProducer;
 import jakarta.jms.Session;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -39,14 +40,26 @@ class SessionInvocationHandler implements InvocationHandler {
 
     private final ObservationRegistry registry;
 
+    private final @Nullable JmsPublishObservationConvention customPublishConvention;
+
+    private final @Nullable JmsProcessObservationConvention customProcessConvention;
+
     /**
      * Create an invocation handler to be used for proxying a {@link Session}.
      * @param session the proxied session
      * @param registry the observation registry used for recording observations
+     * @param customPublishConvention the custom convention to apply to publish
+     * observations, or {@code null} to use the default one
+     * @param customProcessConvention the custom convention to apply to process
+     * observations, or {@code null} to use the default one
      */
-    SessionInvocationHandler(Session session, ObservationRegistry registry) {
+    SessionInvocationHandler(Session session, ObservationRegistry registry,
+            @Nullable JmsPublishObservationConvention customPublishConvention,
+            @Nullable JmsProcessObservationConvention customProcessConvention) {
         this.target = session;
         this.registry = registry;
+        this.customPublishConvention = customPublishConvention;
+        this.customProcessConvention = customProcessConvention;
     }
 
     @Override
@@ -56,14 +69,14 @@ class SessionInvocationHandler implements InvocationHandler {
             if (result instanceof MessageProducer) {
                 MessageProducer producer = (MessageProducer) result;
                 MessageProducerInvocationHandler producerHandler = new MessageProducerInvocationHandler(producer,
-                        this.registry);
+                        this.registry, this.customPublishConvention);
                 return Proxy.newProxyInstance(this.target.getClass().getClassLoader(),
                         new Class[] { MessageProducer.class }, producerHandler);
             }
             if (result instanceof MessageConsumer) {
                 MessageConsumer consumer = (MessageConsumer) result;
                 MessageConsumerInvocationHandler consumerHandler = new MessageConsumerInvocationHandler(consumer,
-                        this.registry);
+                        this.registry, this.customProcessConvention);
                 return Proxy.newProxyInstance(this.target.getClass().getClassLoader(),
                         new Class[] { MessageConsumer.class }, consumerHandler);
             }
