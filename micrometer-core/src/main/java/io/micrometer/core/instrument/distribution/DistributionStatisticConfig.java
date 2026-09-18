@@ -43,6 +43,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         .maximumExpectedValue(Double.POSITIVE_INFINITY)
         .expiry(Duration.ofMinutes(2))
         .bufferLength(3)
+        .publishAverage(true)
         .build();
 
     public static final DistributionStatisticConfig NONE = builder().build();
@@ -62,6 +63,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     private @Nullable Duration expiry;
 
     private @Nullable Integer bufferLength;
+
+    private @Nullable Boolean publishAverage;
 
     public static Builder builder() {
         return new Builder();
@@ -90,6 +93,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
                     this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
             .expiry(this.expiry == null ? parent.expiry : this.expiry)
             .bufferLength(this.bufferLength == null ? parent.bufferLength : this.bufferLength)
+            .publishAverage(this.publishAverage == null ? parent.publishAverage : this.publishAverage)
             .build();
     }
 
@@ -272,6 +276,19 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          */
         public Builder percentiles(double @Nullable ... percentiles) {
             config.percentiles = percentiles;
+            return this;
+        }
+
+        /**
+         * Controls whether an average time/value is published for meters that support
+         * distribution statistics. When enabled, registries that emit an AVG series (e.g.
+         * timers, distribution summaries, function timers) may publish it based on their
+         * protocol.
+         * @param enabled whether the average should be computed and published
+         * @return this builder
+         */
+        public Builder publishAverage(@Nullable Boolean enabled) {
+            config.publishAverage = enabled;
             return this;
         }
 
@@ -493,6 +510,13 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     public boolean isPublishingHistogram() {
         return (percentileHistogram != null && percentileHistogram)
                 || (serviceLevelObjectives != null && serviceLevelObjectives.length > 0);
+    }
+
+    public boolean isPublishingAverage() {
+        if (publishAverage == null) {
+            return DEFAULT.publishAverage == null || DEFAULT.publishAverage;
+        }
+        return publishAverage;
     }
 
 }
