@@ -18,11 +18,14 @@ package io.micrometer.core.instrument;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
@@ -68,6 +71,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     private final Duration delay;
 
     private Consumer<HighCardinalityMeterInfo> meterInfoConsumer;
+
+    private Function<Stream<HighCardinalityMeterInfo>, Optional<HighCardinalityMeterInfo>> meterInfoSelector = Stream::findFirst;
 
     private final ScheduledExecutorService scheduledExecutorService;
 
@@ -151,9 +156,10 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     }
 
     /**
-     * Finds the name of the first Meter that potentially has high cardinality tags.
-     * @return the name of the first Meter that potentially has high cardinality tags, an
-     * empty Optional if none found.
+     * Finds the name of the first Meter that potentially has high cardinality tags, or
+     * the Meter selected by {@link Builder#highCardinalityMeterInfoSelector(Function)} if
+     * configured.
+     * @return the selected Meter name, or an empty Optional if none selected.
      */
     public Optional<String> findFirst() {
         return findFirstHighCardinalityMeterInfo().map(HighCardinalityMeterInfo::getName);
@@ -161,9 +167,10 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     /**
      * Finds the {@code HighCardinalityMeterInfo} of the first Meter that potentially has
-     * high cardinality tags.
-     * @return the {@code HighCardinalityMeterInfo} of the first Meter that potentially
-     * has high cardinality tags, or an empty Optional if none found.
+     * high cardinality tags, or the Meter selected by
+     * {@link Builder#highCardinalityMeterInfoSelector(Function)} if configured.
+     * @return the selected {@code HighCardinalityMeterInfo}, or an empty Optional if none
+     * selected.
      * @since 1.16.0
      */
     public Optional<HighCardinalityMeterInfo> findFirstHighCardinalityMeterInfo() {
@@ -171,11 +178,10 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         for (Meter meter : this.registry.getMeters()) {
             meterNameFrequencies.compute(meter.getId().getName(), (k, v) -> v == null ? 1 : v + 1);
         }
-        return meterNameFrequencies.entrySet()
+        return this.meterInfoSelector.apply(meterNameFrequencies.entrySet()
             .stream()
             .filter((entry) -> entry.getValue() > this.threshold)
-            .map((entry) -> new HighCardinalityMeterInfo(entry.getKey(), entry.getValue()))
-            .findFirst();
+            .map((entry) -> new HighCardinalityMeterInfo(entry.getKey(), entry.getValue())));
     }
 
     private void logWarning(HighCardinalityMeterInfo meterInfo) {
@@ -210,6 +216,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         private Duration delay = DEFAULT_DELAY;
 
         private @Nullable Consumer<HighCardinalityMeterInfo> highCardinalityMeterInfoConsumer;
+
+        private Function<Stream<HighCardinalityMeterInfo>, Optional<HighCardinalityMeterInfo>> highCardinalityMeterInfoSelector = Stream::findFirst;
 
         /**
          * Create a {@code Builder}.
@@ -252,6 +260,24 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         }
 
         /**
+         * Set the strategy for selecting a high cardinality Meter. By default, the first
+         * candidate is selected. The selector receives a fresh sequential stream of
+         * candidates whose counts exceed the threshold on each check. It must consume the
+         * stream synchronously and return a selected candidate or an empty Optional.
+         * Selecting the highest count, for example with {@code Stream.max}, inspects all
+         * candidates rather than stopping at the first match.
+         * @param highCardinalityMeterInfoSelector the selection strategy
+         * @return this builder
+         * @since 1.18.0
+         */
+        public Builder highCardinalityMeterInfoSelector(
+                Function<Stream<HighCardinalityMeterInfo>, Optional<HighCardinalityMeterInfo>> highCardinalityMeterInfoSelector) {
+            this.highCardinalityMeterInfoSelector = Objects.requireNonNull(highCardinalityMeterInfoSelector,
+                    "highCardinalityMeterInfoSelector");
+            return this;
+        }
+
+        /**
          * Build {@code HighCardinalityTagsDetector}.
          * @return {@code HighCardinalityTagsDetector}
          */
@@ -261,6 +287,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
             if (this.highCardinalityMeterInfoConsumer != null) {
                 highCardinalityTagsDetector.meterInfoConsumer = this.highCardinalityMeterInfoConsumer;
             }
+            highCardinalityTagsDetector.meterInfoSelector = this.highCardinalityMeterInfoSelector;
             return highCardinalityTagsDetector;
         }
 
