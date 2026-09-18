@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -366,6 +367,60 @@ class Log4j2MetricsTest {
 
         logger.error("third");
         assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(2);
+    }
+
+    @Issue("#6233")
+    @Test
+    void excludedLoggerShouldNotBeCounted() {
+        LoggerContext loggerContext = new LoggerContext("test");
+        Configuration configuration = loggerContext.getConfiguration();
+        configuration.getRootLogger().setLevel(Level.INFO);
+        loggerContext.updateLoggers(configuration);
+
+        new Log4j2Metrics(emptyList(), loggerContext, Collections.singleton("com.test.excluded")).bindTo(registry);
+
+        Logger excludedLogger = loggerContext.getLogger("com.test.excluded");
+        Logger includedLogger = loggerContext.getLogger("com.test.included");
+
+        excludedLogger.info("should not be counted");
+        includedLogger.info("should be counted");
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1.0);
+    }
+
+    @Issue("#6233")
+    @Test
+    void excludeDoesNotAffectChildLoggers() {
+        LoggerContext loggerContext = new LoggerContext("test");
+        Configuration configuration = loggerContext.getConfiguration();
+        configuration.getRootLogger().setLevel(Level.INFO);
+        loggerContext.updateLoggers(configuration);
+
+        new Log4j2Metrics(emptyList(), loggerContext, Collections.singleton("com.test")).bindTo(registry);
+
+        Logger parentLogger = loggerContext.getLogger("com.test");
+        Logger childLogger = loggerContext.getLogger("com.test.child");
+
+        parentLogger.info("should not be counted");
+        childLogger.info("should be counted");
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1.0);
+    }
+
+    @Issue("#6233")
+    @Test
+    void emptyExcludeSetBehavesLikeDefault() {
+        LoggerContext loggerContext = new LoggerContext("test");
+        Configuration configuration = loggerContext.getConfiguration();
+        configuration.getRootLogger().setLevel(Level.INFO);
+        loggerContext.updateLoggers(configuration);
+
+        new Log4j2Metrics(emptyList(), loggerContext, Collections.emptySet()).bindTo(registry);
+
+        Logger logger = loggerContext.getLogger("com.test");
+        logger.info("should be counted");
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1.0);
     }
 
     @Issue("#5901")
