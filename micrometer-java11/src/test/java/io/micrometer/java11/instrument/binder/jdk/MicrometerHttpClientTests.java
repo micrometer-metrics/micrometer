@@ -19,6 +19,7 @@ import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import io.micrometer.common.KeyValues;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
@@ -82,6 +83,36 @@ class MicrometerHttpClientTests {
 
         verify(anyRequestedFor(urlEqualTo("/metrics")).withHeader("foo", equalTo("bar")));
         thenMeterRegistryContainsHttpClientTags();
+    }
+
+    @Test
+    @Issue("#4962")
+    void shouldCustomizeTagsWithObservationConvention(WireMockRuntimeInfo wmInfo)
+            throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+            .GET()
+            .uri(URI.create(wmInfo.getHttpBaseUrl() + "/metrics"))
+            .build();
+
+        // tag::customConventionInstrumentation[]
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+
+        HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry)
+            .observationRegistry(observationRegistry)
+            .customObservationConvention(new ClientNameObservationConvention())
+            .build();
+        // end::customConventionInstrumentation[]
+        observedClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        then(meterRegistry.get("http.client.requests")
+            .tag("clientName", request.uri().getHost())
+            .tag("method", "GET")
+            .tag("status", "200")
+            .tag("outcome", "SUCCESS")
+            .tag("uri", "UNKNOWN")
+            .timer()
+            .count()).isEqualTo(1);
     }
 
     @Test
@@ -200,6 +231,22 @@ class MicrometerHttpClientTests {
             }
         };
     }
+
+    // tag::customConvention[]
+    static class ClientNameObservationConvention extends DefaultHttpClientObservationConvention {
+
+        @Override
+        public KeyValues getLowCardinalityKeyValues(HttpClientContext context) {
+            HttpRequest.Builder requestBuilder = context.getCarrier();
+            if (requestBuilder == null) {
+                return super.getLowCardinalityKeyValues(context);
+            }
+            String host = requestBuilder.build().uri().getHost();
+            return super.getLowCardinalityKeyValues(context).and("clientName", host != null ? host : "UNKNOWN");
+        }
+
+    }
+    // end::customConvention[]
 
     static class StoreContextObservationHandler implements ObservationHandler<HttpClientContext> {
 
