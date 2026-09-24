@@ -7,7 +7,7 @@
 [![Revved up by Develocity](https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A)](https://ge.spring.io)
 
 An application metrics facade for the most popular monitoring tools. Instrument your code with dimensional metrics with a
-vendor neutral interface and decide on the monitoring backend at the last minute.
+vendor-neutral interface and decide on the monitoring backend at the last minute.
 
 More info on [micrometer.io](https://micrometer.io).
 

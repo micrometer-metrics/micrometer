@@ -16,8 +16,8 @@ The Micrometer community benefits from contributions in all forms.
 For example, those with Micrometer knowledge and experience can contribute by: 
 * [Contributing documentation](https://github.com/micrometer-metrics/micrometer/tree/main/docs/)
 * Answering [Stackoverflow questions](https://stackoverflow.com/tags/micrometer)
-* Answering questions on the [Micrometer slack](https://slack.micrometer.io)
-* Share Micrometer knowledge in other ways (e.g. presentations, blogs)
+* Answering questions on the [Micrometer Slack](https://slack.micrometer.io)
+* Sharing Micrometer knowledge in other ways (e.g. presentations, blogs)
 
 The remainder of this document will focus on guidance for contributing code changes. It will help contributors to build, modify, or test the Micrometer source code.
 

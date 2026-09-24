@@ -17,7 +17,7 @@ include::{include-core-test-java}/io/micrometer/core/instrument/binder/okhttp3/O
 include::{include-core-test-java}/io/micrometer/core/instrument/binder/okhttp3/OkHttpObservationInterceptorTest.java[tags=example, indent=0]
 -----
 
-The builder allows to change the default `ObservationConvention` as follows.
+The builder lets you change the default `ObservationConvention` as follows.
 
 [source,java,subs=+attributes]
 -----

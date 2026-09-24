@@ -196,7 +196,7 @@ The exposed Prometheus series depend on whether `publishPercentileHistogram()` i
 |===
 | Default Prometheus output | With percentile histograms enabled
 
-| `$\{name}_seconds_count`, `$\{name}_seconds_sum`,  `$\{name}_seconds_max`
+| `$\{name}_seconds_count`, `$\{name}_seconds_sum`, `$\{name}_seconds_max`
 | `$\{name}_seconds_gcount`, `$\{name}_seconds_gsum`, `$\{name}_seconds_bucket`, `$\{name}_seconds_max`
 |===
 
@@ -214,7 +214,7 @@ image::implementations/prometheus-long-task-timer.png[Grafana-rendered Prometheu
 
 == Limitation on same name with different set of tag keys
 
-The `PrometheusMeterRegistry` doesn't allow to create meters having the same name with a different set of tag keys, so you should guarantee that meters having the same name have the same set of tag keys.
+The `PrometheusMeterRegistry` doesn't allow creating meters having the same name with a different set of tag keys, so you should guarantee that meters having the same name have the same set of tag keys.
 Otherwise, subsequent meters having the same name with a different set of tag keys will not be registered.
 This means that you should not do things like:
 
@@ -257,9 +257,9 @@ registry.throwExceptionOnRegistrationFailure();
 
 Exemplars are metadata that you can attach to the value of your time series. They can reference data outside of your metrics. A common use case is storing tracing information (`traceId`, `spanId`). Exemplars are not tags/dimensions (labels in Prometheus terminology), they will not increase cardinality since they belong to the values of the time series.
 
-In order to setup Exemplars for `PrometheusMeterRegistry`, you will need a component that provides you the tracing information. If you use the "new" client (`micrometer-registry-prometheus`), this component is the `io.prometheus.metrics.tracer.common.SpanContext` while if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`), it is the `SpanContextSupplier`.
+In order to set up Exemplars for `PrometheusMeterRegistry`, you will need a component that provides you the tracing information. If you use the "new" client (`micrometer-registry-prometheus`), this component is the `io.prometheus.metrics.tracer.common.SpanContext` while if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`), it is the `SpanContextSupplier`.
 
-Setting them up are somewhat similar, if you use the "new" client (`micrometer-registry-prometheus`):
+Setting them up is somewhat similar, if you use the "new" client (`micrometer-registry-prometheus`):
 [source,java]
 ----
 PrometheusMeterRegistry registry = new PrometheusMeterRegistry(

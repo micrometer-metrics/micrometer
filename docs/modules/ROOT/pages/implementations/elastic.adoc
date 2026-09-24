@@ -8,7 +8,7 @@ include::_install.adoc[]
 
 == Configuring
 
-The following example configures an ElasticSearch instance:
+The following example configures an Elasticsearch instance:
 
 [source,java]
 ----
