@@ -71,14 +71,14 @@ class SessionInvocationHandler implements InvocationHandler {
                 MessageProducerInvocationHandler producerHandler = new MessageProducerInvocationHandler(producer,
                         this.registry, this.customPublishConvention);
                 return Proxy.newProxyInstance(this.target.getClass().getClassLoader(),
-                        new Class[] { MessageProducer.class }, producerHandler);
+                        new Class[] { method.getReturnType() }, producerHandler);
             }
             if (result instanceof MessageConsumer) {
                 MessageConsumer consumer = (MessageConsumer) result;
                 MessageConsumerInvocationHandler consumerHandler = new MessageConsumerInvocationHandler(consumer,
                         this.registry, this.customProcessConvention);
                 return Proxy.newProxyInstance(this.target.getClass().getClassLoader(),
-                        new Class[] { MessageConsumer.class }, consumerHandler);
+                        new Class[] { method.getReturnType() }, consumerHandler);
             }
             return result;
         }
