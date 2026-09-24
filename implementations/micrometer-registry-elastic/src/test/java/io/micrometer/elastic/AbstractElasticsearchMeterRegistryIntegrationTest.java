@@ -45,11 +45,11 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     // composable index templates support.
     // See
     // https://www.elastic.co/guide/en/elasticsearch/reference/7.8/index-templates.html
-    protected static final String VERSION_7 = "7.7.1";
+    protected static final String IMAGE_NAME_7 = getImageName("elasticsearch7-image.name");
 
-    protected static final String VERSION_8 = "8.19.10";
+    protected static final String IMAGE_NAME_8 = getImageName("elasticsearch8-image.name");
 
-    protected static final String VERSION_9 = "9.2.4";
+    protected static final String IMAGE_NAME_9 = getImageName("elasticsearch9-image.name");
 
     protected static final String USER = "elastic";
 
@@ -64,7 +64,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
     private ElasticMeterRegistry registry;
 
-    protected abstract String getVersion();
+    protected abstract String getDockerImageName();
 
     @BeforeEach
     void setUp() {
@@ -76,7 +76,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     void indexTemplateShouldApply() throws Throwable {
         String response = sendHttpGet(host);
         String versionNumber = JsonPath.parse(response).read("$.version.number");
-        assertThat(versionNumber).isEqualTo(getVersion());
+        assertThat(versionNumber).isEqualTo(DockerImageName.parse(getDockerImageName()).getVersionPart());
 
         Counter counter = registry.counter("test.counter");
         counter.increment();
@@ -94,8 +94,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     }
 
     protected ElasticsearchContainer getContainer() {
-        return new ElasticsearchContainer(DockerImageName.parse(getDockerImageName(getVersion())))
-            .withPassword(PASSWORD);
+        return new ElasticsearchContainer(DockerImageName.parse(getDockerImageName())).withPassword(PASSWORD);
     }
 
     protected ElasticConfig getConfig() {
@@ -131,8 +130,13 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
         return httpSender.get(uri).withBasicAuthentication(USER, PASSWORD).send().body();
     }
 
-    private static String getDockerImageName(String version) {
-        return "docker.elastic.co/elasticsearch/elasticsearch:" + version;
+    private static String getImageName(String systemProperty) {
+        String imageName = System.getProperty(systemProperty);
+        if (imageName == null) {
+            throw new IllegalStateException("System property '" + systemProperty
+                    + "' is not set. This should be set in the build configuration for running from the command line. If you are running Elasticsearch integration tests from an IDE, set the system property to the desired image name.");
+        }
+        return imageName;
     }
 
 }

@@ -24,8 +24,8 @@ class ElasticsearchMeterRegistryElasticsearch9IntegrationTest
         extends AbstractElasticsearchMeterRegistryIntegrationTest {
 
     @Override
-    protected String getVersion() {
-        return VERSION_9;
+    protected String getDockerImageName() {
+        return IMAGE_NAME_9;
     }
 
 }

@@ -62,6 +62,16 @@ allprojects {
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
 
+// Docker images used by the dockerTest tasks are declared in Dockerfiles so that Dependabot upgrades them
+ext.dockerImage = { String name ->
+    def dockerfile = rootProject.file("dependencies/docker/${name}/Dockerfile")
+    def image = dockerfile.text.find(/(?m)^FROM\s+(\S+)/) { it[1] }
+    if (image == null) {
+        throw new GradleException("No FROM instruction found in ${dockerfile}")
+    }
+    return image
+}
+
 subprojects {
     apply plugin: 'net.ltgt.errorprone'
     apply plugin: 'signing'
