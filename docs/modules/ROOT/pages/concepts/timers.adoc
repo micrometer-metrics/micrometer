@@ -114,9 +114,14 @@ public class ExampleService {
 
 NOTE: `TimedAspect` doesn't support meta-annotations with `@Timed`.
 
-=== @MeterTag on Method Parameters
+=== The `@MeterTag` Annotation
 
-To support using the `@MeterTag` annotation on method parameters, you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
+The `@MeterTag` annotation can be used on:
+
+* Method parameters (to add information about the given parameter)
+* Methods (to add information about the returned value/object of the given method)
+
+To support using the `@MeterTag` annotation, you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
 
 [source,java,subs=+attributes]
 -----
@@ -125,11 +130,15 @@ include::{include-java}/metrics/TimedAspectTest.java[tags=resolvers,indent=0]
 include::{include-java}/metrics/TimedAspectTest.java[tags=meter_tag_annotation_handler,indent=0]
 -----
 
-Let's assume that we have the following interface.
+==== `@MeterTag` on Method Parameters
+
+When the `@MeterTag` annotation is placed on a method parameter, it enables you to add one or more `Tag` to the `Timer` created by `@Timed` using the given method parameter.
+
+Let's assume we have an interface with the following methods:
 
 [source,java,subs=+attributes]
 -----
-include::{include-java}/metrics/TimedAspectTest.java[tags=interface,indent=0]
+include::{include-java}/metrics/TimedAspectTest.java[tags=interface_for_method_param,indent=0]
 -----
 
 When its implementations would be called with different arguments (remember that the implementation needs to be annotated with `@Timed` annotation too), the following timers would be created:
@@ -137,7 +146,7 @@ When its implementations would be called with different arguments (remember that
 [source,java,subs=+attributes]
 -----
 // Example for returning <toString()> on the parameter
-include::{include-java}/metrics/TimedAspectTest.java[tags=example_value_to_string,indent=0]
+include::{include-java}/metrics/TimedAspectTest.java[tags=example_param_value_to_string,indent=0]
 
 // Example for calling the provided <ValueResolver> on the parameter
 include::{include-java}/metrics/TimedAspectTest.java[tags=example_value_resolver,indent=0]
@@ -150,20 +159,30 @@ include::{include-java}/metrics/TimedAspectTest.java[tags=example_value_spel,ind
 include::{include-java}/metrics/TimedAspectTest.java[tags=example_multi_annotations,indent=0]
 -----
 
-=== @MeterTag on Methods
+WARNING: Please make sure that the attached `Tag` values are sanitized/normalized so that they are low-cardinality values.
 
-`@MeterTag` can also be placed on the method itself. With the same `MeterTagAnnotationHandler` configured on `TimedAspect`, the resolver, expression, or `toString()` path runs against the method's return value rather than a parameter.
+==== `@MeterTag` on Methods
 
-[source,java]
+When the `@MeterTag` annotation is placed on a method, it enables you to add one or more `Tag` to the `Timer` created by `@Timed` using the returned value/object of the given method.
+
+Let's assume we have an interface with the following method:
+
+[source,java,subs=+attributes]
 -----
-@Timed
-@MeterTag(key = "result", expression = "id")
-public Order placeOrder(String sku) {
-    return orderService.place(sku);
-}
+include::{include-java}/metrics/TimedAspectTest.java[tags=interface_for_method_result,indent=0]
 -----
 
-Here `expression` is evaluated against the returned `Order`. The same low-cardinality rule applies: do not tag with end-user input or other high-cardinality values.
+When its implementations would be called (remember that the implementation needs to be annotated with `@Timed` annotation too), the following timer would be created:
+
+[source,java,subs=+attributes]
+-----
+// Example for returning <toString()> on the returned value/object
+include::{include-java}/metrics/TimedAspectTest.java[tags=example_return_value_to_string,indent=0]
+-----
+
+The previous examples (using a resolver, defining an expression, or using multiple annotations) also work when `@MeterTag` is placed on a method.
+
+WARNING: Please make sure that the attached `Tag` values are sanitized/normalized so that they are low-cardinality values.
 
 == Function-tracking Timers
 
