@@ -93,30 +93,13 @@ InfluxConfig config = new InfluxConfig() {
 MeterRegistry registry = new InfluxMeterRegistry(config, Clock.SYSTEM);
 ----
 
-`InfluxConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.influx` directly to the `InfluxConfig`:
+`InfluxConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration.
+For the full set of configurable options and their defaults, see the
+https://javadoc.io/doc/io.micrometer/micrometer-registry-influx/latest/io/micrometer/influx/InfluxConfig.html[`InfluxConfig` Javadoc].
 
-[source, yaml]
-----
-management.metrics.export.influx:
-    api-version: v2 # API version of InfluxDB to use. Defaults to 'v1' unless an org is configured. If an org is configured, defaults to 'v2'.
-    auto-create-db: true # Whether to create the InfluxDB database if it does not exist before attempting to publish metrics to it. InfluxDB v1 only. (Default: true)
-    batch-size: 10000 # Number of measurements per request to use for this backend. If more measurements are found, then multiple requests will be made. (Default: 10000)
-    bucket: mybucket # Bucket for metrics. Use either the bucket name or ID. Defaults to the value of the db property if not set. InfluxDB v2 only.
-    compressed: true # Whether to enable GZIP compression of metrics batches published to InfluxDB. (Default: true)
-    connect-timeout: 1s # Connection timeout for requests to this backend. (Default: 1s)
-    consistency: one # Write consistency for each point. (Default: one)
-    db: mydb # Database to send metrics to. InfluxDB v1 only. (Default: mydb)
-    enabled: true # Whether exporting of metrics to this backend is enabled. (Default: true)
-    num-threads: 2 # Number of threads to use with the metrics publishing scheduler. (Default: 2)
-    org: myorg # Org to write metrics to. InfluxDB v2 only.
-    password: mysecret # Login password of the InfluxDB server. InfluxDB v1 only.
-    read-timeout: 10s # Read timeout for requests to this backend. (Default: 10s)
-    retention-policy: my_rp # Retention policy to use (InfluxDB writes to the DEFAULT retention policy if one is not specified). InfluxDB v1 only.
-    step: 1m # Step size (i.e. reporting frequency) to use. (Default: 1m)
-    token: AUTH_TOKEN_HERE # Authentication token to use with calls to the InfluxDB backend. For InfluxDB v1, the Bearer scheme is used. For v2, the Token scheme is used.
-    uri: http://localhost:8086 # URI of the InfluxDB server. (Default: http://localhost:8086)
-    user-name: myusername # Login user of the InfluxDB server. InfluxDB v1 only.
-----
+If you configure Micrometer through Spring Boot, refer to the
+https://docs.spring.io/spring-boot/reference/actuator/metrics.html[Spring Boot reference documentation]
+for the corresponding configuration properties.
 
 === Through Telegraf
 
