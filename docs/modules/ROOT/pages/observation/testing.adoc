@@ -34,7 +34,7 @@ After the BOM is xref:../installing.adoc[configured], add the following dependen
 
 NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
-[[micrometer-observation-runnning]]
+[[micrometer-observation-running]]
 == Running Observation Unit Tests
 
 Suppose you have the following production code. It will create an observation with two tags (low and high cardinality) and then call `observe` to start the observation, put it in scope, close the scope, and stop the observation:

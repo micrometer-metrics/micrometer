@@ -74,8 +74,8 @@ registry.config().commonTags("host", "my-host");
 
 `uri` is an important property to configure.
 The default value is `https://api.datadoghq.com`.
-Depending on the Datadog site (region), the api endpoint will be different.
-To find your the correct `uri` for your account, do the following:
+Depending on the Datadog site (region), the API endpoint will be different.
+To find the correct `uri` for your account, do the following:
 
 1. Read about the https://docs.datadoghq.com/getting_started/site/[Datadog site].
 2. Go to the https://docs.datadoghq.com/api/latest/metrics/[Metrics API reference] and select your own option from the "DATADOG SITE" dropdown.
@@ -98,7 +98,7 @@ NOTE: The version is not needed for this dependency since it is defined by the B
 
 ==== Maven
 
-After the BOM is xref:../installing.adoc[configured]d, add the following dependency:
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,xml]
 ----
