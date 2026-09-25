@@ -57,11 +57,15 @@ class CountedAspectTest {
 
         MeterTagClassInterface service = pf.getProxy();
 
-        // tag::example_value_to_string[]
+        // tag::example_param_value_to_string[]
         service.getAnnotationForArgumentToString(15L);
-
         assertThat(registry.get("method.counted").tag("test", "15").counter().count()).isEqualTo(1);
-        // end::example_value_to_string[]
+        // end::example_param_value_to_string[]
+
+        // tag::example_return_value_to_string[]
+        String returnValue = service.getAnnotationForReturnValueToString();
+        assertThat(registry.get("method.counted").tag("returnValue", returnValue).counter().count()).isEqualTo(1);
+        // end::example_return_value_to_string[]
     }
 
     @ParameterizedTest
@@ -80,7 +84,6 @@ class CountedAspectTest {
         // @formatter:off
         // tag::example_value_resolver[]
         service.getAnnotationForTagValueResolver("foo");
-
         assertThat(registry.get("method.counted")
             .tag("test", "Value from myCustomTagValueResolver [foo]")
             .counter()
@@ -104,7 +107,6 @@ class CountedAspectTest {
 
         // tag::example_value_spel[]
         service.getAnnotationForTagValueExpression("15L");
-
         assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
         // end::example_value_spel[]
     }
@@ -122,15 +124,16 @@ class CountedAspectTest {
 
         MeterTagClassInterface service = pf.getProxy();
 
+        // @formatter:off
         // tag::example_multi_annotations[]
         service.getMultipleAnnotationsForTagValueExpression(new DataHolder("zxe", "qwe"));
-
         assertThat(registry.get("method.counted")
             .tag("value1", "value1: zxe")
             .tag("value2", "value2: qwe")
             .counter()
             .count()).isEqualTo(1);
         // end::example_multi_annotations[]
+        // @formatter:on
     }
 
     enum AnnotatedTestClass {
@@ -155,8 +158,11 @@ class CountedAspectTest {
 
     }
 
-    // tag::interface[]
     interface MeterTagClassInterface {
+
+        // tag::interface_for_method_param[]
+        @Counted
+        void getAnnotationForArgumentToString(@MeterTag("test") Long param);
 
         @Counted
         void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
@@ -166,17 +172,25 @@ class CountedAspectTest {
                 @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
 
         @Counted
-        void getAnnotationForArgumentToString(@MeterTag("test") Long param);
-
-        @Counted
         void getMultipleAnnotationsForTagValueExpression(
                 @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
                         expression = "'value2: ' + value2") DataHolder param);
+        // end::interface_for_method_param[]
+
+        // tag::interface_for_method_result[]
+        @Counted
+        @MeterTag("returnValue")
+        String getAnnotationForReturnValueToString();
+        // end::interface_for_method_result[]
 
     }
-    // end::interface[]
 
     static class MeterTagClass implements MeterTagClassInterface {
+
+        @Counted
+        @Override
+        public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
+        }
 
         @Counted
         @Override
@@ -192,19 +206,26 @@ class CountedAspectTest {
 
         @Counted
         @Override
-        public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
-        }
-
-        @Counted
-        @Override
         public void getMultipleAnnotationsForTagValueExpression(
                 @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
                         expression = "'value2: ' + value2") DataHolder param) {
         }
 
+        @Counted
+        @MeterTag("returnValue")
+        @Override
+        public String getAnnotationForReturnValueToString() {
+            return "testReturnValue";
+        }
+
     }
 
     static class MeterTagClassChild implements MeterTagClassInterface {
+
+        @Counted
+        @Override
+        public void getAnnotationForArgumentToString(Long param) {
+        }
 
         @Counted
         @Override
@@ -218,13 +239,14 @@ class CountedAspectTest {
 
         @Counted
         @Override
-        public void getAnnotationForArgumentToString(Long param) {
+        public void getMultipleAnnotationsForTagValueExpression(
+                @MeterTag(key = "value2", expression = "'value2: ' + value2") DataHolder param) {
         }
 
         @Counted
         @Override
-        public void getMultipleAnnotationsForTagValueExpression(
-                @MeterTag(key = "value2", expression = "'value2: ' + value2") DataHolder param) {
+        public String getAnnotationForReturnValueToString() {
+            return "childReturnValue";
         }
 
     }
