@@ -57,11 +57,15 @@ class TimedAspectTest {
 
         MeterTagClassInterface service = pf.getProxy();
 
-        // tag::example_value_to_string[]
+        // tag::example_param_value_to_string[]
         service.getAnnotationForArgumentToString(15L);
-
         assertThat(registry.get("method.timed").tag("test", "15").timer().count()).isEqualTo(1);
-        // end::example_value_to_string[]
+        // end::example_param_value_to_string[]
+
+        // tag::example_return_value_to_string[]
+        String returnValue = service.getAnnotationForReturnValueToString();
+        assertThat(registry.get("method.timed").tag("returnValue", returnValue).timer().count()).isEqualTo(1);
+        // end::example_return_value_to_string[]
     }
 
     @ParameterizedTest
@@ -80,7 +84,6 @@ class TimedAspectTest {
         // @formatter:off
         // tag::example_value_resolver[]
         service.getAnnotationForTagValueResolver("foo");
-
         assertThat(registry.get("method.timed")
             .tag("test", "Value from myCustomTagValueResolver [foo]")
             .timer()
@@ -104,7 +107,6 @@ class TimedAspectTest {
 
         // tag::example_value_spel[]
         service.getAnnotationForTagValueExpression("15L");
-
         assertThat(registry.get("method.timed").tag("test", "hello characters").timer().count()).isEqualTo(1);
         // end::example_value_spel[]
     }
@@ -122,13 +124,16 @@ class TimedAspectTest {
 
         MeterTagClassInterface service = pf.getProxy();
 
+        // @formatter:off
         // tag::example_multi_annotations[]
         service.getMultipleAnnotationsForTagValueExpression(new DataHolder("zxe", "qwe"));
-
-        assertThat(
-                registry.get("method.timed").tag("value1", "value1: zxe").tag("value2", "value2: qwe").timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get("method.timed")
+            .tag("value1", "value1: zxe")
+            .tag("value2", "value2: qwe")
+            .timer()
+            .count()).isEqualTo(1);
         // end::example_multi_annotations[]
+        // @formatter:on
     }
 
     enum AnnotatedTestClass {
@@ -153,8 +158,11 @@ class TimedAspectTest {
 
     }
 
-    // tag::interface[]
     interface MeterTagClassInterface {
+
+        // tag::interface_for_method_param[]
+        @Timed
+        void getAnnotationForArgumentToString(@MeterTag("test") Long param);
 
         @Timed
         void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
@@ -164,17 +172,25 @@ class TimedAspectTest {
                 @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
 
         @Timed
-        void getAnnotationForArgumentToString(@MeterTag("test") Long param);
-
-        @Timed
         void getMultipleAnnotationsForTagValueExpression(
                 @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
                         expression = "'value2: ' + value2") DataHolder param);
+        // end::interface_for_method_param[]
+
+        // tag::interface_for_method_result[]
+        @Timed
+        @MeterTag("returnValue")
+        String getAnnotationForReturnValueToString();
+        // end::interface_for_method_result[]
 
     }
-    // end::interface[]
 
     static class MeterTagClass implements MeterTagClassInterface {
+
+        @Timed
+        @Override
+        public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
+        }
 
         @Timed
         @Override
@@ -190,19 +206,26 @@ class TimedAspectTest {
 
         @Timed
         @Override
-        public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
-        }
-
-        @Timed
-        @Override
         public void getMultipleAnnotationsForTagValueExpression(
                 @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
                         expression = "'value2: ' + value2") DataHolder param) {
         }
 
+        @Timed
+        @MeterTag("returnValue")
+        @Override
+        public String getAnnotationForReturnValueToString() {
+            return "testReturnValue";
+        }
+
     }
 
     static class MeterTagClassChild implements MeterTagClassInterface {
+
+        @Timed
+        @Override
+        public void getAnnotationForArgumentToString(Long param) {
+        }
 
         @Timed
         @Override
@@ -216,13 +239,14 @@ class TimedAspectTest {
 
         @Timed
         @Override
-        public void getAnnotationForArgumentToString(Long param) {
+        public void getMultipleAnnotationsForTagValueExpression(
+                @MeterTag(key = "value2", expression = "'value2: ' + value2") DataHolder param) {
         }
 
         @Timed
         @Override
-        public void getMultipleAnnotationsForTagValueExpression(
-                @MeterTag(key = "value2", expression = "'value2: ' + value2") DataHolder param) {
+        public String getAnnotationForReturnValueToString() {
+            return "childReturnValue";
         }
 
     }
