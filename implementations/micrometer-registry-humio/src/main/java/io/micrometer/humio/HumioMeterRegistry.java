@@ -114,6 +114,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                             batch::writeFunctionCounter,
                             batch::writeFunctionTimer,
                             batch::writeMeter))
+                    .filter(java.util.Objects::nonNull)
                     .collect(joining(",", "[{" + tags + "\"events\": [", "]}]")))
                     .send()
                     .onSuccess(response -> logger.debug("successfully sent {} metrics to humio.", meters.size()))
