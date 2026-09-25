@@ -1,6 +1,5 @@
 /*
- * Copyright 2002-2017 the original author or authors.
- * Copyright 2017-2021 VMware, Inc.
+ * Copyright 2002 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
