@@ -47,6 +47,25 @@ You can instrument this `HttpClient` as follows with an `ObservationRegistry`:
 include::{include-micrometer-java11-test}/io/micrometer/java11/instrument/binder/jdk/MicrometerHttpClientTests.java[tags=observationInstrumentation,indent=0]
 ----
 
+When using an `ObservationRegistry`, you can customize the tags produced by the instrumentation with an `HttpClientObservationConvention`.
+Extend `DefaultHttpClientObservationConvention` and add to its low-cardinality key values to retain the default tags.
+For example, the following convention adds the request host as a low-cardinality `clientName` tag.
+Only use the request host as a low-cardinality tag when the client calls a bounded set of hosts.
+
+[source,java,subs=+attributes]
+----
+include::{include-micrometer-java11-test}/io/micrometer/java11/instrument/binder/jdk/MicrometerHttpClientTests.java[tags=customConvention,indent=0]
+----
+
+Pass the custom convention to the instrumentation builder together with the `ObservationRegistry`.
+The following example creates a registry and registers a `DefaultMeterObservationHandler` to record metrics.
+If your framework already provides an `ObservationRegistry` configured to record metrics, you can use that registry instead.
+
+[source,java,subs=+attributes]
+----
+include::{include-micrometer-java11-test}/io/micrometer/java11/instrument/binder/jdk/MicrometerHttpClientTests.java[tags=customConventionInstrumentation,indent=0]
+----
+
 Alternatively, if you are not using an `ObservationRegistry`, you can instrument with only a `MeterRegistry` as follows:
 
 [source,java,subs=+attributes]
