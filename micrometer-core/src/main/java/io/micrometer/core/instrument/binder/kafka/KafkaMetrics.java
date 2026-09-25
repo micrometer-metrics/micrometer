@@ -348,11 +348,11 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         return tags;
     }
 
-    private List<Tag> meterTags(MetricName metricName) {
+    List<Tag> meterTags(MetricName metricName) {
         return meterTags(metricName, false);
     }
 
-    private String meterName(MetricName metricName) {
+    String meterName(MetricName metricName) {
         String name = METRIC_NAME_PREFIX + metricName.group() + "." + metricName.name();
         return name.replaceAll("-metrics", "").replace('-', '.');
     }
