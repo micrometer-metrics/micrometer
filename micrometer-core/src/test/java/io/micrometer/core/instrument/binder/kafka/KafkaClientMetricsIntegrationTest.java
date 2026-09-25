@@ -50,7 +50,16 @@ class KafkaClientMetricsIntegrationTest {
 
     @Container
     private final ConfluentKafkaContainer kafkaContainer = new ConfluentKafkaContainer(
-            DockerImageName.parse("confluentinc/cp-kafka:8.0.3"));
+            DockerImageName.parse(getKafkaImageName()));
+
+    private static String getKafkaImageName() {
+        String imageName = System.getProperty("kafka-image.name");
+        if (imageName == null) {
+            throw new IllegalStateException(
+                    "System property 'kafka-image.name' is not set. This should be set in the build configuration for running from the command line. If you are running KafkaClientMetricsIntegrationTest from an IDE, set the system property to the desired Kafka image name.");
+        }
+        return imageName;
+    }
 
     @Test
     void shouldManageProducerAndConsumerMetrics() {

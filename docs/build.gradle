@@ -113,3 +113,7 @@ jar {
 javadoc {
     enabled = false
 }
+
+dockerTest {
+    systemProperty 'kafka-image.name', dockerImage('kafka')
+}
