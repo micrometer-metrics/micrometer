@@ -28,7 +28,6 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-
 package io.micrometer.core.util.internal.logging;
 
 import static java.util.Objects.requireNonNull;
