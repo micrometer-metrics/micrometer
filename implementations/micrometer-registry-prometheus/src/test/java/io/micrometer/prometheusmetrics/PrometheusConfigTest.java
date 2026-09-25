@@ -16,12 +16,18 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.config.validate.Validated;
+import io.prometheus.metrics.config.PrometheusProperties;
+import io.prometheus.metrics.config.PrometheusPropertiesLoader;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 class PrometheusConfigTest {
 
@@ -40,6 +46,70 @@ class PrometheusConfigTest {
     @Test
     void valid() {
         assertThat(config.validate().isValid()).isTrue();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\n\t" })
+    void prometheusPropertiesDefaults(String value) {
+        props.put("prometheus.prometheusProperties", value);
+
+        assertThat(config.prometheusProperties())
+            .containsEntry("io.prometheus.exporter.exemplarsOnAllMetricTypes", "true")
+            .hasSize(1);
+    }
+
+    @Test
+    void prometheusPropertiesFromGetPreserveDefaults() {
+        props.put("prometheus.prometheusProperties", "io.prometheus.exemplars.sampleIntervalMilliseconds=42");
+
+        assertThat(config.prometheusProperties())
+            .containsEntry("io.prometheus.exporter.exemplarsOnAllMetricTypes", "true")
+            .containsEntry("io.prometheus.exemplars.sampleIntervalMilliseconds", "42")
+            .hasSize(2);
+    }
+
+    @Test
+    void prometheusPropertiesFromGetOverrideDefaults() {
+        props.put("prometheus.prometheusProperties", "io.prometheus.exporter.exemplarsOnAllMetricTypes=false");
+
+        assertThat(config.prometheusProperties())
+            .containsEntry("io.prometheus.exporter.exemplarsOnAllMetricTypes", "false")
+            .hasSize(1);
+    }
+
+    @Test
+    void prometheusPropertiesUsePropertiesSyntax() {
+        props.put("prometheus.prometheusProperties",
+                "# Client configuration\n" + " io.prometheus.exemplars.sampleIntervalMilliseconds = 42\r\n"
+                        + "io.prometheus.metrics.histogramClassicUpperBounds=0.1, 0.5, 1.0\n"
+                        + "custom=value=with=equals\n" + "io.prometheus.exemplars.sampleIntervalMilliseconds=43");
+
+        assertThat(config.prometheusProperties())
+            .containsEntry("io.prometheus.exporter.exemplarsOnAllMetricTypes", "true")
+            .containsEntry("io.prometheus.exemplars.sampleIntervalMilliseconds", "43")
+            .containsEntry("io.prometheus.metrics.histogramClassicUpperBounds", "0.1, 0.5, 1.0")
+            .containsEntry("custom", "value=with=equals")
+            .hasSize(4);
+    }
+
+    @Test
+    void configuredPropertiesAreAcceptedByPrometheusClient() {
+        props.put("prometheus.prometheusProperties", "io.prometheus.exporter.exemplarsOnAllMetricTypes=false\n"
+                + "io.prometheus.metrics.histogramClassicUpperBounds=0.1, 0.5, 1.0");
+
+        PrometheusProperties properties = PrometheusPropertiesLoader.load(config.prometheusProperties());
+
+        assertThat(properties.getExporterProperties().getExemplarsOnAllMetricTypes()).isFalse();
+        assertThat(properties.getDefaultMetricProperties().getHistogramClassicUpperBounds()).containsExactly(0.1, 0.5,
+                1.0);
+    }
+
+    @Test
+    void malformedPrometheusPropertiesAreRejected() {
+        props.put("prometheus.prometheusProperties", "custom=\\uXXXX");
+
+        assertThatIllegalArgumentException().isThrownBy(config::prometheusProperties);
     }
 
 }
