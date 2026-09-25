@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Comparator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -108,6 +109,25 @@ class HighCardinalityTagsDetectorTests {
 
         await().atMost(Duration.ofSeconds(1))
             .untilAsserted(() -> assertThat(registry.get("highCardinality.detections").counter().count()).isEqualTo(1));
+    }
+
+    @Test
+    void selectHighestCardinality() {
+        for (int i = 0; i < 12; i++) {
+            registry.counter("requests", "uid", String.valueOf(i));
+        }
+        for (int i = 0; i < 20; i++) {
+            registry.counter("responses", "uid", String.valueOf(i));
+        }
+
+        // tag::custom_selector[]
+        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector.Builder(registry).threshold(10)
+            .highCardinalityMeterInfoSelector(candidates -> candidates
+                .max(Comparator.comparingLong(HighCardinalityTagsDetector.HighCardinalityMeterInfo::getCount)))
+            .build()) {
+            assertThat(detector.findFirst()).contains("responses");
+        }
+        // end::custom_selector[]
     }
 
     // tag::custom_consumer[]
