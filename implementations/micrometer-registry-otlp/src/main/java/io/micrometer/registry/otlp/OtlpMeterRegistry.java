@@ -286,6 +286,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        // A LongTaskTimer that publishes percentiles is exported as a summary, so there
+        // is no histogram data point to give an exponential flavor to.
+        if (!distributionStatisticConfig.isPublishingPercentiles() && HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+            .equals(histogramFlavor(id, config, distributionStatisticConfig))) {
+            // The durations of the active tasks are re-recorded on every snapshot, so
+            // the histogram is a cumulative one for both temporalities and the timer
+            // resets it before each snapshot for DELTA. No exemplar sampler is given:
+            // the same running tasks would be sampled again on every snapshot.
+            Base2ExponentialHistogram exponentialHistogram = new CumulativeBase2ExponentialHistogram(config.maxScale(),
+                    getMaxBuckets(id), getMinimumExpectedValue(distributionStatisticConfig), getBaseTimeUnit(), null);
+            return new OtlpExponentialHistogramLongTaskTimer(id, this.clock, getBaseTimeUnit(),
+                    distributionStatisticConfig, exponentialHistogram, isDelta());
+        }
         DistributionStatisticConfig lttConfig = createModifiedConfigForLongTaskTimer(distributionStatisticConfig);
         return isCumulative() ? new OtlpCumulativeLongTaskTimer(id, this.clock, getBaseTimeUnit(), lttConfig)
                 : new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), lttConfig, false);
@@ -468,10 +481,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         if (distributionStatisticConfig.isPublishingHistogram()) {
             if (HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
                 .equals(histogramFlavor(id, config, distributionStatisticConfig))) {
-                Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
-                if (minimumExpectedValue == null) {
-                    minimumExpectedValue = 0.0;
-                }
+                double minimumExpectedValue = getMinimumExpectedValue(distributionStatisticConfig);
 
                 return config.aggregationTemporality() == AggregationTemporality.DELTA
                         ? new DeltaBase2ExponentialHistogram(config.maxScale(), getMaxBuckets(id), minimumExpectedValue,
@@ -488,6 +498,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
         }
         return NoopHistogram.INSTANCE;
+    }
+
+    private static double getMinimumExpectedValue(DistributionStatisticConfig distributionStatisticConfig) {
+        Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
+        return minimumExpectedValue == null ? 0.0 : minimumExpectedValue;
     }
 
     private int getMaxBuckets(Meter.Id id) {
