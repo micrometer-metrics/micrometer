@@ -24,7 +24,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.docs.SpelValueExpressionResolver;
+import io.micrometer.docs.CustomValueExpressionResolver;
 import io.micrometer.observation.*;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.annotation.ObservationKeyValue;
@@ -237,7 +237,7 @@ class ObservationHandlerTests {
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedServiceWithParameter());
         ObservedAspect observedAspect = new ObservedAspect(registry);
         ValueResolver valueResolver = parameter -> "Value from myCustomValueResolver [" + parameter + "]";
-        ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
+        ValueExpressionResolver valueExpressionResolver = new CustomValueExpressionResolver();
         observedAspect.setObservationKeyValueAnnotationHandler(
             new ObservationKeyValueAnnotationHandler(
                 aClass -> valueResolver, aClass -> valueExpressionResolver)

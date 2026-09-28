@@ -104,6 +104,8 @@ include::{include-java}/metrics/CountedAspectTest.java[tags=resolvers,indent=0]
 include::{include-java}/metrics/CountedAspectTest.java[tags=meter_tag_annotation_handler,indent=0]
 -----
 
+NOTE: `CustomValueExpressionResolver` is a sample implementation of `ValueExpressionResolver` for documentation purposes. Micrometer does not provide this class. An implementation is required to use `@MeterTag` expressions.
+
 ==== `@MeterTag` on Method Parameters
 
 When the `@MeterTag` annotation is placed on a method parameter, it enables you to add one or more `Tag` to the `Counter` created by `@Counted` using the given method parameter.
