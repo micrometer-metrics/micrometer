@@ -64,6 +64,8 @@ public class PrometheusNamingConvention implements NamingConvention {
                 if (baseUnit != null && !conventionName.endsWith("_" + baseUnit))
                     conventionName += "_" + baseUnit;
                 break;
+            default:
+                break;
         }
 
         switch (type) {
@@ -79,6 +81,8 @@ public class PrometheusNamingConvention implements NamingConvention {
                 else if (!conventionName.endsWith("_seconds")) {
                     conventionName += timerSuffix + "_seconds";
                 }
+                break;
+            default:
                 break;
         }
 

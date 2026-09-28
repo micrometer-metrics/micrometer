@@ -249,6 +249,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
                 .getMethod("addNetworkTrafficListener", NetworkTrafficListener.class);
         }
         catch (NoSuchMethodException ignore) {
+            // not Jetty 9
         }
         if (method != null)
             return method;
@@ -258,6 +259,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
                 .getMethod("setNetworkTrafficListener", NetworkTrafficListener.class);
         }
         catch (NoSuchMethodException ignore) {
+            // not Jetty 12
         }
         return method;
     }

@@ -121,6 +121,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     /**
      * Starts a scheduled job that checks if you have high cardinality tags.
      */
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void start() {
         LOGGER.info(String.format("Starting %s with threshold: %d and delay: %s", getClass().getSimpleName(),
                 this.threshold, this.delay));

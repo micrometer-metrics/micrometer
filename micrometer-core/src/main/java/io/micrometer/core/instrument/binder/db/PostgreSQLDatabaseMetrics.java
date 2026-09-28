@@ -316,6 +316,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             }
         }
         catch (SQLException ignored) {
+            // failed to query statistic
         }
         return 0L;
     }

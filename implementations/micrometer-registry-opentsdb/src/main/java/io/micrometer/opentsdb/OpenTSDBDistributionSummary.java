@@ -41,6 +41,7 @@ public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
 
     private final TimeWindowMax max;
 
+    @SuppressWarnings("HidingField")
     private final @Nullable Histogram histogram;
 
     OpenTSDBDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,

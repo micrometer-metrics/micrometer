@@ -39,7 +39,10 @@ public class CumulativeFunctionCounter<T> extends AbstractMeter implements Funct
     @Override
     public double count() {
         T obj2 = ref.get();
-        return obj2 != null ? (last = f.applyAsDouble(obj2)) : last;
+        if (obj2 != null) {
+            last = f.applyAsDouble(obj2);
+        }
+        return last;
     }
 
 }

@@ -154,6 +154,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 this.sink = new LogbackMetricsSuppressingFluxSink(this.sink);
             }
             catch (ClassNotFoundException ignore) {
+                // Logback is not on the classpath
             }
             start();
         }
@@ -456,6 +457,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 case DURATION:
                 case UNKNOWN:
                     pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.gauge(ms.getValue(), stat)));
+                    break;
+                default:
                     break;
             }
         });

@@ -102,7 +102,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         this.config = config;
         this.loggingSink = loggingSink;
-        this.meterIdPrinter = meterIdPrinter != null ? meterIdPrinter : defaultMeterIdPrinter();
+        this.meterIdPrinter = meterIdPrinter != null ? meterIdPrinter : this::defaultMeterIdPrinter;
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }
@@ -111,8 +111,8 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         return value.replace('\r', '_').replace('\n', '_');
     }
 
-    private Function<Meter, String> defaultMeterIdPrinter() {
-        return (meter) -> getConventionName(meter.getId()) + getConventionTags(meter.getId()).stream()
+    private String defaultMeterIdPrinter(Meter meter) {
+        return getConventionName(meter.getId()) + getConventionTags(meter.getId()).stream()
             .map(t -> t.getKey() + "=" + t.getValue())
             .collect(joining(",", "{", "}"));
     }

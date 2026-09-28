@@ -141,6 +141,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     @Override
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void bindTo(MeterRegistry registry) {
         this.registry = registry;
 

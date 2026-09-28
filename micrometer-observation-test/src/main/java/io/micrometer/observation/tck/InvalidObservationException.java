@@ -57,6 +57,7 @@ public class InvalidObservationException extends RuntimeException {
     }
 
     @Override
+    @SuppressWarnings("OverrideThrowableToString")
     public String toString() {
         if (history.isEmpty()) {
             return super.toString();

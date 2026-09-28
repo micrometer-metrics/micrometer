@@ -108,6 +108,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     }
 
     @RequiresNonNull({ "exemplarSampler", "buckets", "exemplars", "lastExemplar" })
+    @SuppressWarnings("ReferenceEquality")
     private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit,
             int index) {
         double bucketFrom = (index == 0) ? Double.NEGATIVE_INFINITY : buckets[index - 1];

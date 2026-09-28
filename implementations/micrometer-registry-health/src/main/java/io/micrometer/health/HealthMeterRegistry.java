@@ -190,6 +190,7 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
         return true;
     }
 
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void start(ThreadFactory threadFactory) {
         if (scheduledExecutorService != null)
             stop();
