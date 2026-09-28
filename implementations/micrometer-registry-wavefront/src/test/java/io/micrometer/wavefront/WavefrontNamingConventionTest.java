@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Deprecated
 class WavefrontNamingConventionTest {
 
     private final WavefrontNamingConvention convention = new WavefrontNamingConvention(null);

@@ -635,6 +635,7 @@ class StatsdMeterRegistryTest {
         registry.close();
     }
 
+    @SuppressWarnings("deprecation")
     private UnicastProcessor<String> lineProcessor() {
         return UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
     }

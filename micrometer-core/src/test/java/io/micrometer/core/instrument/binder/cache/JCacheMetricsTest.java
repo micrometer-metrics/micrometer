@@ -57,6 +57,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     private Long expectedAttributeValue = new Random().nextLong();
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     void setup() throws Exception {
         cache = mock(Cache.class);
         cacheManager = mock(CacheManager.class);
@@ -180,7 +181,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
         private Long expectedAttributeValue;
 
-        public CacheMBeanStub(Long attributeValue) {
+        CacheMBeanStub(Long attributeValue) {
             this.expectedAttributeValue = attributeValue;
         }
 

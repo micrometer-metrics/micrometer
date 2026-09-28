@@ -24,6 +24,7 @@ import io.micrometer.context.ContextAccessor;
 import io.micrometer.context.ContextExecutorService;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
+import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -109,6 +110,7 @@ class ObservationInstrumentingTests {
         // tag::thread_switching[]
         // This snippet shows an example of how to wrap in an observation code that would
         // be executed in a separate thread
+        ContextSnapshotFactory contextSnapshotFactory = ContextSnapshotFactory.builder().build();
 
         // Let's assume that we have a parent observation
         Observation parent = Observation.createNotStarted("parent", registry);
@@ -118,7 +120,7 @@ class ObservationInstrumentingTests {
             then(registry.getCurrentObservation()).isSameAs(parent);
             // [Thread 1] We're wrapping the executor in a Context Propagating version.
             // <ContextExecutorService> comes from Context Propagation library
-            return ContextExecutorService.wrap(executor).submit(() -> {
+            return ContextExecutorService.wrap(executor, contextSnapshotFactory).submit(() -> {
                 // [Thread 2] Current Observation is same as <parent> - context got
                 // propagated
                 then(registry.getCurrentObservation()).isSameAs(parent);
@@ -135,6 +137,7 @@ class ObservationInstrumentingTests {
     void should_instrument_reactor() {
         // tag::reactor[]
         // This snippet shows an example of how to wrap code that is using Reactor
+        ContextSnapshotFactory contextSnapshotFactory = ContextSnapshotFactory.builder().build();
 
         // Let's assume that we have a parent observation
         Observation parent = Observation.start("parent", registry);
@@ -166,7 +169,7 @@ class ObservationInstrumentingTests {
             .flatMap(integer -> Mono.just(integer).map(monoInteger -> monoInteger + 1))
             // Example of retrieving ThreadLocal entries via ReactorContext
             .transformDeferredContextual((integerMono, contextView) -> integerMono.doOnNext(integer -> {
-                try (ContextSnapshot.Scope scope = ContextSnapshot.setAllThreadLocalsFrom(contextView)) {
+                try (ContextSnapshot.Scope scope = contextSnapshotFactory.setThreadLocalsFrom(contextView)) {
                     log.info(
                             "We're retrieving thread locals from Reactor Context - there will be Observation in thread local here ["
                                     + registry.getCurrentObservation() + "]");
@@ -224,14 +227,15 @@ class ObservationInstrumentingTests {
 
             graphqlContext.put(ObservationThreadLocalAccessor.KEY, dataFetcher);
 
-            ContextSnapshot contextSnapshot = ContextSnapshot.captureFrom(graphqlContext);
+            ContextSnapshotFactory contextSnapshotFactory = ContextSnapshotFactory.builder().build();
+            ContextSnapshot contextSnapshot = contextSnapshotFactory.captureFrom(graphqlContext);
 
             contextSnapshot.wrap(() -> {
                 Integer block = Mono.just(1)
                     .flatMap(integer -> Mono.just(integer).map(monoInteger -> monoInteger + 1))
                     .transformDeferredContextual((integerMono, contextView) -> integerMono.doOnNext(integer -> {
                         thenCurrentObservationAndSpanAreSameAs(dataFetcher);
-                        try (ContextSnapshot.Scope s = ContextSnapshot.setAllThreadLocalsFrom(contextView)) {
+                        try (ContextSnapshot.Scope s = contextSnapshotFactory.setThreadLocalsFrom(contextView)) {
                             thenCurrentObservationAndSpanAreSameAs(dataFetcher);
                         }
                         thenCurrentObservationAndSpanAreSameAs(dataFetcher);
@@ -359,6 +363,7 @@ class ObservationInstrumentingTests {
             }
 
             @Override
+            @SuppressWarnings("unchecked")
             public void readValues(Map source, Predicate<Object> keyPredicate, Map<Object, Object> target) {
                 source.forEach((k, v) -> {
                     if (keyPredicate.test(k)) {
@@ -379,6 +384,7 @@ class ObservationInstrumentingTests {
             }
 
             @Override
+            @SuppressWarnings("unchecked")
             public Map writeValues(Map<Object, Object> valuesToWrite, Map target) {
                 target.putAll(valuesToWrite);
                 return target;

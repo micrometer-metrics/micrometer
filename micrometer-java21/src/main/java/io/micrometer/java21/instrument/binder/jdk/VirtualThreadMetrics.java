@@ -86,9 +86,9 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private void bindVirtualThreadSchedulerMXBean(MeterRegistry registry) {
         try {
-            Class clazz = Class.forName("jdk.management.VirtualThreadSchedulerMXBean");
+            Class<? extends PlatformManagedObject> clazz = Class.forName("jdk.management.VirtualThreadSchedulerMXBean")
+                .asSubclass(PlatformManagedObject.class);
             PlatformManagedObject platformMXBean = ManagementFactory.getPlatformMXBean(clazz);
-            Object ignored = clazz.cast(platformMXBean);
 
             MethodHandle getParallelism = MethodHandles.publicLookup()
                 .findVirtual(clazz, "getParallelism", MethodType.methodType(int.class));

@@ -59,7 +59,7 @@ class InfluxMeterRegistryFieldTest {
 
     @Test
     void toStringWithSwedishLocale() {
-        Locale.setDefault(new Locale("sv", "SE"));
+        Locale.setDefault(Locale.forLanguageTag("sv-SE"));
 
         InfluxMeterRegistry.Field field = new InfluxMeterRegistry.Field("value", 0.01);
 

@@ -19,7 +19,6 @@
  * new package name is {@code io.micrometer.prometheusmetrics}.
  */
 @NullMarked
-@Deprecated
 package io.micrometer.prometheus;
 
 import org.jspecify.annotations.NullMarked;

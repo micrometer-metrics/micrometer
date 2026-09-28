@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Clint Checketts
  */
+@Deprecated
 class PrometheusDurationNamingConventionTest {
 
     private PrometheusNamingConvention convention = new PrometheusDurationNamingConvention();
