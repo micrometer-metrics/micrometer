@@ -77,6 +77,7 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
         }
     }
 
+    @SuppressWarnings("deprecation")
     private SimpleHttpRequest makeRequest(HttpMethod method, byte @Nullable [] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         SimpleRequestBuilder builder = SimpleRequestBuilder.create(method.name());

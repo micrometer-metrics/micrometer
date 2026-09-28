@@ -65,6 +65,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
+@SuppressWarnings("deprecation")
 public class SampleRegistries {
 
     @SuppressWarnings("DoNotCallSuggester")
@@ -350,10 +351,12 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
+    @SuppressWarnings("deprecation")
     public static WavefrontMeterRegistry wavefront() {
         return new WavefrontMeterRegistry(WavefrontConfig.DEFAULT_PROXY, Clock.SYSTEM);
     }
 
+    @SuppressWarnings("deprecation")
     public static WavefrontMeterRegistry wavefrontDirect(String apiToken) {
         return new WavefrontMeterRegistry(new WavefrontConfig() {
             @Override

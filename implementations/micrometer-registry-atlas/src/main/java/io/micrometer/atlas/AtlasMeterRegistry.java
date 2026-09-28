@@ -181,6 +181,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj,
             ToDoubleFunction<T> valueFunction) {
         com.netflix.spectator.api.Gauge gauge = new SpectatorToDoubleGauge<>(registry.clock(), spectatorId(id), obj,
@@ -217,6 +218,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected Meter newMeter(Meter.Id id, Meter.Type type,
             Iterable<io.micrometer.core.instrument.Measurement> measurements) {
         Id spectatorId = spectatorId(id);

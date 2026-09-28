@@ -18,7 +18,6 @@
  * Deprecated since 1.16.0 due to Wavefront's End of Life Announcement.
  */
 @NullMarked
-@Deprecated
 package io.micrometer.wavefront;
 
 import org.jspecify.annotations.NullMarked;

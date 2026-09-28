@@ -406,6 +406,7 @@ class TimedHandlerTest {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         protected void onComplete(final Request request, final Throwable failure) {
             try {
                 super.onComplete(request, failure);

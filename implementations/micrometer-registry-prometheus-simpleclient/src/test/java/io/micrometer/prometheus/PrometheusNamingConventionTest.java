@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Jon Schneider
  */
+@SuppressWarnings("deprecation")
 class PrometheusNamingConventionTest {
 
     private PrometheusNamingConvention convention = new PrometheusNamingConvention();

@@ -34,7 +34,6 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -78,6 +77,7 @@ import java.util.stream.DoubleStream;
  * @author Tommy Ludwig
  * @since 1.0.0
  */
+@SuppressWarnings("deprecation")
 public class StatsdMeterRegistry extends MeterRegistry {
 
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
@@ -90,7 +90,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private final AtomicBoolean started = new AtomicBoolean();
 
-    DirectProcessor<String> processor = DirectProcessor.create();
+    @SuppressWarnings("deprecation")
+    reactor.core.publisher.DirectProcessor<String> processor = reactor.core.publisher.DirectProcessor.create();
 
     FluxSink<String> sink = new NoopFluxSink();
 
@@ -147,7 +148,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 }));
 
         if (config.enabled()) {
-            this.sink = processor.sink();
+            @SuppressWarnings("deprecation")
+            FluxSink<String> fluxSink = processor.sink();
+            this.sink = fluxSink;
 
             try {
                 Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());

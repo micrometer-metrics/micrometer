@@ -49,6 +49,10 @@ dependencies {
     jmhAnnotationProcessor libs.jmhAnnotationProcessor
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-Xlint:-options'
+}
+
 jmh {
     duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
     zip64 = true

@@ -19,4 +19,5 @@ compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
     options.release = 11
+    options.compilerArgs -= '-Xlint:deprecation'
 }

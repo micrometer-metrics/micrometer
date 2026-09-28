@@ -47,6 +47,7 @@ import static io.javalin.apibuilder.ApiBuilder.path;
  * See https://github.com/tipsy/javalin/pull/959 which adds improvements to
  * MicrometerPlugin
  */
+@SuppressWarnings("deprecation")
 public class PrometheusSample {
 
     public static void main(String[] args) {
@@ -118,6 +119,7 @@ class MicrometerPlugin implements Plugin {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void apply(@NonNull Javalin app) {
         Server server = app.jettyServer().server();
 

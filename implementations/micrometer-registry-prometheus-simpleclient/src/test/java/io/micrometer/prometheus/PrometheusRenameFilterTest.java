@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Tommy Ludwig
  */
+@SuppressWarnings("deprecation")
 class PrometheusRenameFilterTest {
 
     private final PrometheusRenameFilter filter = new PrometheusRenameFilter();

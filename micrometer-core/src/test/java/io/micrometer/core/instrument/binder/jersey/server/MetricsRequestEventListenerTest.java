@@ -97,6 +97,7 @@ class MetricsRequestEventListenerTest extends JerseyTest {
             target("not-found").request().get();
         }
         catch (NotFoundException ignored) {
+            // expected
         }
 
         assertThat(registry.get(METRIC_NAME).tags(tagsFrom("NOT_FOUND", "404", "CLIENT_ERROR", null)).timer().count())
@@ -109,6 +110,7 @@ class MetricsRequestEventListenerTest extends JerseyTest {
             target("throws-not-found-exception").request().get();
         }
         catch (NotFoundException ignored) {
+            // expected
         }
 
         assertThat(registry.get(METRIC_NAME)
@@ -139,21 +141,25 @@ class MetricsRequestEventListenerTest extends JerseyTest {
             target("throws-exception").request().get();
         }
         catch (Exception ignored) {
+            // expected
         }
         try {
             target("throws-webapplication-exception").request().get();
         }
         catch (Exception ignored) {
+            // expected
         }
         try {
             target("throws-mappable-exception").request().get();
         }
         catch (Exception ignored) {
+            // expected
         }
         try {
             target("produces-text-plain").request(MediaType.APPLICATION_JSON).get();
         }
         catch (Exception ignored) {
+            // expected
         }
 
         assertThat(registry.get(METRIC_NAME)

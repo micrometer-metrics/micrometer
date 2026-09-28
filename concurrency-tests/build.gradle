@@ -14,6 +14,10 @@ dependencies {
     runtimeOnly(libs.logbackLatest)
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-Xlint:-options'
+}
+
 jcstress {
     jcstressDependency = libs.jcstressCore.get().toString()
 

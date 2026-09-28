@@ -185,6 +185,10 @@ subprojects {
             }
         }
 
+        tasks.withType(JavaCompile).configureEach {
+            options.compilerArgs << '-Xlint:-options'
+        }
+
         tasks {
             compileJava {
                 options.encoding = 'UTF-8'

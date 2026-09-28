@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.*;
  * @author Johnny Lim
  * @author Jonatan Ivanov
  */
+@SuppressWarnings("deprecation")
 class PrometheusMeterRegistryTest {
 
     private CollectorRegistry prometheusRegistry = new CollectorRegistry(true);
