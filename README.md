@@ -11,7 +11,7 @@ vendor neutral interface and decide on the monitoring backend at the last minute
 
 More info on [micrometer.io](https://micrometer.io).
 
-Micrometer artifacts work with Java 8 or later with a few exceptions such as the micrometer-java11 module and micrometer-jetty11.
+Micrometer artifacts work with Java 8 or later with a few exceptions such as the micrometer-java11 module, micrometer-jetty11, and micrometer-java21 (which provides [virtual thread metrics](https://docs.micrometer.io/micrometer/reference/reference/jvm.html#_virtual_threads) and requires Java 21 or later).
 
 ## Supported versions
 
