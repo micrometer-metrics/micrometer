@@ -134,7 +134,7 @@ class ObservationRegistryAssertTests {
 
     @Test
     void passesDoesNotHaveAnyRemainingCurrentScope() {
-        Observation o = Observation.start("active", registry);
+        Observation.start("active", registry);
 
         assertThatNoException().isThrownBy(() -> this.registryAssert.doesNotHaveAnyRemainingCurrentScope());
     }

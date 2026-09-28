@@ -152,6 +152,7 @@ class TimedHandlerTest {
                         barrier[1].await(5, TimeUnit.SECONDS);
                     }
                     catch (Exception ignored) {
+                        // best effort await on barrier
                     }
                 }
             }
@@ -195,6 +196,7 @@ class TimedHandlerTest {
                     barrier[2].await(5, TimeUnit.SECONDS);
                 }
                 catch (Exception ignored) {
+                    // best effort await on barrier
                 }
             }
         });
@@ -246,6 +248,7 @@ class TimedHandlerTest {
                         barrier[1].await(5, TimeUnit.SECONDS);
                     }
                     catch (Exception ignored) {
+                        // best effort await on barrier
                     }
                 }
             }
@@ -283,6 +286,7 @@ class TimedHandlerTest {
                     barrier[2].await(5, TimeUnit.SECONDS);
                 }
                 catch (Exception ignored) {
+                    // best effort await on barrier
                 }
             }
         });
@@ -323,6 +327,7 @@ class TimedHandlerTest {
                         barrier[1].await(5, TimeUnit.SECONDS);
                     }
                     catch (Exception ignored) {
+                        // best effort await on barrier
                     }
                 }
             }
@@ -358,6 +363,7 @@ class TimedHandlerTest {
                     latch.countDown();
                 }
                 catch (Exception ignored) {
+                    // best effort await on barrier
                 }
             }
         });

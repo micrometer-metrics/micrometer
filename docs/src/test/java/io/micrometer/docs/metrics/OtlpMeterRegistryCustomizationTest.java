@@ -22,6 +22,7 @@ import io.micrometer.registry.otlp.OtlpMeterRegistry;
 import io.micrometer.registry.otlp.OtlpMetricsSender;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("UnusedVariable")
 class OtlpMeterRegistryCustomizationTest {
 
     @Test

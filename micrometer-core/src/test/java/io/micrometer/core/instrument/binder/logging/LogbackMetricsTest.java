@@ -134,6 +134,7 @@ class LogbackMetricsTest {
             });
         }
         catch (RuntimeException ignore) {
+            // expected exception from throwing runnable
         }
         logger.info("hi");
         assertThat(infoLogCounter.count()).isEqualTo(2);

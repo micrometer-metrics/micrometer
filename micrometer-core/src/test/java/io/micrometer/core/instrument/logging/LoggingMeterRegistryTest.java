@@ -342,7 +342,7 @@ class LoggingMeterRegistryTest {
             return keys.get(key);
         }
 
-        public void set(String key, String value) {
+        void set(String key, String value) {
             keys.put(prefix() + "." + key, value);
         }
 

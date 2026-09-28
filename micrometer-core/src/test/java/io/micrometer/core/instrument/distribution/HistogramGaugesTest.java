@@ -76,9 +76,9 @@ class HistogramGaugesTest {
             .serviceLevelObjectives(Double.POSITIVE_INFINITY)
             .register(registry);
 
-        HistogramGauges distributionGauges = HistogramGauges.registerWithCommonFormat(distributionSummary, registry);
+        HistogramGauges.registerWithCommonFormat(distributionSummary, registry);
 
-        HistogramGauges timerGauges = HistogramGauges.registerWithCommonFormat(timer, registry);
+        HistogramGauges.registerWithCommonFormat(timer, registry);
 
         assertThat(registry.get("my.distribution.histogram").tag("le", "+Inf").gauge()).isNotNull();
         assertThat(registry.get("my.timer.histogram").tag("le", "+Inf").gauge()).isNotNull();

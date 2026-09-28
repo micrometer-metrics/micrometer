@@ -176,10 +176,11 @@ class ObservationTests {
         Service service = new Service();
         Observation observation = Observation.start("service", registry);
         try {
-            String s = observation.scopedChecked(service::executeCallable);
+            observation.scopedChecked(service::executeCallable);
             observation.scopedChecked(service::executeRunnable);
         }
         catch (IOException ignore) {
+            // ignore IOException for scoped checked test
         }
     }
 

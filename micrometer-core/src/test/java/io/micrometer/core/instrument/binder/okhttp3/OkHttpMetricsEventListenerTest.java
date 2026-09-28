@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,14 +51,16 @@ class OkHttpMetricsEventListenerTest {
 
     private static final String URI_EXAMPLE_VALUE = "uriExample";
 
-    private static final Function<@Nullable Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
+    private static String uriMapper(@Nullable Request req) {
+        return URI_EXAMPLE_VALUE;
+    }
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private OkHttpClient client = new OkHttpClient.Builder()
         .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
             .tags(Tags.of("foo", "bar"))
-            .uriMapper(URI_MAPPER)
+            .uriMapper(OkHttpMetricsEventListenerTest::uriMapper)
             .build())
         .build();
 
@@ -100,7 +101,7 @@ class OkHttpMetricsEventListenerTest {
         OkHttpClient client = new OkHttpClient.Builder().connectTimeout(1, TimeUnit.MILLISECONDS)
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                 .tags(Tags.of("foo", "bar"))
-                .uriMapper(URI_MAPPER)
+                .uriMapper(OkHttpMetricsEventListenerTest::uriMapper)
                 .build())
             .build();
 
