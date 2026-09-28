@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.*;
  * @author Johnny Lim
  * @author Yanming Zhou
  */
+@SuppressWarnings("TypeParameterUnusedInFormals")
 class CountedAspectTest {
 
     private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
@@ -95,6 +96,7 @@ class CountedAspectTest {
             countedService.fail();
         }
         catch (Exception ignored) {
+            // expected
         }
 
         Counter counter = meterRegistry.get("metric.failing")
@@ -115,6 +117,7 @@ class CountedAspectTest {
             countedService.emptyMetricNameWithException();
         }
         catch (Exception ignored) {
+            // expected
         }
 
         assertThat(meterRegistry.get("method.counted").counters()).hasSize(2);

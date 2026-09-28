@@ -44,6 +44,7 @@ import static org.awaitility.Awaitility.await;
  * @author Johnny Lim
  * @author Sebastian Lövdahl
  */
+@SuppressWarnings("FutureReturnValueIgnored")
 class ExecutorServiceMetricsTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());

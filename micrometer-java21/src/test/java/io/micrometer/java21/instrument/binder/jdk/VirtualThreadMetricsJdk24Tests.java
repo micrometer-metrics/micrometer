@@ -71,6 +71,7 @@ class VirtualThreadMetricsJdk24Tests {
     }
 
     @Test
+    @SuppressWarnings("FutureReturnValueIgnored")
     void queuedThreads() throws InterruptedException {
         AtomicBoolean spin = new AtomicBoolean(true);
         Runnable spinWait = () -> {

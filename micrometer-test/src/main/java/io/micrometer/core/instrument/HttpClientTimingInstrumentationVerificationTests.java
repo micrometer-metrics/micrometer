@@ -176,6 +176,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
                     URI.create("http://localhost:" + unusedPort), "/anything");
         }
         catch (Throwable ignore) {
+            // expected connection failure to unused port
         }
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET").timer();

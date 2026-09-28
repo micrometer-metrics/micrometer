@@ -29,6 +29,7 @@ import java.util.function.Function;
 /**
  * Taken from Tracing for testing.
  */
+@SuppressWarnings("PatternMatchingInstanceof")
 class HighCardinalityAnnotationHandler extends AnnotationHandler<Observation> {
 
     public HighCardinalityAnnotationHandler(

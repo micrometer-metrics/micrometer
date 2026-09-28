@@ -567,7 +567,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             .publishPercentileHistogram()
             .register(registryWithExponentialHistogram);
         timer.record(Duration.ofMillis(100));
-        timer.record(Duration.ofMillis(1000));
+        timer.record(Duration.ofSeconds(1));
 
         Metric metric = writeToMetric(timer);
         assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
@@ -584,7 +584,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         long previousEndTime = exponentialHistogramDataPoint.getTimeUnixNano();
 
         clock.add(exponentialHistogramOtlpConfig().step());
-        timer.record(Duration.ofMillis(10000));
+        timer.record(Duration.ofSeconds(10));
 
         metric = writeToMetric(timer);
         exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);

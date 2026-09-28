@@ -347,9 +347,7 @@ class StatsdMeterRegistryTest {
     @Test
     void distributionSummariesWithServiceLevelObjectivesHaveInfBucket() {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
-        DistributionSummary summary = DistributionSummary.builder("my.distribution")
-            .serviceLevelObjectives(1.0)
-            .register(registry);
+        DistributionSummary.builder("my.distribution").serviceLevelObjectives(1.0).register(registry);
 
         // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the
         // gauge isn't present
@@ -459,6 +457,9 @@ class StatsdMeterRegistryTest {
                 // the
                 // 'statistic' tag as well.
                 assertThat(namingConventionUses.intValue()).isEqualTo(5);
+                break;
+            case SYSDIG:
+            default:
                 break;
         }
 
