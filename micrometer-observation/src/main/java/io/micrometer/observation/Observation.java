@@ -1118,6 +1118,7 @@ public interface Observation extends ObservationView {
          * @return entry or {@code null} if not present
          */
         @Override
+        @SuppressWarnings("TypeParameterUnusedInFormals")
         public <T> @Nullable T get(Object key) {
             return (T) this.map.get(key);
         }
@@ -1140,6 +1141,7 @@ public interface Observation extends ObservationView {
          * @return entry
          */
         @Override
+        @SuppressWarnings("TypeParameterUnusedInFormals")
         public <T> T getRequired(Object key) {
             T object = (T) this.map.get(key);
             if (object == null) {
@@ -1452,6 +1454,7 @@ public interface Observation extends ObservationView {
          * @param <T> value type
          * @return entry or {@code null} if not present
          */
+        @SuppressWarnings("TypeParameterUnusedInFormals")
         <T> @Nullable T get(Object key);
 
         /**
@@ -1461,6 +1464,7 @@ public interface Observation extends ObservationView {
          * @throws IllegalArgumentException if not present
          * @return entry
          */
+        @SuppressWarnings("TypeParameterUnusedInFormals")
         <T> T getRequired(Object key);
 
         /**
