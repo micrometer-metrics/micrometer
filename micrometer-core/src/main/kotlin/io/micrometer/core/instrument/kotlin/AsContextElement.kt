@@ -27,9 +27,7 @@ import kotlin.coroutines.CoroutineContext
  * Inspired by OpenTelemetry's asContextElement.
  * @since 1.10.0
  */
-fun ObservationRegistry.asContextElement(): CoroutineContext {
-    return KotlinObservationContextElement(this, ContextRegistry.getInstance())
-}
+fun ObservationRegistry.asContextElement(): CoroutineContext = KotlinObservationContextElement(this, ContextRegistry.getInstance())
 
 /**
  * Returns the [Observation] in this [CoroutineContext] if present, or null otherwise.
