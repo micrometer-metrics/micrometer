@@ -29,7 +29,6 @@ jar {
         bnd '''\
         Import-Package: \
             !java.*,\
-            javax.servlet.*;resolution:=optional,\
             io.micrometer.context.*;resolution:=optional,\
             org.aspectj.*;resolution:=optional,\
             *
@@ -41,9 +40,6 @@ dependencies {
     api project(":micrometer-commons")
 
     optionalApi libs.contextPropagation
-
-    // HttpServlet KeyValueProvider
-    optionalApi libs.javax.servletApi
 
     // Aspects
     optionalApi libs.aspectjrt
