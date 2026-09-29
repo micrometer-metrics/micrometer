@@ -104,6 +104,7 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
                     context.setPeerPort(uri.getPort());
                 }
                 catch (Exception ex) {
+                    // best effort parsing authority
                 }
             }
             return context;

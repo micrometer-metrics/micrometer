@@ -109,6 +109,8 @@ public class MetricsRequestEventListener implements RequestEventListener {
                     }
                 }
                 break;
+            default:
+                break;
         }
     }
 

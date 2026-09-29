@@ -137,7 +137,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
 
     /**
      * Set trailers.
-     * @param trailers
+     * @param trailers trailers
      * @since 1.13.0
      */
     public void setTrailers(Metadata trailers) {

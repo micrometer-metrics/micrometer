@@ -52,6 +52,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
     private final @Nullable Double maxIdleConnectionCount;
 
+    @SuppressWarnings("ThreadLocalUsage")
     private final ThreadLocal<ConnectionPoolConnectionStats> connectionStats = new ThreadLocal<>();
 
     /**
@@ -160,13 +161,13 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
         private int total;
 
-        public int getActiveCount() {
+        int getActiveCount() {
             snapshotStatsIfNecessary();
             uses.countDown();
             return total - idle;
         }
 
-        public int getIdleConnectionCount() {
+        int getIdleConnectionCount() {
             snapshotStatsIfNecessary();
             uses.countDown();
             return idle;

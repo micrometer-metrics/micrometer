@@ -62,7 +62,10 @@ public class CumulativeFunctionTimer<T> extends AbstractMeter implements Functio
     @Override
     public double count() {
         T obj2 = ref.get();
-        return obj2 != null ? (lastCount = Math.max(countFunction.applyAsLong(obj2), 0)) : lastCount;
+        if (obj2 != null) {
+            lastCount = Math.max(countFunction.applyAsLong(obj2), 0);
+        }
+        return lastCount;
     }
 
     /**

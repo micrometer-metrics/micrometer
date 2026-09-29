@@ -219,7 +219,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
      * @since 1.2.0
      */
     protected String indexName() {
-        ZonedDateTime dt = ZonedDateTime.ofInstant(new Date(config().clock().wallTime()).toInstant(), ZoneOffset.UTC);
+        ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(config().clock().wallTime()), ZoneOffset.UTC);
         return config.index() + config.indexDateSeparator() + indexDateFormatter.format(dt);
     }
 

@@ -143,6 +143,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void start(ThreadFactory threadFactory) {
         super.start(threadFactory);
 

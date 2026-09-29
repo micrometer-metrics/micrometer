@@ -51,6 +51,7 @@ public enum InfluxApiVersion {
 
     V2 {
         @Override
+        @SuppressWarnings("JdkObsolete")
         String writeEndpoint(final InfluxConfig config) throws UnsupportedEncodingException {
             String bucket = URLEncoder.encode(config.bucket(), "UTF-8");
             String org = URLEncoder.encode(config.org(), "UTF-8");

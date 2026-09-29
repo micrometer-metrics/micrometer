@@ -45,6 +45,7 @@ public class PrometheusTimer extends AbstractTimer {
 
     private final TimeWindowMax max;
 
+    @SuppressWarnings("HidingField")
     private final @Nullable Histogram histogram;
 
     private final @Nullable ExemplarSampler exemplarSampler;

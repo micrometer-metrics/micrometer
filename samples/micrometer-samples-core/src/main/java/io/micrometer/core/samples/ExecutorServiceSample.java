@@ -29,6 +29,7 @@ import static java.util.Collections.emptyList;
 
 public class ExecutorServiceSample {
 
+    @SuppressWarnings("FutureReturnValueIgnored")
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         ScheduledExecutorService es = Executors.newSingleThreadScheduledExecutor();

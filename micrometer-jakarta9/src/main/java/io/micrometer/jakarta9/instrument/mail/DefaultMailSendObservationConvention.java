@@ -53,9 +53,9 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
 
     private static final KeyValue SMTP_MESSAGE_ID_UNKNOWN = SMTP_MESSAGE_ID.withValue(UNKNOWN);
 
-    private static final Map<RecipientType, KeyName> RECIPIENT_TYPE_KEY_NAME_MAP;
+    private static final IdentityHashMap<RecipientType, KeyName> RECIPIENT_TYPE_KEY_NAME_MAP;
     static {
-        Map<RecipientType, KeyName> map = new IdentityHashMap<>();
+        IdentityHashMap<RecipientType, KeyName> map = new IdentityHashMap<>();
         map.put(RecipientType.TO, SMTP_MESSAGE_TO);
         map.put(RecipientType.CC, SMTP_MESSAGE_CC);
         map.put(RecipientType.BCC, SMTP_MESSAGE_BCC);
@@ -66,9 +66,9 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
     // VisibleForTesting
     static final Set<RecipientType> RECIPIENT_TYPES = RECIPIENT_TYPE_KEY_NAME_MAP.keySet();
 
-    private static final Map<RecipientType, KeyValue> RECIPIENT_TYPE_UNKNOWN_MAP;
+    private static final IdentityHashMap<RecipientType, KeyValue> RECIPIENT_TYPE_UNKNOWN_MAP;
     static {
-        Map<RecipientType, KeyValue> map = new IdentityHashMap<>();
+        IdentityHashMap<RecipientType, KeyValue> map = new IdentityHashMap<>();
         for (Map.Entry<RecipientType, KeyName> entry : RECIPIENT_TYPE_KEY_NAME_MAP.entrySet()) {
             map.put(entry.getKey(), entry.getValue().withValue(UNKNOWN));
         }

@@ -40,6 +40,7 @@ public interface DropwizardConfig extends MeterRegistryConfig {
     }
 
     @Override
+    @SuppressWarnings("AmbiguousMethodReference")
     default Validated<?> validate() {
         return validate(this);
     }
@@ -50,6 +51,7 @@ public interface DropwizardConfig extends MeterRegistryConfig {
      * @return validation result
      * @since 1.5.0
      */
+    @SuppressWarnings("AmbiguousMethodReference")
     static Validated<?> validate(DropwizardConfig config) {
         return checkAll(config, check("step", DropwizardConfig::step));
     }
