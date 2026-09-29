@@ -45,7 +45,7 @@ management.metrics.export.stackdriver:
 
 For most environments, you need to create and configure credentials to push metrics to Stackdriver Monitoring.
 In most cases, you should create a service account with Stackdriver Monitoring permissions and configure a
-`GOOGLE_APPLICATION_CREDENTIALS` environmental variable to the path of the service account key file.
+`GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of the service account key file.
 The following example shows how to do so:
 
 [source]
@@ -70,7 +70,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=$HOME/$APP_NAME-key.json
 ----
 
 When running in managed environments (such as Google App Engine, Google Cloud Run, and Google Cloud Function),
-you need not configure this environmental variable. In those environments, a service account is
+you need not configure this environment variable. In those environments, a service account is
 automatically associated with the application instance. The underlying Stackdriver Monitoring client
 library can automatically detect and use those credentials.
 

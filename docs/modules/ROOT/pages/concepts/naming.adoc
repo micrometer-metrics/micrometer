@@ -90,4 +90,4 @@ https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.m
 
 Tag values must be non-null.
 
-WARNING: Beware of the potential for tag values coming from user-supplied sources to blow up the cardinality of a metric. You should always carefully normalize and add bounds to user-supplied input. Sometimes, the cause is sneaky. Consider the URI tag for recording HTTP requests on service endpoints. If we do not constrain 404's to a value like NOT_FOUND, the dimensionality of the metric would grow with each resource that cannot be found.
+WARNING: Beware of the potential for tag values coming from user-supplied sources to blow up the cardinality of a metric. You should always carefully normalize and add bounds to user-supplied input. Sometimes, the cause is sneaky. Consider the URI tag for recording HTTP requests on service endpoints. If we do not constrain 404s to a value like NOT_FOUND, the dimensionality of the metric would grow with each resource that cannot be found.
