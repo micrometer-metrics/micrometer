@@ -375,6 +375,7 @@ class ObservationThreadLocalAccessorTests {
         }
 
         @Override
+        @SuppressWarnings("TypeParameterUnusedInFormals")
         public <T> @Nullable T readValue(Map sourceContext, Object key) {
             return (T) sourceContext.get(key);
         }

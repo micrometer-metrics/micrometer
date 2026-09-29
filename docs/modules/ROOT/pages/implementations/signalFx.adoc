@@ -2,7 +2,7 @@
 :sectnums:
 :system: signalfx
 
-CAUTION: This module has been deprecated in favor of the xref:./otlp.adoc[OTLP Registry] because the https://github.com/signalfx/signalfx-java[SignalFX Java client library] that this module depends on has been deprecated.
+CAUTION: This module has been deprecated in favor of the xref:./otlp.adoc[OTLP Registry] because the https://github.com/signalfx/signalfx-java[SignalFx Java client library] that this module depends on has been deprecated.
 
 SignalFx is a dimensional monitoring system SaaS with a full UI that operates on a push model. It has a rich set of alert "`detectors`".
 
@@ -31,7 +31,7 @@ MeterRegistry registry = new SignalFxMeterRegistry(signalFxConfig, Clock.SYSTEM)
 
 There are two distinct sources of API keys in SignalFx.
 
-`SignalFxConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you  instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.signalfx` directly to the `SignalFxConfig`:
+`SignalFxConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.signalfx` directly to the `SignalFxConfig`:
 
 [source,yml]
 ----

@@ -130,7 +130,6 @@ jakarta-servletApi = { module = "jakarta.servlet:jakarta.servlet-api", version =
 javalin = { module = "io.javalin:javalin", version = "5.6.5" }
 javax-cacheApi = { module = "javax.cache:cache-api", version.ref = "javax-cache" }
 javax-inject = { module = "javax.inject:javax.inject", version.ref = "javax-inject" }
-javax-servletApi = { module = "javax.servlet:javax.servlet-api", version = "4.0.1" }
 jaxbApi = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb" }
 jcstressCore = { module = "org.openjdk.jcstress:jcstress-core", version = "0.16" }
 jetty12Server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty12" }
