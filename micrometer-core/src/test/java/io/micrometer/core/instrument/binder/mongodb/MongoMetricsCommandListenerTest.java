@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.notNullValue;
  * @author Christophe Bornet
  * @author Chris Bono
  */
+@SuppressWarnings("JavaUtilDate")
 class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry();

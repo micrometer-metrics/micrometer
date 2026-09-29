@@ -152,6 +152,7 @@ class DynatraceMeterRegistryTest {
     }
 
     @Test
+    @SuppressWarnings("FutureReturnValueIgnored")
     void shouldTrackPercentilesWhenDynatraceSummaryInstrumentsNotUsed() throws Throwable {
         DynatraceConfig dynatraceConfig = getNonSummaryInstrumentsConfig();
 

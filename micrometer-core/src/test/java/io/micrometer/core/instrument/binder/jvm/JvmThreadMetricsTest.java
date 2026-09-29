@@ -141,6 +141,7 @@ class JvmThreadMetricsTest {
             TimeUnit.SECONDS.sleep(seconds);
         }
         catch (InterruptedException ignored) {
+            // ignore interrupted sleep
         }
     }
 

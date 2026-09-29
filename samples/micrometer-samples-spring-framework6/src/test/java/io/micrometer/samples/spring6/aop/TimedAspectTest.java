@@ -49,6 +49,7 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
+@SuppressWarnings("TypeParameterUnusedInFormals")
 class TimedAspectTest {
 
     @Test
