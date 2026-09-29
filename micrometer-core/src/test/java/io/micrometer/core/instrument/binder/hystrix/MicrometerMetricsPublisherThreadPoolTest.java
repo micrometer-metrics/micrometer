@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("deprecation")
 class MicrometerMetricsPublisherThreadPoolTest {
 
     private static final String NAME_HYSTRIX_THREADPOOL = "hystrix.threadpool";

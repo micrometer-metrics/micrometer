@@ -105,6 +105,7 @@ class ObservationInstrumentingTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void should_instrument_thread_switching() throws ExecutionException, InterruptedException {
         // tag::thread_switching[]
         // This snippet shows an example of how to wrap in an observation code that would
@@ -132,6 +133,7 @@ class ObservationInstrumentingTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void should_instrument_reactor() {
         // tag::reactor[]
         // This snippet shows an example of how to wrap code that is using Reactor
@@ -204,6 +206,7 @@ class ObservationInstrumentingTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void should_instrument_reactor_with_by_using_context_propagation_and_reusing_the_same_thread() {
         ContextRegistry.getInstance().registerContextAccessor(testContextAccessor());
 
@@ -359,6 +362,7 @@ class ObservationInstrumentingTests {
             }
 
             @Override
+            @SuppressWarnings("unchecked")
             public void readValues(Map source, Predicate<Object> keyPredicate, Map<Object, Object> target) {
                 source.forEach((k, v) -> {
                     if (keyPredicate.test(k)) {
@@ -379,6 +383,7 @@ class ObservationInstrumentingTests {
             }
 
             @Override
+            @SuppressWarnings("unchecked")
             public Map writeValues(Map<Object, Object> valuesToWrite, Map target) {
                 target.putAll(valuesToWrite);
                 return target;

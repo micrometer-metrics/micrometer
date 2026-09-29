@@ -51,6 +51,7 @@ class JettyClientMetricsTest {
     protected HttpClient httpClient = new HttpClient();
 
     @BeforeEach
+    @SuppressWarnings("deprecation")
     void beforeEach() throws Exception {
         server.insertHandler(new HandlerWrapper() {
             @Override

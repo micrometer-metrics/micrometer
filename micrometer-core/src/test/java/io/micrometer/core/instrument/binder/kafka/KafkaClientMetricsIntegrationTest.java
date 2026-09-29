@@ -46,7 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
 @Tag("docker")
-@SuppressWarnings("FutureReturnValueIgnored")
+@SuppressWarnings({ "FutureReturnValueIgnored", "deprecation" })
 class KafkaClientMetricsIntegrationTest {
 
     @Container

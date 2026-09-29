@@ -177,11 +177,13 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
                 return createdBy != null && createdBy.contains("IntelliJ");
             }
             catch (Exception ex) {
+                // Ignore manifest parsing errors
             }
         }
         return false;
     }
 
+    @SuppressWarnings("deprecation")
     private static List<URL> extractUrlsFromManifestClassPath(URL booterJar) {
         List<URL> urls = new ArrayList<>();
         try {
@@ -308,6 +310,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
                     }
                 }
                 catch (URISyntaxException ex) {
+                    // Ignore URI syntax errors
                 }
             }
             return false;

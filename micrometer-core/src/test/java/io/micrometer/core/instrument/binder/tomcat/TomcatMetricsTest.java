@@ -238,10 +238,10 @@ class TomcatMetricsTest {
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
                 HttpPost post = new HttpPost("http://localhost:" + this.port + "/0");
                 post.setEntity(new StringEntity("you there?"));
-                CloseableHttpResponse response1 = httpClient.execute(post);
-
-                CloseableHttpResponse response2 = httpClient
-                    .execute(new HttpGet("http://localhost:" + this.port + "/1"));
+                try (CloseableHttpResponse ignored = httpClient.execute(post);
+                        CloseableHttpResponse ignored2 = httpClient
+                            .execute(new HttpGet("http://localhost:" + this.port + "/1"))) {
+                }
 
                 FunctionTimer servlet0 = registry.get("tomcat.servlet.request").tag("name", "servlet0").functionTimer();
                 FunctionTimer servlet1 = registry.get("tomcat.servlet.request").tag("name", "servlet1").functionTimer();
@@ -299,10 +299,10 @@ class TomcatMetricsTest {
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
                 HttpPost post = new HttpPost("http://localhost:" + this.port + "/0");
                 post.setEntity(new StringEntity("you there?"));
-                CloseableHttpResponse response1 = httpClient.execute(post);
-
-                CloseableHttpResponse response2 = httpClient
-                    .execute(new HttpGet("http://localhost:" + this.port + "/1"));
+                try (CloseableHttpResponse ignored = httpClient.execute(post);
+                        CloseableHttpResponse ignored2 = httpClient
+                            .execute(new HttpGet("http://localhost:" + this.port + "/1"))) {
+                }
 
                 FunctionTimer servlet0 = registry.get("tomcat.servlet.request").tag("name", "servlet0").functionTimer();
                 FunctionTimer servlet1 = registry.get("tomcat.servlet.request").tag("name", "servlet1").functionTimer();

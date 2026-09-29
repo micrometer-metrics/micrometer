@@ -613,6 +613,7 @@ class GrpcObservationTest {
         }
 
         @Test
+        @SuppressWarnings("unchecked")
         void cancel() {
             SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(channel);
             SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();

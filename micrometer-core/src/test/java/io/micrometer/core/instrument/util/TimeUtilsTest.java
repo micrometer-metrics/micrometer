@@ -36,6 +36,7 @@ class TimeUtilsTest {
     }
 
     @Test
+    @SuppressWarnings("CanonicalDuration")
     void simpleParseHandlesSpacesCommasAndUnderscores() {
         assertThat(TimeUtils.simpleParse("7,000 ms")).isEqualByComparingTo(Duration.ofMillis(7000));
         assertThat(TimeUtils.simpleParse("7_000ms ")).isEqualByComparingTo(Duration.ofMillis(7000));
@@ -47,6 +48,7 @@ class TimeUtilsTest {
     }
 
     @Test
+    @SuppressWarnings("CanonicalDuration")
     void formatDuration() {
         assertThat(TimeUtils.format(Duration.ofSeconds(10))).isEqualTo("10s");
         assertThat(TimeUtils.format(Duration.ofSeconds(90))).isEqualTo("1m 30s");

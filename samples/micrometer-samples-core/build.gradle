@@ -30,3 +30,8 @@ configurations.all {
     exclude group: 'com.google.guava', module: 'listenablefuture'
     exclude group: 'io.grpc', module: 'grpc-netty-shaded'
 }
+
+// micrometer-registry-wavefront is deprecated
+tasks.named('compileJava') {
+    options.compilerArgs -= '-Xlint:deprecation'
+}

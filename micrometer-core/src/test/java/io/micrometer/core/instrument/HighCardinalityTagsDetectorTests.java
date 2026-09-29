@@ -42,6 +42,7 @@ class HighCardinalityTagsDetectorTests {
     private HighCardinalityTagsDetector highCardinalityTagsDetector;
 
     @BeforeEach
+    @SuppressWarnings("deprecation")
     void setUp() {
         this.testMeterNameConsumer = new TestMeterNameConsumer();
         this.registry = new SimpleMeterRegistry();
@@ -92,6 +93,7 @@ class HighCardinalityTagsDetectorTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void shouldBeManagedThroughMeterRegistry() {
         for (int i = 0; i < 4; i++) {
             Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();

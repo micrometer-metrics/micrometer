@@ -84,6 +84,7 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         bindVirtualThreadSchedulerMXBean(registry);
     }
 
+    @SuppressWarnings("unchecked")
     private void bindVirtualThreadSchedulerMXBean(MeterRegistry registry) {
         try {
             Class clazz = Class.forName("jdk.management.VirtualThreadSchedulerMXBean");

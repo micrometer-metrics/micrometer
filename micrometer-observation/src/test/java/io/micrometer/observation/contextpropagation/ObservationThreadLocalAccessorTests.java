@@ -380,12 +380,13 @@ class ObservationThreadLocalAccessorTests {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public void readValues(Map sourceContext, Predicate<Object> keyPredicate, Map<Object, Object> readValues) {
             readValues.putAll(sourceContext);
         }
 
         @Override
-        @SuppressWarnings("TypeParameterUnusedInFormals")
+        @SuppressWarnings({ "TypeParameterUnusedInFormals", "unchecked" })
         public <T> @Nullable T readValue(Map sourceContext, Object key) {
             return (T) sourceContext.get(key);
         }
@@ -396,6 +397,7 @@ class ObservationThreadLocalAccessorTests {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public Map writeValues(Map<Object, Object> valuesToWrite, Map targetContext) {
             targetContext.putAll(valuesToWrite);
             return targetContext;

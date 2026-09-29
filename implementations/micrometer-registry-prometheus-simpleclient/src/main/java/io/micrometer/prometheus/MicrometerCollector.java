@@ -46,6 +46,7 @@ class MicrometerCollector extends Collector implements Collector.Describable {
 
     // take name to avoid calling NamingConvention#name after the callsite has already
     // done it
+    @SuppressWarnings("deprecation")
     MicrometerCollector(String name, Meter.Id id, NamingConvention convention, PrometheusConfig config) {
         this.id = id;
         this.conventionName = name;

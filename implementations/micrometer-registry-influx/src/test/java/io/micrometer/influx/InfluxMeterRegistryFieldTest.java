@@ -58,6 +58,7 @@ class InfluxMeterRegistryFieldTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void toStringWithSwedishLocale() {
         Locale.setDefault(new Locale("sv", "SE"));
 

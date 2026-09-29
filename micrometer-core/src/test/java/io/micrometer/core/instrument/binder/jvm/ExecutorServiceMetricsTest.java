@@ -371,6 +371,7 @@ class ExecutorServiceMetricsTest {
         registry.get("executor.completed").tag("name", executorServiceName).functionCounter();
     }
 
+    @SuppressWarnings("deprecation")
     private boolean isJava16OrLater() {
         return JRE.currentVersion().compareTo(JRE.JAVA_16) >= 0;
     }

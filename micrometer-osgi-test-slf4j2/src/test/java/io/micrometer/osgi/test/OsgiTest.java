@@ -36,6 +36,7 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith({ ServiceExtension.class, BundleContextExtension.class })
+@SuppressWarnings("deprecation")
 class OsgiTest {
 
     private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -52,6 +53,7 @@ class OsgiTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testPrometheusMeterRegistryResolves() {
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         testMetrics(registry);

@@ -374,6 +374,7 @@ class ObservationTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void observe() {
         String result;
         // with supplier
@@ -391,6 +392,7 @@ class ObservationTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void observeWithFunction() {
         CustomContext context = new CustomContext();
         AtomicReference<CustomContext> contextHolder = new AtomicReference<>();

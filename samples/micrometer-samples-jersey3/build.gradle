@@ -17,3 +17,7 @@ dependencies {
     testImplementation libs.assertj
     testImplementation libs.awaitility
 }
+
+tasks.named('compileJava') {
+    options.compilerArgs -= '-Xlint:deprecation'
+}
