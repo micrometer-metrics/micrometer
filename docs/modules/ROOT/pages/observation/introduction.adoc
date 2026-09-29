@@ -12,7 +12,7 @@ For any Observation to happen, you need to register `ObservationHandler` objects
 
 Whenever any of these methods is called, an `ObservationHandler` method (such as `onStart(T extends Observation.Context ctx)`, `onStop(T extends Observation.Context ctx)`, and so on) is called. To pass state between the handler methods, you can use the `Observation.Context`.
 
-This is how the Observation state diagram looks like:
+This is what the Observation state diagram looks like:
 
 [source]
 ----
@@ -21,7 +21,7 @@ This is how the Observation state diagram looks like:
 Created ----------> Started ----------> Stopped
 ----
 
-This is how the Observation Scope state diagram looks like:
+This is what the Observation Scope state diagram looks like:
 
 [source]
 ----
@@ -48,7 +48,7 @@ TIP: Calling `observe(() -> ...)` leads to starting the Observation, putting it 
 [[micrometer-observation-building-blocks]]
 == Building Blocks
 
-In this section we will describe a high overview of Micrometer Observation components. You can read more about those in xref:./components.adoc[this part of the documentation].
+In this section we will describe a high-level overview of Micrometer Observation components. You can read more about those in xref:./components.adoc[this part of the documentation].
 
 [[micrometer-observation-glossary]]
 === Glossary
@@ -58,7 +58,7 @@ In this section we will describe a high overview of Micrometer Observation compo
 - `ObservationFilter` - mutates the `Context` before the `Observation` gets stopped (e.g. add a high cardinality key-value with the cloud server region)
 - `ObservationPredicate` - condition to disable creation of an `Observation` (e.g. don't create observations with given key-value)
 - `Context` (actually `Observation.Context`) - a mutable map attached to an `Observation`, passed between handlers (that way you can pass state without doing any thread locals)
-- `ObservationConvention` - mean to separate Observation lifecycle (starting, stopping, opening scopes) from adding metadata (such as observation name, key-value pairs). That way the naming of observations and metadata handling becomes a configuration problem (e.g. adding key-values does not require changing instrumentation code, but changing the convention)
+- `ObservationConvention` - a means to separate Observation lifecycle (starting, stopping, opening scopes) from adding metadata (such as observation name, key-value pairs). That way the naming of observations and metadata handling becomes a configuration problem (e.g. adding key-values does not require changing instrumentation code, but changing the convention)
 
 [[micrometer-observation-usage]]
 === Usage Flow

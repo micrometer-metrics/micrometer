@@ -5,7 +5,7 @@ IMPORTANT: This section of the documentation is targeted to users who want to ad
 
 In this section, we see some common examples of reusing existing Micrometer and Micrometer Tracing handlers and context types to do instrumentation.
 
-IMPORTANT: Before you decide to instrument a project yourself, double-check whether that it has not already been instrumented!
+IMPORTANT: Before you decide to instrument a project yourself, double-check that it has not already been instrumented!
 
 To better convey how you can do instrumentation, we need to distinguish two concepts:
 
@@ -115,7 +115,7 @@ In this section you can find how to instrument libraries that do HTTP communicat
 ** Set the <2> carrier on the <1> `RequestReplyReceiverContext`
 * Create an <4> `Observation`, optionally using the <5> `ObservationConvention` with the receiver context
 ** On <4> `Observation` start, propagation will happen (e.g. carrier will be enriched with proper headers) via an <6> `ObservationHandler`
-* Wrap the <6> code to instrument (e.g. processing of an HTTP request) in scope (e.g. through the `observe` or `scoped` method)
+* Wrap the <7> code to instrument (e.g. processing of an HTTP request) in scope (e.g. through the `observe` or `scoped` method)
 
 [[instrumentation_of_http_communication_example]]
 === Instrumentation of HTTP Communication Example
@@ -247,7 +247,7 @@ In this section you can find how to instrument libraries that do fire-and-forget
 * Create a <1> `ReceiverContext` that wraps a <2> carrier (e.g. `AmqpMessage`)
 ** In its constructor explain how to retrieve the header values (e.g. `(carrier, key) -> carrier.header(key)`)
 ** Set the <2> carrier on the <1> `ReceiverContext`
-* Create an <4> `Observation`, optionally using the <6> `ObservationConvention` with the receiver context
+* Create an <4> `Observation`, optionally using the <5> `ObservationConvention` with the receiver context
 ** On <4> `Observation` start, propagation will happen (e.g. carrier will be enriched with proper headers) via an <6> `ObservationHandler`
 * Wrap the <7> code to instrument (e.g. processing of an AMQP message) in scope (e.g. through the `observe` or `scoped` method)
 ** For some libraries (e.g. RabbitMQ) you might not have a handle on user's code, and you may require the user to allow starting a consumer side Observation and opening its scope by the framework (putting values in thread local) with the requirement of manually both closing the scope and stopping the Observation later by the user in their code!

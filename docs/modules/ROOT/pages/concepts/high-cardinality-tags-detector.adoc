@@ -79,7 +79,7 @@ This approach can be useful for:
 
 === Scheduled Monitoring
 
-For continuous monitoring in production, you don't need to create a scheduled job that periodically calls the detector. The detector has a built in scheduler, but you don't need to manage that one either (by calling `start()` and `close()`). Instead you can configure the detector through the `MeterRegistry` so that the detector is automatically started and managed by the registry for you. See the various configuration options with the registry above.
+For continuous monitoring in production, you don't need to create a scheduled job that periodically calls the detector. The detector has a built-in scheduler, but you don't need to manage that one either (by calling `start()` and `close()`). Instead you can configure the detector through the `MeterRegistry` so that the detector is automatically started and managed by the registry for you. See the various configuration options with the registry above.
 
 === Custom Consumer
 
@@ -126,7 +126,7 @@ Instead of using "raw" values, normalize them to reduce cardinality:
 - Use categories: `outcome=CLIENT_ERROR` (or `status=4xx`) instead of `status=404`
 - Limit unknown/unexpected values to known values: `status=OTHER`
 
-NOTE: `age` and `status` are not necessarily high cardinality data since they are usually fall into a finite set of values (except if input is not validated and `age=12345` and `status=54321` are possible to send to the app). The normalization techniques to reduce cardinality are still valid though.
+NOTE: `age` and `status` are not necessarily high cardinality data since they usually fall into a finite set of values (except if input is not validated and `age=12345` and `status=54321` are possible to send to the app). The normalization techniques to reduce cardinality are still valid though.
 
 === Use High Cardinality data with the Observation API
 

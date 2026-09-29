@@ -58,8 +58,10 @@ release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SN
 allprojects {
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
+}
 
-    afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
+afterEvaluate {
+    println "Building $name with version $version"
 }
 
 subprojects {
@@ -84,7 +86,9 @@ subprojects {
                 excludedPaths = ".*/generated/.*"
 
                 disable(
-                    "StringConcatToTextBlock" // Requires JDK 15+
+                    "StringConcatToTextBlock", // Requires JDK 15+
+                    "MissingSummary",
+                    "InlineMeSuggester"
                 )
 
                 error(
@@ -292,6 +296,8 @@ subprojects {
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
             exclude '**/*.json' // comments not supported
+            exclude '**/META-INF/services/**'
+            exclude '**/META-INF/*.providers'
         }
 
         // Publish resolved versions.
@@ -380,6 +386,7 @@ subprojects {
     // This hack makes the hashCode return constant 1.
     plugins.withId('io.freefair.aspectj.post-compile-weaving') {
         compileJava.ajc.options.forkOptions.jvmArgs += ['-XX:+UnlockExperimentalVMOptions', '-XX:hashCode=2']
+        compileJava.ajc.options.compilerArgs += ['-Xlint:ignore']
     }
 
     // Do not publish some modules

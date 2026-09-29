@@ -83,8 +83,6 @@ import java.util.function.Predicate;
 @Aspect
 public class ObservedAspect {
 
-    private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
-
     private final ObservationRegistry registry;
 
     private final @Nullable ObservationConvention<ObservedAspectContext> observationConvention;
@@ -92,6 +90,10 @@ public class ObservedAspect {
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
     private @Nullable ObservationKeyValueAnnotationHandler observationKeyValueAnnotationHandler;
+
+    private static boolean dontSkipAnything(ProceedingJoinPoint pjp) {
+        return false;
+    }
 
     /**
      * Create an {@code ObservedAspect} with {@link Observations#getGlobalRegistry()}.
@@ -101,16 +103,16 @@ public class ObservedAspect {
      * @since 1.14.0
      */
     public ObservedAspect() {
-        this(Observations.getGlobalRegistry(), null, DONT_SKIP_ANYTHING);
+        this(Observations.getGlobalRegistry(), null, ObservedAspect::dontSkipAnything);
     }
 
     public ObservedAspect(ObservationRegistry registry) {
-        this(registry, null, DONT_SKIP_ANYTHING);
+        this(registry, null, ObservedAspect::dontSkipAnything);
     }
 
     public ObservedAspect(ObservationRegistry registry,
             ObservationConvention<ObservedAspectContext> observationConvention) {
-        this(registry, observationConvention, DONT_SKIP_ANYTHING);
+        this(registry, observationConvention, ObservedAspect::dontSkipAnything);
     }
 
     public ObservedAspect(ObservationRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
