@@ -32,7 +32,7 @@ class HttpSenderTests {
     void basicAuthenticationPreservesPassword(String password) throws Throwable {
         HttpSender sender = request -> {
             String authorization = request.getRequestHeaders().get("Authorization");
-            assertThat(authorization).startsWith("Basic ");
+            assertThat(authorization).isNotNull().startsWith("Basic ");
             String credentials = new String(Base64.getDecoder().decode(authorization.substring(6)),
                     StandardCharsets.UTF_8);
             assertThat(credentials).isEqualTo("user:" + password);
