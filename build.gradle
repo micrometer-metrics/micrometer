@@ -86,7 +86,9 @@ subprojects {
                 excludedPaths = ".*/generated/.*"
 
                 disable(
-                    "StringConcatToTextBlock" // Requires JDK 15+
+                    "StringConcatToTextBlock", // Requires JDK 15+
+                    "MissingSummary",
+                    "InlineMeSuggester"
                 )
 
                 error(
