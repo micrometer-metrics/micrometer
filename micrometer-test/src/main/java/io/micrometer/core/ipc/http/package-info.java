@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /**
  * Support for testing {@link io.micrometer.core.ipc.http.HttpSender HttpSender classes}.
  */

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /**
  * Deprecated since 1.16.0 due to Wavefront's End of Life Announcement.
  */

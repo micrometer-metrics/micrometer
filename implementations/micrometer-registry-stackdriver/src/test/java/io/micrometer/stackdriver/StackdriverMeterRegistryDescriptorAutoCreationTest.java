@@ -1,3 +1,4 @@
+// spotless-license-check:ignore
 /*
  * Copyright 2025 the original author or authors.
  *
