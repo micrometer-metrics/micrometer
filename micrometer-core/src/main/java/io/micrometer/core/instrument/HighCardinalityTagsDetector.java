@@ -77,7 +77,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private final Duration delay;
 
-    private Consumer<HighCardinalityDetections> detectionsConsumer;
+    private final Consumer<HighCardinalityDetections> detectionsConsumer;
 
     private final ScheduledExecutorService scheduledExecutorService;
 
@@ -95,7 +95,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @param registry The registry to use to check the Meters in it
      */
     public HighCardinalityTagsDetector(MeterRegistry registry) {
-        this(registry, calculateThreshold(), DEFAULT_DELAY);
+        this(builder(registry));
     }
 
     /**
@@ -107,7 +107,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * the next
      */
     public HighCardinalityTagsDetector(MeterRegistry registry, long threshold, Duration delay) {
-        this(registry, threshold, delay, null);
+        this(builder(registry).threshold(threshold).delay(delay));
     }
 
     /**
@@ -124,13 +124,19 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     @Deprecated
     public HighCardinalityTagsDetector(MeterRegistry registry, long threshold, Duration delay,
             @Nullable Consumer<String> meterNameConsumer) {
-        this.registry = registry;
-        this.threshold = threshold;
-        this.delay = delay;
-        if (meterNameConsumer != null) {
-            this.detectionsConsumer = (detections) -> detections.first()
+        this(builder(registry).threshold(threshold)
+            .delay(delay)
+            .detectionsConsumer(meterNameConsumer != null ? (detections) -> detections.first()
                 .map(HighCardinalityMeterInfo::getName)
-                .ifPresent(meterNameConsumer);
+                .ifPresent(meterNameConsumer) : null));
+    }
+
+    HighCardinalityTagsDetector(Builder builder) {
+        this.registry = builder.registry;
+        this.threshold = builder.threshold;
+        this.delay = builder.delay;
+        if (builder.detectionsConsumer != null) {
+            this.detectionsConsumer = builder.detectionsConsumer;
         }
         else {
             this.detectionsConsumer = (detections) -> detections.first().ifPresent(this::logWarning);
@@ -290,7 +296,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
          * @return this builder
          * @since 1.18.0
          */
-        public Builder detectionsConsumer(Consumer<HighCardinalityDetections> detectionsConsumer) {
+        public Builder detectionsConsumer(@Nullable Consumer<HighCardinalityDetections> detectionsConsumer) {
             this.detectionsConsumer = detectionsConsumer;
             return this;
         }
@@ -314,12 +320,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
          * @return {@code HighCardinalityTagsDetector}
          */
         public HighCardinalityTagsDetector build() {
-            HighCardinalityTagsDetector highCardinalityTagsDetector = new HighCardinalityTagsDetector(this.registry,
-                    this.threshold, this.delay);
-            if (this.detectionsConsumer != null) {
-                highCardinalityTagsDetector.detectionsConsumer = this.detectionsConsumer;
-            }
-            return highCardinalityTagsDetector;
+            return new HighCardinalityTagsDetector(this);
         }
 
     }
@@ -337,7 +338,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
          * Create a {@code HighCardinalityDetections} instance.
          * @param meters meters exceeding threshold
          */
-        public HighCardinalityDetections(Collection<HighCardinalityMeterInfo> meters) {
+        HighCardinalityDetections(Collection<HighCardinalityMeterInfo> meters) {
             this.meters = meters != null ? Collections.unmodifiableList(new ArrayList<>(meters))
                     : Collections.emptyList();
         }
