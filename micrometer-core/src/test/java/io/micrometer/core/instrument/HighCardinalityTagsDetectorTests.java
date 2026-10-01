@@ -70,11 +70,11 @@ class HighCardinalityTagsDetectorTests {
         highCardinalityTagsDetector.start();
 
         await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(testFirstMeterInfoConsumer.getName()));
+        assertThat(highCardinalityTagsDetector.findDetections()).isNotEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections().first()).isNotEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections().highest()).isNotEmpty();
         assertThat(highCardinalityTagsDetector.findFirst()).isNotEmpty();
         assertThat(highCardinalityTagsDetector.findFirstHighCardinalityMeterInfo()).isNotEmpty();
-        assertThat(highCardinalityTagsDetector.findHighestHighCardinalityMeterInfo()).isNotEmpty();
-        assertThat(highCardinalityTagsDetector.findAllHighCardinalityMeterInfo()).isNotEmpty();
-        assertThat(highCardinalityTagsDetector.findDetections()).isNotEmpty();
     }
 
     @Test
@@ -83,11 +83,11 @@ class HighCardinalityTagsDetectorTests {
             Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
         }
 
+        assertThat(highCardinalityTagsDetector.findDetections()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections().first()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections().highest()).isEmpty();
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
         assertThat(highCardinalityTagsDetector.findFirstHighCardinalityMeterInfo()).isEmpty();
-        assertThat(highCardinalityTagsDetector.findHighestHighCardinalityMeterInfo()).isEmpty();
-        assertThat(highCardinalityTagsDetector.findAllHighCardinalityMeterInfo()).isEmpty();
-        assertThat(highCardinalityTagsDetector.findDetections()).isEmpty();
     }
 
     @Test
@@ -96,11 +96,11 @@ class HighCardinalityTagsDetectorTests {
             Counter.builder("test.counter").tag("index", "0").register(registry).increment();
         }
 
+        assertThat(highCardinalityTagsDetector.findDetections()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections().first()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections().highest()).isEmpty();
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
         assertThat(highCardinalityTagsDetector.findFirstHighCardinalityMeterInfo()).isEmpty();
-        assertThat(highCardinalityTagsDetector.findHighestHighCardinalityMeterInfo()).isEmpty();
-        assertThat(highCardinalityTagsDetector.findAllHighCardinalityMeterInfo()).isEmpty();
-        assertThat(highCardinalityTagsDetector.findDetections()).isEmpty();
     }
 
     @Test
@@ -109,11 +109,11 @@ class HighCardinalityTagsDetectorTests {
             Counter.builder("test.counter").register(registry).increment();
         }
 
+        assertThat(highCardinalityTagsDetector.findDetections()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections().first()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections().highest()).isEmpty();
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
         assertThat(highCardinalityTagsDetector.findFirstHighCardinalityMeterInfo()).isEmpty();
-        assertThat(highCardinalityTagsDetector.findHighestHighCardinalityMeterInfo()).isEmpty();
-        assertThat(highCardinalityTagsDetector.findAllHighCardinalityMeterInfo()).isEmpty();
-        assertThat(highCardinalityTagsDetector.findDetections()).isEmpty();
     }
 
     @Test
@@ -126,7 +126,7 @@ class HighCardinalityTagsDetectorTests {
             .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
                 .threshold(3)
                 .delay(Duration.ofMinutes(1))
-                .detectionsConsumer(detections -> detections.findFirst().ifPresent(testFirstMeterInfoConsumer))
+                .detectionsConsumer(detections -> detections.first().ifPresent(testFirstMeterInfoConsumer))
                 .build());
 
         await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(testFirstMeterInfoConsumer.getName()));
@@ -183,7 +183,7 @@ class HighCardinalityTagsDetectorTests {
                 .threshold(3)
                 // Typical usage for gh-7649: get the single meter with highest
                 // cardinality
-                .detectionsConsumer(detections -> detections.findHighest().ifPresent(highestOffender::set))
+                .detectionsConsumer(detections -> detections.highest().ifPresent(highestOffender::set))
                 .build());
 
         await().atMost(Duration.ofSeconds(1)).untilAsserted(() -> assertThat(highestOffender.get()).isNotNull());
@@ -203,7 +203,7 @@ class HighCardinalityTagsDetectorTests {
             .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
                 .threshold(3)
                 // Typical usage: get the first detection
-                .detectionsConsumer(detections -> detections.findFirst().ifPresent(firstDetected::set))
+                .detectionsConsumer(detections -> detections.first().ifPresent(firstDetected::set))
                 .build());
 
         await().atMost(Duration.ofSeconds(1)).untilAsserted(() -> assertThat(firstDetected.get()).isNotNull());
@@ -247,14 +247,18 @@ class HighCardinalityTagsDetectorTests {
             List<String> names = detections.stream().map(HighCardinalityMeterInfo::getName).toList();
             assertThat(names).containsExactlyInAnyOrder("http.requests", "db.calls");
 
-            // Direct query methods
-            assertThat(detector.findHighestHighCardinalityMeterInfo()).isNotEmpty().get().satisfies(info -> {
+            // Accessing highest and first directly on HighCardinalityDetections
+            assertThat(detections.highest()).isNotEmpty().get().satisfies(info -> {
                 assertThat(info.getName()).isEqualTo("http.requests");
                 assertThat(info.getCount()).isEqualTo(15);
             });
 
+            assertThat(detections.first()).isNotEmpty();
+            assertThat(detections.meters()).hasSize(2);
+            assertThat(detections.getMeters()).hasSize(2);
+
+            // Deprecated compatibility methods on HighCardinalityTagsDetector
             assertThat(detector.findFirstHighCardinalityMeterInfo()).isNotEmpty();
-            assertThat(detector.findAllHighCardinalityMeterInfo()).hasSize(2);
             assertThat(detector.findFirst()).contains("http.requests");
         }
     }

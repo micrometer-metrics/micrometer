@@ -49,9 +49,8 @@ import java.util.stream.Stream;
  * tags. You can use this class in two ways:
  *
  * <ul>
- * <li>Call {@code findDetections}, {@code findHighestHighCardinalityMeterInfo},
- * {@code findFirstHighCardinalityMeterInfo}, or {@code findAllHighCardinalityMeterInfo}
- * and check if you get any results, if so, you probably have high cardinality tags.</li>
+ * <li>Call {@code findDetections} and check if you get any results, if so, you probably
+ * have high cardinality tags.</li>
  * <li>Call start which will start a scheduled job that will do the check for you.</li>
  * </ul>
  *
@@ -129,12 +128,12 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         this.threshold = threshold;
         this.delay = delay;
         if (meterNameConsumer != null) {
-            this.detectionsConsumer = (detections) -> detections.findFirst()
+            this.detectionsConsumer = (detections) -> detections.first()
                 .map(HighCardinalityMeterInfo::getName)
                 .ifPresent(meterNameConsumer);
         }
         else {
-            this.detectionsConsumer = (detections) -> detections.findFirst().ifPresent(this::logWarning);
+            this.detectionsConsumer = (detections) -> detections.first().ifPresent(this::logWarning);
         }
         this.scheduledExecutorService = Executors
             .newSingleThreadScheduledExecutor(new NamedThreadFactory("high-cardinality-tags-detector"));
@@ -179,11 +178,12 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * Finds the name of the first Meter that potentially has high cardinality tags.
      * @return the name of the first Meter that potentially has high cardinality tags, an
      * empty Optional if none found.
-     * @deprecated since 1.18.0, use {@link #findFirstHighCardinalityMeterInfo()} instead.
+     * @deprecated since 1.18.0, use {@link #findDetections()} and
+     * {@link HighCardinalityDetections#first()} instead.
      */
     @Deprecated
     public Optional<String> findFirst() {
-        return findFirstHighCardinalityMeterInfo().map(HighCardinalityMeterInfo::getName);
+        return findDetections().first().map(HighCardinalityMeterInfo::getName);
     }
 
     /**
@@ -191,32 +191,13 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * high cardinality tags.
      * @return the {@code HighCardinalityMeterInfo} of the first Meter that potentially
      * has high cardinality tags, or an empty Optional if none found.
+     * @deprecated since 1.18.0, use {@link #findDetections()} and
+     * {@link HighCardinalityDetections#first()} instead.
      * @since 1.16.0
      */
+    @Deprecated
     public Optional<HighCardinalityMeterInfo> findFirstHighCardinalityMeterInfo() {
-        return findDetections().findFirst();
-    }
-
-    /**
-     * Finds the {@code HighCardinalityMeterInfo} of the Meter that has the highest
-     * cardinality among all Meters that potentially have high cardinality tags.
-     * @return the {@code HighCardinalityMeterInfo} of the Meter with highest cardinality,
-     * or an empty Optional if none found.
-     * @since 1.18.0
-     */
-    public Optional<HighCardinalityMeterInfo> findHighestHighCardinalityMeterInfo() {
-        return findDetections().findHighest();
-    }
-
-    /**
-     * Finds all the {@code HighCardinalityMeterInfo} of the Meters that potentially have
-     * high cardinality tags.
-     * @return all the {@code HighCardinalityMeterInfo} of the Meters that potentially
-     * have high cardinality tags, or an empty Collection if none found.
-     * @since 1.18.0
-     */
-    public Collection<HighCardinalityMeterInfo> findAllHighCardinalityMeterInfo() {
-        return findDetections().getMeters();
+        return findDetections().first();
     }
 
     /**
@@ -325,7 +306,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         @Deprecated
         public Builder highCardinalityMeterInfoConsumer(
                 Consumer<HighCardinalityMeterInfo> highCardinalityMeterInfoConsumer) {
-            return detectionsConsumer(detections -> detections.findFirst().ifPresent(highCardinalityMeterInfoConsumer));
+            return detectionsConsumer(detections -> detections.first().ifPresent(highCardinalityMeterInfoConsumer));
         }
 
         /**
@@ -365,6 +346,14 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
          * Return all meters exceeding the threshold.
          * @return all meters exceeding threshold
          */
+        public Collection<HighCardinalityMeterInfo> meters() {
+            return this.meters;
+        }
+
+        /**
+         * Return all meters exceeding the threshold.
+         * @return all meters exceeding threshold
+         */
         public Collection<HighCardinalityMeterInfo> getMeters() {
             return this.meters;
         }
@@ -373,7 +362,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
          * Return the first meter detected to exceed the threshold.
          * @return first meter detected, or empty Optional if none
          */
-        public Optional<HighCardinalityMeterInfo> findFirst() {
+        public Optional<HighCardinalityMeterInfo> first() {
             return this.meters.stream().findFirst();
         }
 
@@ -382,7 +371,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
          * threshold.
          * @return meter with highest cardinality, or empty Optional if none
          */
-        public Optional<HighCardinalityMeterInfo> findHighest() {
+        public Optional<HighCardinalityMeterInfo> highest() {
             return this.meters.stream().max(Comparator.comparingLong(HighCardinalityMeterInfo::getCount));
         }
 

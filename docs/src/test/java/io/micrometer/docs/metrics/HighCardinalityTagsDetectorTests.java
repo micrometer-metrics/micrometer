@@ -16,6 +16,7 @@
 package io.micrometer.docs.metrics;
 
 import io.micrometer.core.instrument.HighCardinalityTagsDetector;
+import io.micrometer.core.instrument.HighCardinalityTagsDetector.HighCardinalityDetections;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,12 +80,13 @@ class HighCardinalityTagsDetectorTests {
                 registry.counter("requests", "uid", String.valueOf(i)).increment();
             }
 
-            assertThat(detector.findDetections()).isNotEmpty().hasSize(1);
-            assertThat(detector.findFirstHighCardinalityMeterInfo()).isNotEmpty().get().satisfies(info -> {
+            HighCardinalityDetections detections = detector.findDetections();
+            assertThat(detections).isNotEmpty().hasSize(1);
+            assertThat(detections.first()).isNotEmpty().get().satisfies(info -> {
                 assertThat(info.getName()).isEqualTo("requests");
                 assertThat(info.getCount()).isEqualTo(15);
             });
-            assertThat(detector.findHighestHighCardinalityMeterInfo()).isNotEmpty().get().satisfies(info -> {
+            assertThat(detections.highest()).isNotEmpty().get().satisfies(info -> {
                 assertThat(info.getName()).isEqualTo("requests");
                 assertThat(info.getCount()).isEqualTo(15);
             });
@@ -103,7 +105,7 @@ class HighCardinalityTagsDetectorTests {
         // tag::custom_consumer_config[]
         registry.config().withHighCardinalityTagsDetector(registry ->
             HighCardinalityTagsDetector.builder(registry).threshold(10)
-                .detectionsConsumer(detections -> detections.findFirst().ifPresent(this::recordHighCardinalityEvent))
+                .detectionsConsumer(detections -> detections.first().ifPresent(this::recordHighCardinalityEvent))
                 .build()
         );
         // end::custom_consumer_config[]
