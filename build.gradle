@@ -10,7 +10,6 @@ buildscript {
 
     dependencies {
         classpath libs.plugin.errorprone
-        classpath libs.plugin.license
         classpath libs.plugin.nebulaRelease
         classpath libs.plugin.nebulaPublishing
         classpath libs.plugin.nebulaProject
@@ -154,9 +153,9 @@ subprojects {
                 testRuntimeOnly libs.junitPlatformLauncher
             }
         }
-        apply plugin: 'com.github.hierynomus.license'
         apply plugin: 'checkstyle'
         apply plugin: 'io.spring.nohttp'
+        apply plugin: 'com.diffplug.spotless'
 
         java {
             // It is more idiomatic to define different features for different sets of optional
@@ -182,6 +181,18 @@ subprojects {
             if (javaLanguageVersion.canCompileOrRun(21)) {
                 errorprone(libs.errorprone)
                 errorprone(libs.nullAway)
+            }
+        }
+
+        spotless {
+            java {
+                toggleOffOn()
+            }
+            format 'javaLicenseHeader', {
+                target 'src/**/*.java'
+                targetExclude fileTree(projectDir) { include 'src/**/*.java' }.filter { it.text.startsWith('// spotless-license-check:ignore') }
+                licenseHeaderFile(rootProject.file('gradle/licenseHeader.txt'),
+                    '(package|import|public|class|module) |@|\\n/\\*\\*|// spotless-license-check:off')
             }
         }
 
@@ -285,21 +296,6 @@ subprojects {
             }
         }
 
-        license {
-            header = rootProject.file('gradle/licenseHeader.txt')
-            strictCheck = true
-            mapping {
-                java = 'SLASHSTAR_STYLE'
-            }
-            sourceSets = project.sourceSets
-
-            ext.year = Calendar.getInstance().get(Calendar.YEAR)
-            skipExistingHeaders = true
-            exclude '**/*.json' // comments not supported
-            exclude '**/META-INF/services/**'
-            exclude '**/META-INF/*.providers'
-        }
-
         // Publish resolved versions.
         plugins.withId('maven-publish') {
             publishing {
@@ -369,7 +365,14 @@ subprojects {
 
         spotless {
             kotlin {
+                toggleOffOn()
                 ktlint().editorConfigOverride(['ktlint_standard_no-wildcard-imports': 'disabled'])
+            }
+            format 'kotlinLicenseHeader', {
+                target 'src/**/*.kt'
+                targetExclude fileTree(projectDir) { include 'src/**/*.kt' }.filter { it.text.startsWith('// spotless-license-check:ignore') }
+                licenseHeaderFile(rootProject.file('gradle/licenseHeader.txt'),
+                    '(package|import|public|class|module) |// spotless-license-check:off')
             }
         }
 

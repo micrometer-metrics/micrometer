@@ -1,3 +1,4 @@
+// spotless-license-check:ignore
 /*
  * Copyright 2023 the original author or authors.
  *
@@ -13,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.micrometer.core.instrument.binder.grpc;
 
 import com.google.common.util.concurrent.ListenableFuture;

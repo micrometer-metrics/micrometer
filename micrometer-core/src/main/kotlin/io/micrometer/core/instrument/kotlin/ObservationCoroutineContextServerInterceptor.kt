@@ -41,7 +41,5 @@ import kotlin.coroutines.CoroutineContext
 class ObservationCoroutineContextServerInterceptor(
     private val observationRegistry: ObservationRegistry,
 ) : CoroutineContextServerInterceptor() {
-    override fun coroutineContext(call: ServerCall<*, *>, headers: Metadata): CoroutineContext {
-        return observationRegistry.asContextElement()
-    }
+    override fun coroutineContext(call: ServerCall<*, *>, headers: Metadata): CoroutineContext = observationRegistry.asContextElement()
 }
