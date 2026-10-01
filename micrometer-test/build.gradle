@@ -12,6 +12,10 @@ dependencies {
     api project(':micrometer-observation')
     api project(':micrometer-observation-test')
 
+    // The compatibility kit exercises client-side percentiles, so it needs the optional
+    // HdrHistogram dependency at runtime, as would any user of client-side percentiles.
+    implementation libs.hdrhistogram
+
     api libs.assertj
 
     implementation platform(libs.junitBom)
