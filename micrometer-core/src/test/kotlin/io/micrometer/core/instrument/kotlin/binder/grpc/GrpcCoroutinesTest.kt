@@ -94,15 +94,13 @@ class GrpcCoroutinesTest {
                 .build()
         }
 
-        override fun bindService(): ServerServiceDefinition {
-            return ServerServiceDefinition.builder(SimpleServiceGrpc.SERVICE_NAME)
-                .addMethod(
-                    ServerCalls.unaryServerMethodDefinition(
-                        context = context,
-                        descriptor = SimpleServiceGrpc.getUnaryRpcMethod(),
-                        implementation = ::unaryRpc,
-                    ),
-                ).build()
-        }
+        override fun bindService(): ServerServiceDefinition = ServerServiceDefinition.builder(SimpleServiceGrpc.SERVICE_NAME)
+            .addMethod(
+                ServerCalls.unaryServerMethodDefinition(
+                    context = context,
+                    descriptor = SimpleServiceGrpc.getUnaryRpcMethod(),
+                    implementation = ::unaryRpc,
+                ),
+            ).build()
     }
 }

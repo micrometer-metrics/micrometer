@@ -25,8 +25,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.net.URI
 
-internal class OkHttpClientTimingInstrumentationVerificationTests :
-    HttpClientTimingInstrumentationVerificationTests<OkHttpClient>() {
+internal class OkHttpClientTimingInstrumentationVerificationTests : HttpClientTimingInstrumentationVerificationTests<OkHttpClient>() {
 
     override fun sendHttpRequest(
         instrumentedClient: OkHttpClient,

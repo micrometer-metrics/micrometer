@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.micrometer.jakarta9.instrument.jms;
 
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
