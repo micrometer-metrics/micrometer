@@ -83,7 +83,9 @@ For continuous monitoring in production, you don't need to create a scheduled jo
 
 === Custom Consumer
 
-Instead of the default logging behavior, you can provide a `Consumer<HighCardinalityMeterInfo>` to handle high cardinality notifications:
+Instead of the default logging behavior, you can provide a `Consumer<HighCardinalityDetections>` to handle high cardinality notifications. From `HighCardinalityDetections`, you can access the first detection (`findFirst()`), the detection with the highest cardinality (`findHighest()`), or iterate over all detected meters.
+
+For example, to handle only the first meter found:
 
 [source,java,subs=+attributes]
 ----
@@ -104,7 +106,7 @@ This can be useful for:
 
 === Custom Consumer for all Meters with High Cardinality
 
-It's also possible to provide a `Consumer<List<HighCardinalityMeterInfo>>` to handle all meters with high cardinality:
+You can also handle all meters with high cardinality by iterating directly over the detections (since `HighCardinalityDetections` implements `Iterable`):
 
 [source,java,subs=+attributes]
 ----

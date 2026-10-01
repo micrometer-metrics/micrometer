@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.HighCardinalityTagsDetector.HighCardinalityDetections;
 import io.micrometer.core.instrument.HighCardinalityTagsDetector.HighCardinalityMeterInfo;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.jspecify.annotations.Nullable;
@@ -23,12 +24,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 /**
@@ -38,7 +40,7 @@ import static org.awaitility.Awaitility.await;
  */
 class HighCardinalityTagsDetectorTests {
 
-    private TestFirstMeterInfoConsumer testFirstMeterInfoConsumer;
+    private TestMeterInfoConsumer testFirstMeterInfoConsumer;
 
     private SimpleMeterRegistry registry;
 
@@ -46,12 +48,12 @@ class HighCardinalityTagsDetectorTests {
 
     @BeforeEach
     void setUp() {
-        this.testFirstMeterInfoConsumer = new TestFirstMeterInfoConsumer();
+        this.testFirstMeterInfoConsumer = new TestMeterInfoConsumer();
         this.registry = new SimpleMeterRegistry();
         this.highCardinalityTagsDetector = HighCardinalityTagsDetector.builder(registry)
             .threshold(3)
             .delay(Duration.ofMinutes(1))
-            .firstHighCardinalityMeterInfoConsumer(testFirstMeterInfoConsumer)
+            .highCardinalityMeterInfoConsumer(testFirstMeterInfoConsumer)
             .build();
     }
 
@@ -70,7 +72,9 @@ class HighCardinalityTagsDetectorTests {
         await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(testFirstMeterInfoConsumer.getName()));
         assertThat(highCardinalityTagsDetector.findFirst()).isNotEmpty();
         assertThat(highCardinalityTagsDetector.findFirstHighCardinalityMeterInfo()).isNotEmpty();
+        assertThat(highCardinalityTagsDetector.findHighestHighCardinalityMeterInfo()).isNotEmpty();
         assertThat(highCardinalityTagsDetector.findAllHighCardinalityMeterInfo()).isNotEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections()).isNotEmpty();
     }
 
     @Test
@@ -81,7 +85,9 @@ class HighCardinalityTagsDetectorTests {
 
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
         assertThat(highCardinalityTagsDetector.findFirstHighCardinalityMeterInfo()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findHighestHighCardinalityMeterInfo()).isEmpty();
         assertThat(highCardinalityTagsDetector.findAllHighCardinalityMeterInfo()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections()).isEmpty();
     }
 
     @Test
@@ -92,7 +98,9 @@ class HighCardinalityTagsDetectorTests {
 
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
         assertThat(highCardinalityTagsDetector.findFirstHighCardinalityMeterInfo()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findHighestHighCardinalityMeterInfo()).isEmpty();
         assertThat(highCardinalityTagsDetector.findAllHighCardinalityMeterInfo()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections()).isEmpty();
     }
 
     @Test
@@ -103,7 +111,9 @@ class HighCardinalityTagsDetectorTests {
 
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
         assertThat(highCardinalityTagsDetector.findFirstHighCardinalityMeterInfo()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findHighestHighCardinalityMeterInfo()).isEmpty();
         assertThat(highCardinalityTagsDetector.findAllHighCardinalityMeterInfo()).isEmpty();
+        assertThat(highCardinalityTagsDetector.findDetections()).isEmpty();
     }
 
     @Test
@@ -116,20 +126,10 @@ class HighCardinalityTagsDetectorTests {
             .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
                 .threshold(3)
                 .delay(Duration.ofMinutes(1))
-                .firstHighCardinalityMeterInfoConsumer(testFirstMeterInfoConsumer)
+                .detectionsConsumer(detections -> detections.findFirst().ifPresent(testFirstMeterInfoConsumer))
                 .build());
 
         await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(testFirstMeterInfoConsumer.getName()));
-    }
-
-    @Test
-    void shouldNotAllowSettingBothConsumers() {
-        assertThatThrownBy(() -> HighCardinalityTagsDetector.builder(registry)
-            .firstHighCardinalityMeterInfoConsumer(new TestFirstMeterInfoConsumer())
-            .allHighCardinalityMeterInfoConsumer(new TestAllMeterInfoConsumer())
-            .build()).isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                    "Both firstHighCardinalityMeterInfoConsumer and allHighCardinalityMeterInfoConsumer cannot be set, you need to choose one.");
     }
 
     @Test
@@ -137,6 +137,159 @@ class HighCardinalityTagsDetectorTests {
         try (HighCardinalityTagsDetector detector = HighCardinalityTagsDetector.builder(registry).build()) {
             detector.start();
         }
+    }
+
+    @Test
+    void detectionsConsumerHandlingAllDetections() {
+        for (int i = 0; i < 10; i++) {
+            Counter.builder("http.requests").tag("index", String.valueOf(i)).register(registry).increment();
+            if (i % 2 == 0) {
+                Counter.builder("db.calls").tag("index", String.valueOf(i)).register(registry).increment();
+            }
+        }
+
+        List<HighCardinalityMeterInfo> collected = Collections.synchronizedList(new ArrayList<>());
+        registry.config()
+            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
+                .threshold(3)
+                .detectionsConsumer(detections -> {
+                    // Typical usage: iterate directly over detections (implements
+                    // Iterable)
+                    for (HighCardinalityMeterInfo info : detections) {
+                        collected.add(info);
+                    }
+                })
+                .build());
+
+        await().atMost(Duration.ofSeconds(1)).untilAsserted(() -> assertThat(collected).hasSize(2));
+
+        assertThat(collected).containsExactlyInAnyOrder(new HighCardinalityMeterInfo("http.requests", 10),
+                new HighCardinalityMeterInfo("db.calls", 5));
+    }
+
+    @Test
+    void detectionsConsumerHandlingHighestCardinalityDetection() {
+        // "http.requests" has 10 meters, "db.calls" has 5 meters.
+        for (int i = 0; i < 10; i++) {
+            Counter.builder("http.requests").tag("index", String.valueOf(i)).register(registry).increment();
+            if (i % 2 == 0) {
+                Counter.builder("db.calls").tag("index", String.valueOf(i)).register(registry).increment();
+            }
+        }
+
+        AtomicReference<HighCardinalityMeterInfo> highestOffender = new AtomicReference<>();
+        registry.config()
+            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
+                .threshold(3)
+                // Typical usage for gh-7649: get the single meter with highest
+                // cardinality
+                .detectionsConsumer(detections -> detections.findHighest().ifPresent(highestOffender::set))
+                .build());
+
+        await().atMost(Duration.ofSeconds(1)).untilAsserted(() -> assertThat(highestOffender.get()).isNotNull());
+
+        assertThat(highestOffender.get().getName()).isEqualTo("http.requests");
+        assertThat(highestOffender.get().getCount()).isEqualTo(10);
+    }
+
+    @Test
+    void detectionsConsumerHandlingFirstDetection() {
+        for (int i = 0; i < 10; i++) {
+            Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
+        }
+
+        AtomicReference<HighCardinalityMeterInfo> firstDetected = new AtomicReference<>();
+        registry.config()
+            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
+                .threshold(3)
+                // Typical usage: get the first detection
+                .detectionsConsumer(detections -> detections.findFirst().ifPresent(firstDetected::set))
+                .build());
+
+        await().atMost(Duration.ofSeconds(1)).untilAsserted(() -> assertThat(firstDetected.get()).isNotNull());
+
+        assertThat(firstDetected.get().getName()).isEqualTo("test.counter");
+        assertThat(firstDetected.get().getCount()).isEqualTo(10);
+    }
+
+    @Test
+    void detectionsConsumerIsNotCalledUnderTheThreshold() {
+        AtomicReference<HighCardinalityDetections> received = new AtomicReference<>();
+        registry.config()
+            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
+                .threshold(3)
+                .detectionsConsumer(received::set)
+                .build());
+
+        await().during(Duration.ofSeconds(1))
+            .atMost(Duration.ofSeconds(2))
+            .untilAsserted(() -> assertThat(received.get()).isNull());
+    }
+
+    @Test
+    void oneTimeChecksAndQueryMethods() {
+        for (int i = 0; i < 15; i++) {
+            Counter.builder("http.requests").tag("index", String.valueOf(i)).register(registry).increment();
+            if (i < 8) {
+                Counter.builder("db.calls").tag("index", String.valueOf(i)).register(registry).increment();
+            }
+        }
+
+        try (HighCardinalityTagsDetector detector = HighCardinalityTagsDetector.builder(registry)
+            .threshold(5)
+            .build()) {
+
+            HighCardinalityDetections detections = detector.findDetections();
+            assertThat(detections).hasSize(2);
+            assertThat(detections.isEmpty()).isFalse();
+
+            // Stream operations on detections
+            List<String> names = detections.stream().map(HighCardinalityMeterInfo::getName).toList();
+            assertThat(names).containsExactlyInAnyOrder("http.requests", "db.calls");
+
+            // Direct query methods
+            assertThat(detector.findHighestHighCardinalityMeterInfo()).isNotEmpty().get().satisfies(info -> {
+                assertThat(info.getName()).isEqualTo("http.requests");
+                assertThat(info.getCount()).isEqualTo(15);
+            });
+
+            assertThat(detector.findFirstHighCardinalityMeterInfo()).isNotEmpty();
+            assertThat(detector.findAllHighCardinalityMeterInfo()).hasSize(2);
+            assertThat(detector.findFirst()).contains("http.requests");
+        }
+    }
+
+    @Test
+    void highCardinalityMeterInfoConsumerBackwardsCompatibility() {
+        for (int i = 0; i < 10; i++) {
+            Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
+        }
+
+        TestMeterInfoConsumer consumer = new TestMeterInfoConsumer();
+        registry.config()
+            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
+                .threshold(3)
+                .highCardinalityMeterInfoConsumer(consumer)
+                .build());
+
+        await().atMost(Duration.ofSeconds(1)).untilAsserted(() -> assertThat(consumer.meterInfo).isNotNull());
+
+        assertThat(consumer.getName()).isEqualTo("test.counter");
+        assertThat(consumer.getCount()).isEqualTo(10);
+    }
+
+    @Test
+    void highCardinalityMeterInfoConsumerIsNotCalledUnderTheThreshold() {
+        TestMeterInfoConsumer consumer = new TestMeterInfoConsumer();
+        registry.config()
+            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
+                .threshold(3)
+                .highCardinalityMeterInfoConsumer(consumer)
+                .build());
+
+        await().during(Duration.ofSeconds(1))
+            .atMost(Duration.ofSeconds(2))
+            .untilAsserted(() -> assertThat(consumer.meterInfo).isNull());
     }
 
     @Test
@@ -166,80 +319,6 @@ class HighCardinalityTagsDetectorTests {
             .untilAsserted(() -> assertThat(testMeterNameConsumer.getName()).isNull());
     }
 
-    @Test
-    void firstHighCardinalityMeterInfoConsumer() {
-        for (int i = 0; i < 10; i++) {
-            Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
-        }
-
-        registry.config()
-            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
-                .threshold(3)
-                .firstHighCardinalityMeterInfoConsumer(testFirstMeterInfoConsumer)
-                .build());
-
-        await().atMost(Duration.ofSeconds(1))
-            .untilAsserted(() -> assertThat(testFirstMeterInfoConsumer.meterInfo).isNotNull());
-
-        assertThat(testFirstMeterInfoConsumer.getName()).isEqualTo("test.counter");
-        assertThat(testFirstMeterInfoConsumer.getCount()).isEqualTo(10);
-    }
-
-    @Test
-    void firstHighCardinalityMeterInfoConsumerIsNotCalledUnderTheThreshold() {
-        registry.config()
-            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
-                .threshold(3)
-                .firstHighCardinalityMeterInfoConsumer(testFirstMeterInfoConsumer)
-                .build());
-
-        await().during(Duration.ofSeconds(1))
-            .atMost(Duration.ofSeconds(2))
-            .untilAsserted(() -> assertThat(testFirstMeterInfoConsumer.meterInfo).isNull());
-    }
-
-    @Test
-    void allHighCardinalityMeterInfoConsumer() {
-        for (int i = 0; i < 10; i++) {
-            Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
-            if (i % 2 == 0) {
-                Counter.builder("another.counter").tag("index", String.valueOf(i)).register(registry).increment();
-            }
-        }
-
-        TestAllMeterInfoConsumer testAllMeterInfoConsumer = new TestAllMeterInfoConsumer();
-        registry.config()
-            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
-                .threshold(3)
-                .allHighCardinalityMeterInfoConsumer(testAllMeterInfoConsumer)
-                .build());
-
-        await().atMost(Duration.ofSeconds(1))
-            .untilAsserted(() -> assertThat(testAllMeterInfoConsumer.meterInfo).hasSize(2));
-
-        assertThat(testAllMeterInfoConsumer.meterInfo).satisfiesExactlyInAnyOrder(meterInfo -> {
-            assertThat(meterInfo.getName()).isEqualTo("test.counter");
-            assertThat(meterInfo.getCount()).isEqualTo(10);
-        }, meterInfo -> {
-            assertThat(meterInfo.getName()).isEqualTo("another.counter");
-            assertThat(meterInfo.getCount()).isEqualTo(5);
-        });
-    }
-
-    @Test
-    void allHighCardinalityMeterInfoConsumerIsNotCalledUnderTheThreshold() {
-        TestAllMeterInfoConsumer testAllMeterInfoConsumer = new TestAllMeterInfoConsumer();
-        registry.config()
-            .withHighCardinalityTagsDetector(registry -> HighCardinalityTagsDetector.builder(registry)
-                .threshold(3)
-                .allHighCardinalityMeterInfoConsumer(testAllMeterInfoConsumer)
-                .build());
-
-        await().during(Duration.ofSeconds(1))
-            .atMost(Duration.ofSeconds(2))
-            .untilAsserted(() -> assertThat(testAllMeterInfoConsumer.meterInfo).isEmpty());
-    }
-
     private static class TestMeterNameConsumer implements Consumer<String> {
 
         private volatile @Nullable String name;
@@ -255,7 +334,7 @@ class HighCardinalityTagsDetectorTests {
 
     }
 
-    private static class TestFirstMeterInfoConsumer implements Consumer<HighCardinalityMeterInfo> {
+    private static class TestMeterInfoConsumer implements Consumer<HighCardinalityMeterInfo> {
 
         private volatile @Nullable HighCardinalityMeterInfo meterInfo;
 
@@ -272,17 +351,6 @@ class HighCardinalityTagsDetectorTests {
         public @Nullable Long getCount() {
             HighCardinalityMeterInfo meterInfo = this.meterInfo;
             return meterInfo != null ? meterInfo.getCount() : null;
-        }
-
-    }
-
-    private static class TestAllMeterInfoConsumer implements Consumer<List<HighCardinalityMeterInfo>> {
-
-        private volatile List<HighCardinalityMeterInfo> meterInfo = Collections.emptyList();
-
-        @Override
-        public void accept(List<HighCardinalityMeterInfo> meterInfo) {
-            this.meterInfo = meterInfo;
         }
 
     }

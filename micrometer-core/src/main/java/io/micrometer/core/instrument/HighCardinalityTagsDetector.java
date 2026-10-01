@@ -23,10 +23,17 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Spliterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -42,9 +49,9 @@ import java.util.stream.Stream;
  * tags. You can use this class in two ways:
  *
  * <ul>
- * <li>Call {@code findFirstHighCardinalityMeterInfo} or
- * {@code findAllHighCardinalityMeterInfo} and check if you get any results, if so, you
- * probably have high cardinality tags.</li>
+ * <li>Call {@code findDetections}, {@code findHighestHighCardinalityMeterInfo},
+ * {@code findFirstHighCardinalityMeterInfo}, or {@code findAllHighCardinalityMeterInfo}
+ * and check if you get any results, if so, you probably have high cardinality tags.</li>
  * <li>Call start which will start a scheduled job that will do the check for you.</li>
  * </ul>
  *
@@ -71,9 +78,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private final Duration delay;
 
-    private Consumer<HighCardinalityMeterInfo> firstMeterInfoConsumer;
-
-    private @Nullable Consumer<List<HighCardinalityMeterInfo>> allMeterInfoConsumer;
+    private Consumer<HighCardinalityDetections> detectionsConsumer;
 
     private final ScheduledExecutorService scheduledExecutorService;
 
@@ -115,8 +120,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * the next
      * @param meterNameConsumer The action to execute if the first high cardinality tag is
      * found
-     * @deprecated since 1.16.0, use
-     * {@link Builder#firstHighCardinalityMeterInfoConsumer(Consumer)} instead.
+     * @deprecated since 1.16.0, use {@link Builder#detectionsConsumer(Consumer)} instead.
      */
     @Deprecated
     public HighCardinalityTagsDetector(MeterRegistry registry, long threshold, Duration delay,
@@ -125,10 +129,12 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         this.threshold = threshold;
         this.delay = delay;
         if (meterNameConsumer != null) {
-            this.firstMeterInfoConsumer = (meterInfo) -> meterNameConsumer.accept(meterInfo.getName());
+            this.detectionsConsumer = (detections) -> detections.findFirst()
+                .map(HighCardinalityMeterInfo::getName)
+                .ifPresent(meterNameConsumer);
         }
         else {
-            this.firstMeterInfoConsumer = this::logWarning;
+            this.detectionsConsumer = (detections) -> detections.findFirst().ifPresent(this::logWarning);
         }
         this.scheduledExecutorService = Executors
             .newSingleThreadScheduledExecutor(new NamedThreadFactory("high-cardinality-tags-detector"));
@@ -159,14 +165,9 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private void detectHighCardinalityTags() {
         try {
-            if (allMeterInfoConsumer != null) {
-                List<HighCardinalityMeterInfo> highCardinalityMeterInfo = findAllHighCardinalityMeterInfo();
-                if (!highCardinalityMeterInfo.isEmpty()) {
-                    this.allMeterInfoConsumer.accept(highCardinalityMeterInfo);
-                }
-            }
-            else {
-                findFirstHighCardinalityMeterInfo().ifPresent(this.firstMeterInfoConsumer);
+            HighCardinalityDetections detections = findDetections();
+            if (!detections.isEmpty()) {
+                this.detectionsConsumer.accept(detections);
             }
         }
         catch (Exception exception) {
@@ -193,29 +194,49 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @since 1.16.0
      */
     public Optional<HighCardinalityMeterInfo> findFirstHighCardinalityMeterInfo() {
-        return getHighCardinalityMeterInfoStream().findFirst();
+        return findDetections().findFirst();
+    }
+
+    /**
+     * Finds the {@code HighCardinalityMeterInfo} of the Meter that has the highest
+     * cardinality among all Meters that potentially have high cardinality tags.
+     * @return the {@code HighCardinalityMeterInfo} of the Meter with highest cardinality,
+     * or an empty Optional if none found.
+     * @since 1.18.0
+     */
+    public Optional<HighCardinalityMeterInfo> findHighestHighCardinalityMeterInfo() {
+        return findDetections().findHighest();
     }
 
     /**
      * Finds all the {@code HighCardinalityMeterInfo} of the Meters that potentially have
      * high cardinality tags.
      * @return all the {@code HighCardinalityMeterInfo} of the Meters that potentially
-     * have high cardinality tags, or an empty List if none found.
+     * have high cardinality tags, or an empty Collection if none found.
      * @since 1.18.0
      */
-    public List<HighCardinalityMeterInfo> findAllHighCardinalityMeterInfo() {
-        return getHighCardinalityMeterInfoStream().collect(Collectors.toList());
+    public Collection<HighCardinalityMeterInfo> findAllHighCardinalityMeterInfo() {
+        return findDetections().getMeters();
     }
 
-    private Stream<HighCardinalityMeterInfo> getHighCardinalityMeterInfoStream() {
+    /**
+     * Finds all {@code HighCardinalityDetections} of the Meters that potentially have
+     * high cardinality tags.
+     * @return {@code HighCardinalityDetections} containing all offending meters, or empty
+     * if none found.
+     * @since 1.18.0
+     */
+    public HighCardinalityDetections findDetections() {
         Map<String, Long> meterNameFrequencies = new LinkedHashMap<>();
         for (Meter meter : this.registry.getMeters()) {
             meterNameFrequencies.compute(meter.getId().getName(), (k, v) -> v == null ? 1 : v + 1);
         }
-        return meterNameFrequencies.entrySet()
+        List<HighCardinalityMeterInfo> meters = meterNameFrequencies.entrySet()
             .stream()
             .filter((entry) -> entry.getValue() > this.threshold)
-            .map((entry) -> new HighCardinalityMeterInfo(entry.getKey(), entry.getValue()));
+            .map((entry) -> new HighCardinalityMeterInfo(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList());
+        return new HighCardinalityDetections(meters);
     }
 
     private void logWarning(HighCardinalityMeterInfo meterInfo) {
@@ -249,9 +270,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
         private Duration delay = DEFAULT_DELAY;
 
-        private @Nullable Consumer<HighCardinalityMeterInfo> firstMeterInfoConsumer;
-
-        private @Nullable Consumer<List<HighCardinalityMeterInfo>> allMeterInfoConsumer;
+        private @Nullable Consumer<HighCardinalityDetections> detectionsConsumer;
 
         /**
          * Create a {@code Builder}.
@@ -285,42 +304,28 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         }
 
         /**
-         * Set {@link Consumer} of the first {@code HighCardinalityMeterInfo}.
-         * @param firstMeterInfoConsumer {@link Consumer} of the first
-         * {@code HighCardinalityMeterInfo}
+         * Set {@link Consumer} of {@link HighCardinalityDetections}.
+         * @param detectionsConsumer {@code HighCardinalityDetections} {@link Consumer}
          * @return this builder
-         * @deprecated since 1.18.0, use
-         * {@link Builder#firstHighCardinalityMeterInfoConsumer(Consumer)} instead.
+         * @since 1.18.0
+         */
+        public Builder detectionsConsumer(Consumer<HighCardinalityDetections> detectionsConsumer) {
+            this.detectionsConsumer = detectionsConsumer;
+            return this;
+        }
+
+        /**
+         * Set {@code HighCardinalityMeterInfo} {@link Consumer} for the first detected
+         * meter.
+         * @param highCardinalityMeterInfoConsumer {@code HighCardinalityMeterInfo}
+         * {@code Consumer}
+         * @return this builder
+         * @deprecated since 1.18.0, use {@link #detectionsConsumer(Consumer)} instead.
          */
         @Deprecated
-        public Builder highCardinalityMeterInfoConsumer(Consumer<HighCardinalityMeterInfo> firstMeterInfoConsumer) {
-            return firstHighCardinalityMeterInfoConsumer(firstMeterInfoConsumer);
-        }
-
-        /**
-         * Set {@link Consumer} of the first {@code HighCardinalityMeterInfo}.
-         * @param firstMeterInfoConsumer {@link Consumer} of the first
-         * {@code HighCardinalityMeterInfo}
-         * @return this builder
-         * @since 1.18.0
-         */
-        public Builder firstHighCardinalityMeterInfoConsumer(
-                Consumer<HighCardinalityMeterInfo> firstMeterInfoConsumer) {
-            this.firstMeterInfoConsumer = firstMeterInfoConsumer;
-            return this;
-        }
-
-        /**
-         * Set {@link Consumer} of all the {@code HighCardinalityMeterInfo}.
-         * @param allMeterInfoConsumer {@code Consumer} of all the
-         * {@code HighCardinalityMeterInfo}
-         * @return this builder
-         * @since 1.18.0
-         */
-        public Builder allHighCardinalityMeterInfoConsumer(
-                Consumer<List<HighCardinalityMeterInfo>> allMeterInfoConsumer) {
-            this.allMeterInfoConsumer = allMeterInfoConsumer;
-            return this;
+        public Builder highCardinalityMeterInfoConsumer(
+                Consumer<HighCardinalityMeterInfo> highCardinalityMeterInfoConsumer) {
+            return detectionsConsumer(detections -> detections.findFirst().ifPresent(highCardinalityMeterInfoConsumer));
         }
 
         /**
@@ -330,19 +335,111 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         public HighCardinalityTagsDetector build() {
             HighCardinalityTagsDetector highCardinalityTagsDetector = new HighCardinalityTagsDetector(this.registry,
                     this.threshold, this.delay);
-
-            if (this.firstMeterInfoConsumer != null && this.allMeterInfoConsumer != null) {
-                throw new IllegalArgumentException(
-                        "Both firstHighCardinalityMeterInfoConsumer and allHighCardinalityMeterInfoConsumer cannot be set, you need to choose one.");
+            if (this.detectionsConsumer != null) {
+                highCardinalityTagsDetector.detectionsConsumer = this.detectionsConsumer;
             }
-            else if (this.firstMeterInfoConsumer != null) {
-                highCardinalityTagsDetector.firstMeterInfoConsumer = this.firstMeterInfoConsumer;
-            }
-            else if (this.allMeterInfoConsumer != null) {
-                highCardinalityTagsDetector.allMeterInfoConsumer = this.allMeterInfoConsumer;
-            }
-
             return highCardinalityTagsDetector;
+        }
+
+    }
+
+    /**
+     * High cardinality meter detections.
+     *
+     * @since 1.18.0
+     */
+    public static class HighCardinalityDetections implements Iterable<HighCardinalityMeterInfo> {
+
+        private final List<HighCardinalityMeterInfo> meters;
+
+        /**
+         * Create a {@code HighCardinalityDetections} instance.
+         * @param meters meters exceeding threshold
+         */
+        public HighCardinalityDetections(Collection<HighCardinalityMeterInfo> meters) {
+            this.meters = meters != null ? Collections.unmodifiableList(new ArrayList<>(meters))
+                    : Collections.emptyList();
+        }
+
+        /**
+         * Return all meters exceeding the threshold.
+         * @return all meters exceeding threshold
+         */
+        public Collection<HighCardinalityMeterInfo> getMeters() {
+            return this.meters;
+        }
+
+        /**
+         * Return the first meter detected to exceed the threshold.
+         * @return first meter detected, or empty Optional if none
+         */
+        public Optional<HighCardinalityMeterInfo> findFirst() {
+            return this.meters.stream().findFirst();
+        }
+
+        /**
+         * Return the meter with the highest cardinality among all meters exceeding the
+         * threshold.
+         * @return meter with highest cardinality, or empty Optional if none
+         */
+        public Optional<HighCardinalityMeterInfo> findHighest() {
+            return this.meters.stream().max(Comparator.comparingLong(HighCardinalityMeterInfo::getCount));
+        }
+
+        /**
+         * Return a sequential {@link Stream} with this collection as its source.
+         * @return stream of {@code HighCardinalityMeterInfo}
+         */
+        public Stream<HighCardinalityMeterInfo> stream() {
+            return this.meters.stream();
+        }
+
+        @Override
+        public Iterator<HighCardinalityMeterInfo> iterator() {
+            return this.meters.iterator();
+        }
+
+        @Override
+        public Spliterator<HighCardinalityMeterInfo> spliterator() {
+            return this.meters.spliterator();
+        }
+
+        /**
+         * Return whether there are no detections.
+         * @return {@code true} if no detections, otherwise {@code false}
+         */
+        public boolean isEmpty() {
+            return this.meters.isEmpty();
+        }
+
+        /**
+         * Return the number of detections.
+         * @return number of detections
+         */
+        public int size() {
+            return this.meters.size();
+        }
+
+        @Override
+        public boolean equals(@Nullable Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof HighCardinalityDetections)) {
+                return false;
+            }
+            HighCardinalityDetections other = (HighCardinalityDetections) obj;
+            return Objects.equals(this.meters, other.meters);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.meters);
+        }
+
+        @Override
+        public String toString() {
+            return "HighCardinalityDetections{" + "meters=" + this.meters + '}';
         }
 
     }
@@ -382,6 +479,28 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
          */
         public long getCount() {
             return this.count;
+        }
+
+        @Override
+        public boolean equals(@Nullable Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof HighCardinalityMeterInfo)) {
+                return false;
+            }
+            HighCardinalityMeterInfo that = (HighCardinalityMeterInfo) obj;
+            return this.count == that.count && Objects.equals(this.name, that.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.name, this.count);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s (%d)", this.name, this.count);
         }
 
     }
