@@ -192,7 +192,7 @@ subprojects {
                 target 'src/**/*.java'
                 targetExclude fileTree(projectDir) { include 'src/**/*.java' }.filter { it.text.startsWith('// spotless-license-check:ignore') }
                 licenseHeaderFile(rootProject.file('gradle/licenseHeader.txt'),
-                    '(package|import|public|class|module) |@|/\\*\\*|// spotless-license-check:off')
+                    '(package|import|public|class|module) |@|\\n/\\*\\*|// spotless-license-check:off')
             }
         }
 

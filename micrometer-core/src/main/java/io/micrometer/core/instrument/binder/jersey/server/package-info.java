@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
  * Meter binders for Jersey.
  * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
