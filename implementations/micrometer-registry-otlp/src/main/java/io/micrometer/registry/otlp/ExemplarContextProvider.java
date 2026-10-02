@@ -28,7 +28,7 @@ public interface ExemplarContextProvider {
     /**
      * The exemplar information returned by this method must contain the necessary
      * information to create an exemplar. If the exemplar information is not available
-     * (there is no current span or the span is not sampled) or the implementor does not
+     * (there is no current span or the span is not sampled) or the implementer does not
      * want this particular span to be used as an exemplar, the method should return
      * {@code null}.
      * @return context object if available, null otherwise

@@ -551,7 +551,7 @@ public interface Observation extends ObservationView {
     Scope openScope();
 
     /**
-     * Observes the passed {@link Runnable}, this means the followings:
+     * Observes the passed {@link Runnable}, this means the following:
      *
      * <ul>
      * <li>Starts the {@code Observation}</li>
@@ -582,7 +582,7 @@ public interface Observation extends ObservationView {
     }
 
     /**
-     * Observes the passed {@link CheckedRunnable}, this means the followings:
+     * Observes the passed {@link CheckedRunnable}, this means the following:
      *
      * <ul>
      * <li>Starts the {@code Observation}</li>
@@ -614,7 +614,7 @@ public interface Observation extends ObservationView {
     }
 
     /**
-     * Observes the passed {@link Supplier}, this means the followings:
+     * Observes the passed {@link Supplier}, this means the following:
      *
      * <ul>
      * <li>Starts the {@code Observation}</li>
@@ -647,7 +647,7 @@ public interface Observation extends ObservationView {
     }
 
     /**
-     * Observes the passed {@link CheckedCallable}, this means the followings:
+     * Observes the passed {@link CheckedCallable}, this means the following:
      *
      * <ul>
      * <li>Starts the {@code Observation}</li>
@@ -684,7 +684,7 @@ public interface Observation extends ObservationView {
     /**
      * Observes the passed {@link Function} which provides access to the {@link Context}.
      *
-     * This means the followings:
+     * This means the following:
      * <ul>
      * <li>Starts the {@code Observation}</li>
      * <li>Opens a {@code Scope}</li>
@@ -725,7 +725,7 @@ public interface Observation extends ObservationView {
     /**
      * Observes the passed {@link Function} which provides access to the {@link Context}.
      *
-     * This means the followings:
+     * This means the following:
      * <ul>
      * <li>Starts the {@code Observation}</li>
      * <li>Opens a {@code Scope}</li>
