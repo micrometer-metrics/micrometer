@@ -201,6 +201,6 @@ include::{include-java}/metrics/OtlpMeterRegistryCustomizationTest.java[tags=cus
 -----
 
 The implementation of `ExemplarContextProvider` is responsible for providing an `OtlpExemplarContext` which contains the necessary information (traceId, spanId, and arbitrary key-value pairs) to be attached to the exemplar.
-If the exemplar information is not available (there is no current Span or the Span is not sampled) or the implementor does not want this particular Span to be used as an exemplar, the `ExemplarContextProvider` should return `null`.
+If the exemplar information is not available (there is no current Span or the Span is not sampled) or the implementer does not want this particular Span to be used as an exemplar, the `ExemplarContextProvider` should return `null`.
 
 NOTE: The `traceId` and `spanId` passed to `OtlpExemplarContext` must be case-insensitive hex-encoded strings.

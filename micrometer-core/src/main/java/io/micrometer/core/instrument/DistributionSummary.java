@@ -134,7 +134,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
         /**
          * @param tags Must be an even number of arguments representing key/value pairs of
          * tags.
-         * @return The distribution summmary builder with added tags.
+         * @return The distribution summary builder with added tags.
          */
         public Builder tags(String... tags) {
             return tags(Tags.of(tags));
