@@ -98,7 +98,7 @@ public interface Propagator {
          * {@code Iterable} if no values are found.
          * @implNote For backward-compatibility, a default implementation is provided that
          * returns a list with the value of {@link #get(Object, String)} or an empty list
-         * if no values are found. Implementors of this interface should override this
+         * if no values are found. Implementers of this interface should override this
          * method to provide an implementation that returns all present values of the
          * given propagation {@code key}.
          * @since 1.16.0

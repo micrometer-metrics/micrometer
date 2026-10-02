@@ -27,7 +27,7 @@ class StrongReferenceGaugeFunction<T> implements ToDoubleFunction<T> {
 
     /**
      * Holding a reference to obj inside of this function effectively prevents it from
-     * being garbage collected. Implementors of {@link Gauge} can then assume that they
+     * being garbage collected. Implementers of {@link Gauge} can then assume that they
      * should hold {@code obj} as a weak reference.
      * <p>
      * If obj is {@code null} initially then this gauge will not be reported.

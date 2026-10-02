@@ -50,7 +50,7 @@ import static java.util.Collections.emptyList;
  * remove the meters this binder registered.
  *
  * @author Jorge Quilcate
- * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
+ * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kafka monitoring
  * documentation</a>
  * @since 1.4.0
  */

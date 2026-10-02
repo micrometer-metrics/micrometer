@@ -87,7 +87,7 @@ class DropwizardRate {
     }
 
     /**
-     * Mimicks what happens inside of {@link com.codahale.metrics.Meter#mark(long)}, but
+     * Mimics what happens inside of {@link com.codahale.metrics.Meter#mark(long)}, but
      * ticks AFTER the increment.
      */
     public void increment(long n) {

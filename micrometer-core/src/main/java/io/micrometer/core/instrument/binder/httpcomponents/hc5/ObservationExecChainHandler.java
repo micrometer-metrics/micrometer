@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicMarkableReference;
 /**
  * Instruments the Apache HTTP Client 5 for both classic and async variants using the
  * {@link ExecChainHandler} and {@link AsyncExecChainHandler} contracts. This
- * instrumentation accepts {@link ApacheHttpClientObservationConvention custom convetion
+ * instrumentation accepts {@link ApacheHttpClientObservationConvention custom convention
  * implementations} and will use {@link DefaultApacheHttpClientObservationConvention the
  * default one} if none was provided.
  * <p>

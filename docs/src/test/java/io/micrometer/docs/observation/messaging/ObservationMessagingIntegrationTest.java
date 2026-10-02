@@ -127,7 +127,7 @@ class ObservationMessagingIntegrationTest {
         Consumer<String, String> consumer = new KafkaConsumer<>(consumerConfigs, new StringDeserializer(),
                 new StringDeserializer());
 
-        // Consumer scubscribes to the topic
+        // Consumer subscribes to the topic
         consumer.subscribe(Collections.singletonList(topic));
 
         // Consumer polls for a message

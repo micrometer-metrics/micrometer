@@ -48,7 +48,7 @@ import static java.util.Collections.emptyList;
  * @author Wardha Perinkadakattu
  * @author Jon Schneider
  * @author Johnny Lim
- * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
+ * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kafka monitoring
  * documentation</a>
  * @since 1.1.0
  * @deprecated use {@link KafkaClientMetrics} instead since 1.4.0

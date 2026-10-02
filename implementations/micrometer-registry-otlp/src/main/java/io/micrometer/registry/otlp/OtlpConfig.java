@@ -170,7 +170,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @return a map of the headers' key-value pairs
      * @see <a href=
      * "https://opentelemetry.io/docs/reference/specification/protocol/exporter/#specifying-headers-via-environment-variables">OTLP
-     * Exporer headers configuration</a>
+     * Exporter headers configuration</a>
      * @since 1.11.0
      */
     default Map<String, String> headers() {
