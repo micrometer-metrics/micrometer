@@ -45,7 +45,13 @@ public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCou
         if (obj2 != null) {
             double prevLast = last;
             last = f.applyAsDouble(obj2);
-            count.getCurrent().add(last - prevLast);
+            double delta = last - prevLast;
+            // The count function is expected to be monotonically increasing. Guard
+            // against a finite decrease (a reset), which would otherwise record a
+            // negative count for the step interval. A non-finite delta is left as-is
+            // so each registry's own infinite/NaN-value handling still applies.
+            // See gh-2489.
+            count.getCurrent().add(Double.isFinite(delta) ? Math.max(delta, 0) : delta);
         }
         return count.poll();
     }
