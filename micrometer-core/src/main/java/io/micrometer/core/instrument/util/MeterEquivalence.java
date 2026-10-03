@@ -26,19 +26,14 @@ public final class MeterEquivalence {
     private MeterEquivalence() {
     }
 
-    // TODO fix somehow or report bug?
-    @SuppressWarnings("NullAway")
     public static boolean equals(@Nullable Meter m1, @Nullable Object o) {
-        if (m1 == null && o != null)
-            return false;
-        if (o == null && m1 != null)
+        if (m1 == o)
+            return true;
+        if (m1 == null || o == null)
             return false;
         if (!(o instanceof Meter))
             return false;
-        if (m1 == o)
-            return true;
         Meter m2 = (Meter) o;
-        // NullAway isn't smart enough to know m1 (and m2) can't be null here
         return m1.getId().equals(m2.getId());
     }
 
