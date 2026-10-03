@@ -178,6 +178,7 @@ prometheusMetricsBom = { module = "io.prometheus:prometheus-metrics-bom", versio
 prometheusMetrics = { module = "io.prometheus:prometheus-metrics-core" }
 prometheusMetricsExpositionFormats = { module = "io.prometheus:prometheus-metrics-exposition-formats" }
 prometheusMetricsTracerCommon = { module = "io.prometheus:prometheus-metrics-tracer-common" }
+prometheusMetricsTracerInitializer = { module = "io.prometheus:prometheus-metrics-tracer-initializer" }
 prometheusSimpleClientBom = { module = "io.prometheus:simpleclient_bom", version.ref = "prometheusSimpleClient" }
 prometheusSimpleClient = { module = "io.prometheus:simpleclient_common" }
 prometheusSimpleClientPushgateway = { module = "io.prometheus:simpleclient_pushgateway" }
