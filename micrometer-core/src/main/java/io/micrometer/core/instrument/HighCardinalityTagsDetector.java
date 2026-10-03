@@ -15,21 +15,24 @@
  */
 package io.micrometer.core.instrument;
 
-import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.jspecify.annotations.Nullable;
+
+import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Tries to detect high cardinality tags by checking if the amount of Meters with the same
@@ -39,9 +42,10 @@ import org.jspecify.annotations.Nullable;
  * tags. You can use this class in two ways:
  *
  * <ul>
- * <li>Call findFirst and check if you get any results, if so you probably have high
- * cardinality tags</li>
- * <li>Call start which will start a scheduled job that will do this check for you.</li>
+ * <li>Call {@code findFirstHighCardinalityMeterInfo} or
+ * {@code findAllHighCardinalityMeterInfo} and check if you get any results, if so, you
+ * probably have high cardinality tags.</li>
+ * <li>Call start which will start a scheduled job that will do the check for you.</li>
  * </ul>
  *
  * You can also utilize
@@ -67,9 +71,21 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private final Duration delay;
 
-    private Consumer<HighCardinalityMeterInfo> meterInfoConsumer;
+    private Consumer<HighCardinalityMeterInfo> firstMeterInfoConsumer;
+
+    private @Nullable Consumer<List<HighCardinalityMeterInfo>> allMeterInfoConsumer;
 
     private final ScheduledExecutorService scheduledExecutorService;
+
+    /**
+     * Creates a builder for {@code HighCardinalityTagsDetector}.
+     * @param registry registry
+     * @return builder instance
+     * @since 1.18.0
+     */
+    public static Builder builder(MeterRegistry registry) {
+        return new Builder(registry);
+    }
 
     /**
      * @param registry The registry to use to check the Meters in it
@@ -100,7 +116,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @param meterNameConsumer The action to execute if the first high cardinality tag is
      * found
      * @deprecated since 1.16.0, use
-     * {@link Builder#highCardinalityMeterInfoConsumer(Consumer)} instead.
+     * {@link Builder#firstHighCardinalityMeterInfoConsumer(Consumer)} instead.
      */
     @Deprecated
     public HighCardinalityTagsDetector(MeterRegistry registry, long threshold, Duration delay,
@@ -109,10 +125,10 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         this.threshold = threshold;
         this.delay = delay;
         if (meterNameConsumer != null) {
-            this.meterInfoConsumer = (meterInfo) -> meterNameConsumer.accept(meterInfo.getName());
+            this.firstMeterInfoConsumer = (meterInfo) -> meterNameConsumer.accept(meterInfo.getName());
         }
         else {
-            this.meterInfoConsumer = this::logWarning;
+            this.firstMeterInfoConsumer = this::logWarning;
         }
         this.scheduledExecutorService = Executors
             .newSingleThreadScheduledExecutor(new NamedThreadFactory("high-cardinality-tags-detector"));
@@ -143,7 +159,15 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private void detectHighCardinalityTags() {
         try {
-            findFirstHighCardinalityMeterInfo().ifPresent(this.meterInfoConsumer);
+            if (allMeterInfoConsumer != null) {
+                List<HighCardinalityMeterInfo> highCardinalityMeterInfo = findAllHighCardinalityMeterInfo();
+                if (!highCardinalityMeterInfo.isEmpty()) {
+                    this.allMeterInfoConsumer.accept(highCardinalityMeterInfo);
+                }
+            }
+            else {
+                findFirstHighCardinalityMeterInfo().ifPresent(this.firstMeterInfoConsumer);
+            }
         }
         catch (Exception exception) {
             LOGGER.warn("Something went wrong during high cardinality tag detection", exception);
@@ -154,7 +178,9 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * Finds the name of the first Meter that potentially has high cardinality tags.
      * @return the name of the first Meter that potentially has high cardinality tags, an
      * empty Optional if none found.
+     * @deprecated since 1.18.0, use {@link #findFirstHighCardinalityMeterInfo()} instead.
      */
+    @Deprecated
     public Optional<String> findFirst() {
         return findFirstHighCardinalityMeterInfo().map(HighCardinalityMeterInfo::getName);
     }
@@ -167,6 +193,21 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @since 1.16.0
      */
     public Optional<HighCardinalityMeterInfo> findFirstHighCardinalityMeterInfo() {
+        return getHighCardinalityMeterInfoStream().findFirst();
+    }
+
+    /**
+     * Finds all the {@code HighCardinalityMeterInfo} of the Meters that potentially have
+     * high cardinality tags.
+     * @return all the {@code HighCardinalityMeterInfo} of the Meters that potentially
+     * have high cardinality tags, or an empty List if none found.
+     * @since 1.18.0
+     */
+    public List<HighCardinalityMeterInfo> findAllHighCardinalityMeterInfo() {
+        return getHighCardinalityMeterInfoStream().collect(Collectors.toList());
+    }
+
+    private Stream<HighCardinalityMeterInfo> getHighCardinalityMeterInfoStream() {
         Map<String, Long> meterNameFrequencies = new LinkedHashMap<>();
         for (Meter meter : this.registry.getMeters()) {
             meterNameFrequencies.compute(meter.getId().getName(), (k, v) -> v == null ? 1 : v + 1);
@@ -174,8 +215,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         return meterNameFrequencies.entrySet()
             .stream()
             .filter((entry) -> entry.getValue() > this.threshold)
-            .map((entry) -> new HighCardinalityMeterInfo(entry.getKey(), entry.getValue()))
-            .findFirst();
+            .map((entry) -> new HighCardinalityMeterInfo(entry.getKey(), entry.getValue()));
     }
 
     private void logWarning(HighCardinalityMeterInfo meterInfo) {
@@ -209,12 +249,17 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
         private Duration delay = DEFAULT_DELAY;
 
-        private @Nullable Consumer<HighCardinalityMeterInfo> highCardinalityMeterInfoConsumer;
+        private @Nullable Consumer<HighCardinalityMeterInfo> firstMeterInfoConsumer;
+
+        private @Nullable Consumer<List<HighCardinalityMeterInfo>> allMeterInfoConsumer;
 
         /**
          * Create a {@code Builder}.
          * @param registry registry
+         * @deprecated since 1.18.0, use
+         * {@link HighCardinalityTagsDetector#builder(MeterRegistry)} instead.
          */
+        @Deprecated
         public Builder(MeterRegistry registry) {
             this.registry = registry;
         }
@@ -240,14 +285,41 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         }
 
         /**
-         * Set {@code HighCardinalityMeterInfo} {@link Consumer}.
-         * @param highCardinalityMeterInfoConsumer {@code HighCardinalityMeterInfo}
-         * {@code Consumer}
+         * Set {@link Consumer} of the first {@code HighCardinalityMeterInfo}.
+         * @param firstMeterInfoConsumer {@link Consumer} of the first
+         * {@code HighCardinalityMeterInfo}
          * @return this builder
+         * @deprecated since 1.18.0, use
+         * {@link Builder#firstHighCardinalityMeterInfoConsumer(Consumer)} instead.
          */
-        public Builder highCardinalityMeterInfoConsumer(
-                Consumer<HighCardinalityMeterInfo> highCardinalityMeterInfoConsumer) {
-            this.highCardinalityMeterInfoConsumer = highCardinalityMeterInfoConsumer;
+        @Deprecated
+        public Builder highCardinalityMeterInfoConsumer(Consumer<HighCardinalityMeterInfo> firstMeterInfoConsumer) {
+            return firstHighCardinalityMeterInfoConsumer(firstMeterInfoConsumer);
+        }
+
+        /**
+         * Set {@link Consumer} of the first {@code HighCardinalityMeterInfo}.
+         * @param firstMeterInfoConsumer {@link Consumer} of the first
+         * {@code HighCardinalityMeterInfo}
+         * @return this builder
+         * @since 1.18.0
+         */
+        public Builder firstHighCardinalityMeterInfoConsumer(
+                Consumer<HighCardinalityMeterInfo> firstMeterInfoConsumer) {
+            this.firstMeterInfoConsumer = firstMeterInfoConsumer;
+            return this;
+        }
+
+        /**
+         * Set {@link Consumer} of all the {@code HighCardinalityMeterInfo}.
+         * @param allMeterInfoConsumer {@code Consumer} of all the
+         * {@code HighCardinalityMeterInfo}
+         * @return this builder
+         * @since 1.18.0
+         */
+        public Builder allHighCardinalityMeterInfoConsumer(
+                Consumer<List<HighCardinalityMeterInfo>> allMeterInfoConsumer) {
+            this.allMeterInfoConsumer = allMeterInfoConsumer;
             return this;
         }
 
@@ -258,9 +330,18 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         public HighCardinalityTagsDetector build() {
             HighCardinalityTagsDetector highCardinalityTagsDetector = new HighCardinalityTagsDetector(this.registry,
                     this.threshold, this.delay);
-            if (this.highCardinalityMeterInfoConsumer != null) {
-                highCardinalityTagsDetector.meterInfoConsumer = this.highCardinalityMeterInfoConsumer;
+
+            if (this.firstMeterInfoConsumer != null && this.allMeterInfoConsumer != null) {
+                throw new IllegalArgumentException(
+                        "Both firstHighCardinalityMeterInfoConsumer and allHighCardinalityMeterInfoConsumer cannot be set, you need to choose one.");
             }
+            else if (this.firstMeterInfoConsumer != null) {
+                highCardinalityTagsDetector.firstMeterInfoConsumer = this.firstMeterInfoConsumer;
+            }
+            else if (this.allMeterInfoConsumer != null) {
+                highCardinalityTagsDetector.allMeterInfoConsumer = this.allMeterInfoConsumer;
+            }
+
             return highCardinalityTagsDetector;
         }
 

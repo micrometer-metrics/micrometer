@@ -102,6 +102,20 @@ This can be useful for:
 - Collecting metrics about high cardinality detections
 - Triggering any kind of custom actions
 
+=== Custom Consumer for all Meters with High Cardinality
+
+It's also possible to provide a `Consumer<List<HighCardinalityMeterInfo>>` to handle all meters with high cardinality:
+
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=custom_all_consumer_config,indent=0]
+----
+And here's an example implementation:
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=custom_all_consumer,indent=0]
+----
+
 == Preventing High Cardinality
 
 When the detector identifies high cardinality tags, consider the following possible solutions:
