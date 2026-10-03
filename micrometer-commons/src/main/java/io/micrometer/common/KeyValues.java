@@ -210,7 +210,8 @@ public final class KeyValues implements Iterable<KeyValue> {
         if (isEmptyVarargs(keyValues)) {
             return this;
         }
-        return and(toKeyValues(keyValues));
+        // copy: toKeyValues sorts and deduplicates in place and keeps the array
+        return and(toKeyValues(Arrays.copyOf(keyValues, keyValues.length)));
     }
 
     /**

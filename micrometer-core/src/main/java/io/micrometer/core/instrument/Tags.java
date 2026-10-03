@@ -206,7 +206,8 @@ public final class Tags implements Iterable<Tag> {
         if (blankVarargs(tags)) {
             return this;
         }
-        return and(toTags(tags));
+        // copy: toTags sorts and deduplicates in place and keeps the array
+        return and(toTags(Arrays.copyOf(tags, tags.length)));
     }
 
     /**
