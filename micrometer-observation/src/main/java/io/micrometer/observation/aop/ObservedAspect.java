@@ -161,7 +161,8 @@ public class ObservedAspect {
             Object result = pjp.proceed();
             if (result != null && CompletionStage.class.isAssignableFrom(method.getReturnType())) {
                 CompletionStage<?> stage = (CompletionStage<?>) result;
-                return stage.whenComplete((res, error) -> stopObservation(observation, pjp, res, error));
+                stage.whenComplete((res, error) -> stopObservation(observation, pjp, res, error));
+                return result;
             }
             stopObservation(observation, pjp, result, null);
             return result;
