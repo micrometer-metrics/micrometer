@@ -50,6 +50,7 @@ class VirtualThreadMetricsJdk24Tests {
     void parallelism() {
         int expectedParallelism = Runtime.getRuntime().availableProcessors();
         assertThat(registry.get("jvm.threads.virtual.parallelism").gauge().value()).isEqualTo(expectedParallelism);
+        assertThat(registry.get("jvm.threads.virtual.parallelism").gauge().getId().getBaseUnit()).isEqualTo("threads");
     }
 
     @Test
