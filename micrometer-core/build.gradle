@@ -304,3 +304,10 @@ tasks.register("openj9ConcurrentScavengeTest", Test) {
 
     jvmArgs '-Xgc:concurrentScavenge'
 }
+
+dockerTest {
+    systemProperty 'kafka-image.name', dockerImage('kafka')
+    systemProperty 'mongo-image.name', dockerImage('mongo')
+    systemProperty 'postgres-oldest-image.name', dockerImage('postgres-oldest')
+    systemProperty 'postgres-latest-image.name', dockerImage('postgres-latest')
+}
