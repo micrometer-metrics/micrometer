@@ -542,7 +542,7 @@ class KafkaMetricsTest {
         assertThat(registry.getMeters()).hasSize(1);
 
         kafkaMetricMap.clear();
-        registry.forEachMeter(m -> registry.remove(m));
+        registry.forEachMeter(registry::remove);
         kafkaMetrics.checkAndBindMetrics(registry);
         assertThat(registry.getMeters()).hasSize(0);
     }

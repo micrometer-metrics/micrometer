@@ -866,7 +866,7 @@ public abstract class MeterRegistry {
      */
     @Incubating(since = "1.2.0")
     public void clear() {
-        meterMap.keySet().forEach(id -> remove(id));
+        meterMap.keySet().forEach(this::remove);
     }
 
     /**

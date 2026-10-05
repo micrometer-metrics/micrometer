@@ -104,11 +104,8 @@ public class TestObservationRegistryAssert
         TestObservationRegistry.TestObservationContext testObservationContext = contexts.stream()
             .filter(mock -> Objects.equals(name, mock.getContext().getName()))
             .findFirst()
-            .orElseGet(() -> {
-                failWithMessage("There are no observations with name equal to <%s>. Available names are <%s>", name,
-                        observationNames(contexts));
-                return null;
-            });
+            .orElseThrow(() -> failure("There are no observations with name equal to <%s>. Available names are <%s>",
+                    name, observationNames(contexts)));
         return new That(testObservationContext, this);
     }
 
@@ -135,12 +132,9 @@ public class TestObservationRegistryAssert
         TestObservationRegistry.TestObservationContext testObservationContext = contexts.stream()
             .filter(mock -> name != null && name.equalsIgnoreCase(mock.getContext().getName()))
             .findFirst()
-            .orElseGet(() -> {
-                failWithMessage(
-                        "There are no observations with name equal to ignoring case <%s>. Available names are <%s>",
-                        name, observationNames(contexts));
-                return null;
-            });
+            .orElseThrow(() -> failure(
+                    "There are no observations with name equal to ignoring case <%s>. Available names are <%s>", name,
+                    observationNames(contexts)));
         return new That(testObservationContext, this);
     }
 
