@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests for {@link DynatraceLongTaskTimer}.
  */
+@SuppressWarnings("FutureReturnValueIgnored")
 class DynatraceLongTaskTimerTest {
 
     private static final Meter.Id ID = new Meter.Id("test.id", Tags.empty(), "1", "desc",

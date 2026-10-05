@@ -146,7 +146,7 @@ class CountedAspectTest {
             this.clazz = clazz;
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
         <T extends MeterTagClassInterface> T newInstance() {
             try {
                 return (T) clazz.getDeclaredConstructor().newInstance();

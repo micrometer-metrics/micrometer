@@ -105,6 +105,7 @@ class JvmThreadDeadlockMetricsTest {
                     lock2.lockInterruptibly();
                 }
                 catch (InterruptedException ignored) {
+                    // thread interrupted as expected
                 }
             });
         }

@@ -22,6 +22,7 @@ import java.time.Duration;
 import static io.micrometer.core.instrument.config.validate.DurationValidator.validate;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("CanonicalDuration")
 class DurationValidatorTest {
 
     @Test

@@ -55,6 +55,7 @@ class GuavaCacheMetricsCompatibilityKit extends CacheMeterBinderCompatibilityKit
                 cache.get(key);
             }
             catch (ExecutionException ignored) {
+                // best effort cache load
             }
         }
     }

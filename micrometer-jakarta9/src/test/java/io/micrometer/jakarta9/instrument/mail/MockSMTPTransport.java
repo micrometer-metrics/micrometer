@@ -26,6 +26,7 @@ import static org.mockito.Mockito.mock;
  *
  * @author famaridon
  */
+@SuppressWarnings("DirectInvocationOnMock")
 public class MockSMTPTransport extends Transport {
 
     // Needs to be static since it is created by the Java Mail implementation,

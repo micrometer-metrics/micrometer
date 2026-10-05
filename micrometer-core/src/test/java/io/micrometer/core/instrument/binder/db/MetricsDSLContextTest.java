@@ -88,7 +88,8 @@ class MetricsDSLContextTest {
 
             failBecauseExceptionWasNotThrown(DataAccessException.class);
         }
-        catch (DataAccessException ignored) {
+        catch (DataAccessException expected) {
+            // expected exception from faulty query
         }
 
         assertThat(meterRegistry.get("jooq.query")
