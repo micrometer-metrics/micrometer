@@ -114,6 +114,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
+    @SuppressWarnings("FutureReturnValueIgnored")
     void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
         PutMetricDataRequest putMetricDataRequest = PutMetricDataRequest.builder()
             .namespace(config.namespace())

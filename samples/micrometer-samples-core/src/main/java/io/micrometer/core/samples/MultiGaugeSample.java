@@ -74,11 +74,11 @@ public class MultiGaugeSample {
             this.temperature = temperature;
         }
 
-        public Room getRoom() {
+        Room getRoom() {
             return room;
         }
 
-        public double getTemperature() {
+        double getTemperature() {
             return temperature;
         }
 

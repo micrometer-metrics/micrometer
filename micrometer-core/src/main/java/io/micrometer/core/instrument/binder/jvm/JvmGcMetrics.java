@@ -177,6 +177,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     notificationEmitter.removeNotificationListener(gcNotificationListener);
                 }
                 catch (ListenerNotFoundException ignore) {
+                    // best effort listener removal
                 }
             });
         }

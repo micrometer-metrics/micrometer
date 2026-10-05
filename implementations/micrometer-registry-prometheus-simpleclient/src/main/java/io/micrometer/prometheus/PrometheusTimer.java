@@ -51,6 +51,7 @@ public class PrometheusTimer extends AbstractTimer {
 
     private final HistogramFlavor histogramFlavor;
 
+    @SuppressWarnings("HidingField")
     private final @Nullable Histogram histogram;
 
     private final @Nullable ExemplarSampler exemplarSampler;
@@ -120,6 +121,7 @@ public class PrometheusTimer extends AbstractTimer {
 
     // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
     @RequiresNonNull({ "exemplarSampler", "lastExemplar" })
+    @SuppressWarnings("ReferenceEquality")
     private void updateLastExemplar(double amount) {
         Exemplar prev;
         Exemplar next;

@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
  * @since 1.5.0
  */
 @Incubating(since = "1.5.0")
+@SuppressWarnings("ImmutableEnumChecker")
 public enum DurationValidator {
 
     /**

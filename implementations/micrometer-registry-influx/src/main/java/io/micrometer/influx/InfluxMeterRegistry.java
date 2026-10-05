@@ -94,6 +94,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return new Builder(config);
     }
 
+    @SuppressWarnings("JdkObsolete")
     private void createDatabaseIfNecessary() {
         if (!config.autoCreateDb() || databaseExists || config.apiVersion() == InfluxApiVersion.V2)
             return;

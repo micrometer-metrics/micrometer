@@ -77,7 +77,7 @@ public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
 
     private class StepExponentialHistogramSnapShot extends StepValue<ExponentialHistogramSnapShot> {
 
-        public StepExponentialHistogramSnapShot(final Clock clock, final long stepMillis, final int maxScale) {
+        StepExponentialHistogramSnapShot(final Clock clock, final long stepMillis, final int maxScale) {
             super(clock, stepMillis, DefaultExponentialHistogramSnapShot.getEmptySnapshotForScale(maxScale));
         }
 

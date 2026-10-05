@@ -397,6 +397,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             case TIMER:
                 promType = Collector.Type.SUMMARY;
                 break;
+            default:
+                break;
         }
 
         final Collector.Type finalPromType = promType;
@@ -426,6 +428,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                     break;
                                 case DURATION:
                                     name += "_duration_sum";
+                                    break;
+                                default:
                                     break;
                             }
 

@@ -33,6 +33,7 @@ public class KafkaMetricsSample {
 
     private static final String TOPIC = "my-example-topic";
 
+    @SuppressWarnings("FutureReturnValueIgnored")
     public static void main(String[] args) throws Exception {
         EphemeralKafkaBroker broker = EphemeralKafkaBroker.create();
         broker.start();
