@@ -88,9 +88,9 @@ class DefaultLongTaskTimerTest {
 
         assertThat(sample2.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(1));
         assertThat(ltt.activeTasks()).isEqualTo(3);
-        assertThat(sample3.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(0));
+        assertThat(sample3.stop()).isEqualTo(0L);
         assertThat(ltt.activeTasks()).isEqualTo(2);
-        assertThat(sample4.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(0));
+        assertThat(sample4.stop()).isEqualTo(0L);
         assertThat(ltt.activeTasks()).isEqualTo(1);
         assertThat(sample1.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(1));
         assertThat(ltt.activeTasks()).isEqualTo(0);

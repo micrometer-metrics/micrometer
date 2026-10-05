@@ -170,7 +170,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             return hasArtificialZeroPercentile(id) ? DENY : NEUTRAL;
         }
 
-        public void addMeterId(Meter.Id id) {
+        void addMeterId(Meter.Id id) {
             metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
         }
 

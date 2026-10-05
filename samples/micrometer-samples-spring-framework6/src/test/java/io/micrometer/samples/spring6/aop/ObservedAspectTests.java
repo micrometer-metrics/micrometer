@@ -56,6 +56,7 @@ import static org.awaitility.Awaitility.await;
 /**
  * {@link ObservedAspect} tests.
  */
+@SuppressWarnings({ "FutureReturnValueIgnored", "TypeParameterUnusedInFormals" })
 class ObservedAspectTests {
 
     private final TestObservationRegistry registry = TestObservationRegistry.create();

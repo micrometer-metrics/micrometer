@@ -146,6 +146,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                     notificationEmitter.removeNotificationListener(notificationListener);
                 }
                 catch (ListenerNotFoundException ignore) {
+                    // best effort listener removal
                 }
             });
         }

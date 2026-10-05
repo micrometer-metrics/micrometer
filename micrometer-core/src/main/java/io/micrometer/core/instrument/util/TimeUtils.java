@@ -241,6 +241,7 @@ public final class TimeUtils {
         throw new DateTimeParseException("Unable to parse " + time + " into duration", timeLower, 0);
     }
 
+    @SuppressWarnings("JavaDurationGetSecondsGetNano")
     public static String format(Duration duration) {
         int totalSeconds = (int) (duration.toMillis() / 1000);
         int seconds = totalSeconds % 60;

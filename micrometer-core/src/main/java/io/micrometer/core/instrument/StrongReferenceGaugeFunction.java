@@ -30,7 +30,7 @@ class StrongReferenceGaugeFunction<T> implements ToDoubleFunction<T> {
      * <p>
      * If obj is {@code null} initially then this gauge will not be reported.
      */
-    @SuppressWarnings("FieldCanBeLocal")
+    @SuppressWarnings({ "FieldCanBeLocal", "UnusedVariable" })
     private final T obj;
 
     private final ToDoubleFunction<T> f;

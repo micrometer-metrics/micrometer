@@ -450,6 +450,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 case UNKNOWN:
                     pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.gauge(ms.getValue(), stat)));
                     break;
+                default:
+                    break;
             }
         });
         return new DefaultMeter(id, type, measurements);

@@ -515,7 +515,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             .publishPercentileHistogram()
             .register(registryWithExponentialHistogram);
         timer.record(Duration.ofMillis(100));
-        timer.record(Duration.ofMillis(1000));
+        timer.record(Duration.ofSeconds(1));
 
         List<MetricData> metrics = writeToMetrics(timer);
         MetricData metric = metrics.stream()
@@ -539,7 +539,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         long previousEndTime = exponentialHistogramDataPoint.getEpochNanos();
 
         clock.add(exponentialHistogramOtlpConfig().step());
-        timer.record(Duration.ofMillis(10000));
+        timer.record(Duration.ofSeconds(10));
 
         metrics = writeToMetrics(timer);
         metric = metrics.stream()

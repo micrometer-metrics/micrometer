@@ -329,6 +329,7 @@ class DynatraceExporterV2Test {
 
     @Issue("#3985")
     @Test
+    @SuppressWarnings("FutureReturnValueIgnored")
     void longTaskTimerWithSingleValueExportsConsistentData() throws InterruptedException {
         // In the past, there were problems with the LongTaskTimer: In cases where only
         // one value was exported, the max and duration were read sequentially while the
@@ -374,6 +375,7 @@ class DynatraceExporterV2Test {
 
     @Issue("#3985")
     @Test
+    @SuppressWarnings("FutureReturnValueIgnored")
     void longTaskTimerWithMultipleValuesExportsConsistentData() throws InterruptedException {
         // For this test we need to use the system clock.
         // See longTaskTimerWithSingleValueExportsConsistentData for more info

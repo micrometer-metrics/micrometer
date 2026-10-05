@@ -548,11 +548,11 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .publishPercentileHistogram()
             .register(registryWithExponentialHistogram);
         timer.record(Duration.ofMillis(100));
-        timer.record(Duration.ofMillis(1000));
+        timer.record(Duration.ofSeconds(1));
 
         clock.add(exponentialHistogramOtlpConfig().step());
         registryWithExponentialHistogram.publish();
-        timer.record(Duration.ofMillis(10000));
+        timer.record(Duration.ofSeconds(10));
 
         MetricData metric = writeToMetric(timer);
         assertThat(metric.getExponentialHistogramData().getPoints()).isNotEmpty();

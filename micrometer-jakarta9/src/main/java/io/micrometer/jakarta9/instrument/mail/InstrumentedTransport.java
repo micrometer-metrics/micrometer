@@ -72,7 +72,7 @@ public class InstrumentedTransport extends Transport {
     }
 
     @Override
-    public void connect(String host, int port, String user, String password) throws MessagingException {
+    public synchronized void connect(String host, int port, String user, String password) throws MessagingException {
         this.delegate.connect(host, port, user, password);
         this.host = host;
         this.port = port;

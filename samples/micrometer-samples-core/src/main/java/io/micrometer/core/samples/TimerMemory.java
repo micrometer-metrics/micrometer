@@ -28,10 +28,8 @@ public class TimerMemory {
     public static void main(String[] args) throws InterruptedException {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
-        Timer t = null;
-
         for (Integer i = 0; i < 80; i++) {
-            t = Timer.builder("my.timer")
+            Timer.builder("my.timer")
                 .tag("index", i.toString())
                 // .publishPercentileHistogram()
                 .serviceLevelObjectives(Stream.of(1, 150, 300, 500, 900, 1000, 1200, 1500, 2000, 3000, 4000)

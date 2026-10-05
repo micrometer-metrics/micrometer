@@ -43,6 +43,7 @@ public class OpenTSDBTimer extends AbstractTimer {
 
     private final TimeWindowMax max;
 
+    @SuppressWarnings("HidingField")
     private final @Nullable Histogram histogram;
 
     OpenTSDBTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,

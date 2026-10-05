@@ -368,6 +368,7 @@ class ObservationInstrumentingTests {
             }
 
             @Override
+            @SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
             public <T> T readValue(Map sourceContext, Object key) {
                 return (T) sourceContext.getOrDefault(key, null);
             }

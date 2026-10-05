@@ -118,6 +118,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void start(ThreadFactory threadFactory) {
         super.start(threadFactory);
 

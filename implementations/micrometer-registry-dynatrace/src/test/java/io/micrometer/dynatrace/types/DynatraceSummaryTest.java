@@ -76,6 +76,7 @@ class DynatraceSummaryTest {
     }
 
     @Test
+    @SuppressWarnings("FutureReturnValueIgnored")
     void testConcurrentAdds() throws InterruptedException {
         DynatraceSummary summary = new DynatraceSummary();
 

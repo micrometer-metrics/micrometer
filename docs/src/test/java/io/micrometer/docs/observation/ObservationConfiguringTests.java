@@ -28,6 +28,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 /**
  * Sources for observation-components.adoc
  */
+@SuppressWarnings("PatternMatchingInstanceof")
 class ObservationConfiguringTests {
 
     void yourCodeToMeasure() {
