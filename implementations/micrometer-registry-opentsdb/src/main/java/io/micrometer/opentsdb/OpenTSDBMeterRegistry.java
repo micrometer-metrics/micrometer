@@ -368,6 +368,8 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
                 case DURATION:
                     name += ".duration.sum";
                     break;
+                default:
+                    break;
             }
 
             return new OpenTSDBMetricBuilder().field("metric", name)

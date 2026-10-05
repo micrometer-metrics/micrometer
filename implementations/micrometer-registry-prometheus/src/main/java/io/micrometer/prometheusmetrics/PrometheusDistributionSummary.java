@@ -43,6 +43,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
 
     private final TimeWindowMax max;
 
+    @SuppressWarnings("HidingField")
     private final @Nullable Histogram histogram;
 
     private final @Nullable ExemplarSampler exemplarSampler;

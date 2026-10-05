@@ -80,7 +80,9 @@ public class CountedAspect {
 
     private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(CountedAspect.class);
 
-    private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
+    private static boolean dontSkipAnything(ProceedingJoinPoint pjp) {
+        return false;
+    }
 
     public final String DEFAULT_EXCEPTION_TAG_VALUE = KeyValue.NONE_VALUE;
 
@@ -130,7 +132,7 @@ public class CountedAspect {
      * @param registry Where we're going to register metrics.
      */
     public CountedAspect(MeterRegistry registry) {
-        this(registry, DONT_SKIP_ANYTHING);
+        this(registry, CountedAspect::dontSkipAnything);
     }
 
     /**
@@ -140,7 +142,7 @@ public class CountedAspect {
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
      */
     public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
-        this(registry, tagsBasedOnJoinPoint, DONT_SKIP_ANYTHING);
+        this(registry, tagsBasedOnJoinPoint, CountedAspect::dontSkipAnything);
     }
 
     /**

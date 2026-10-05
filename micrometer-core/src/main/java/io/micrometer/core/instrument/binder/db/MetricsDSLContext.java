@@ -99,7 +99,7 @@ public class MetricsDSLContext extends DefaultDSLContext {
         return configuration.derive(newProviders);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
     public <O> O timeCoercable(Object o) {
         return (O) time((Query) o);
     }

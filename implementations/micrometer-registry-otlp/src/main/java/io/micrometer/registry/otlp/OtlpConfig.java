@@ -203,6 +203,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * Exporter headers configuration</a>
      * @since 1.11.0
      */
+    @SuppressWarnings("JdkObsolete")
     default Map<String, String> headers() {
         String headersString = getString(this, "headers").orElse(null);
 

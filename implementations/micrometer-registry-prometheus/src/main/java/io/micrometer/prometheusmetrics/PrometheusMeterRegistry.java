@@ -136,6 +136,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * @return the scrape body
      * @see ExpositionFormats
      */
+    @SuppressWarnings("JdkObsolete")
     public String scrape(String contentType) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
@@ -182,6 +183,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * designated for Prometheus to scrape from.
      * @see ExpositionFormats
      */
+    @SuppressWarnings("JdkObsolete")
     public String scrape(String contentType, @Nullable Set<String> includedNames) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {

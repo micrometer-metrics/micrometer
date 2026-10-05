@@ -221,6 +221,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                     mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener);
                 }
                 catch (InstanceNotFoundException | ListenerNotFoundException ignore) {
+                    // best effort listener removal
                 }
             });
         }

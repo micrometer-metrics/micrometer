@@ -71,7 +71,7 @@ class ObservationTestingTests {
                     });
             }
             catch (Exception ex) {
-
+                // ignore test exception
             }
         }
 

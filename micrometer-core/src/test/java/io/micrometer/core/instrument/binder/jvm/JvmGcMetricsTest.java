@@ -195,6 +195,7 @@ class JvmGcMetricsTest {
                     notificationEmitter.removeNotificationListener(capturingListener);
                 }
                 catch (ListenerNotFoundException ignore) {
+                    // best effort listener removal
                 }
             });
         }

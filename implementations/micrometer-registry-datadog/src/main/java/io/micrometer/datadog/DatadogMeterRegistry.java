@@ -263,6 +263,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      * Set up metric metadata once per time series
      */
     // VisibleForTesting
+    @SuppressWarnings("JdkObsolete")
     void postMetricMetadata(String metricName, DatadogMetricMetadata metadata) {
         // already posted the metadata for this metric, or no data to post
         if (metadata.editMetadataBody() == null || verifiedMetadata.contains(metricName)) {

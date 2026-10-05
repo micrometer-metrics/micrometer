@@ -38,8 +38,10 @@ public class AtlasUtils {
                 return duration;
             case MAX:
                 return max;
+            case UNKNOWN:
+            default:
+                return null;
         }
-        return null;
     }
 
 }

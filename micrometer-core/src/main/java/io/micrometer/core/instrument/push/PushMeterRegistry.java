@@ -101,6 +101,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         start(Executors.defaultThreadFactory());
     }
 
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void start(ThreadFactory threadFactory) {
         if (scheduledExecutorService != null)
             stop();

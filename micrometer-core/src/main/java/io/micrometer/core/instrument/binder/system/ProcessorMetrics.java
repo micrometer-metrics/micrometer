@@ -177,6 +177,7 @@ public class ProcessorMetrics implements MeterBinder {
                 return Class.forName(className);
             }
             catch (ClassNotFoundException ignore) {
+                // class not found on classpath
             }
         }
         return null;

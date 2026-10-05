@@ -359,6 +359,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
             mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener);
         }
         catch (InstanceNotFoundException | ListenerNotFoundException ignored) {
+            // best effort listener removal
         }
     }
 

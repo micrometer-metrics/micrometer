@@ -21,6 +21,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("UnusedVariable")
 class OtlpMeterRegistryCustomizationTest {
 
     @Test

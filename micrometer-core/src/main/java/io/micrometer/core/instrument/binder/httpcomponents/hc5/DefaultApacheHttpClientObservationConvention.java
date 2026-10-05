@@ -175,6 +175,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
                 return request.getUri();
             }
             catch (URISyntaxException ignored) {
+                // ignore invalid URI syntax
             }
         }
         return null;

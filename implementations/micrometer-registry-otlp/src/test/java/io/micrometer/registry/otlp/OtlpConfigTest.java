@@ -85,14 +85,14 @@ class OtlpConfigTest {
     void stepConfigTakesPrecedenceOverEnvVars() throws Exception {
         OtlpConfig config = k -> "10s";
         withEnvironmentVariable("OTEL_METRIC_EXPORT_INTERVAL", "20000")
-            .execute(() -> assertThat(config.step()).isEqualTo(Duration.ofMillis(10000)));
+            .execute(() -> assertThat(config.step()).isEqualTo(Duration.ofSeconds(10)));
     }
 
     @Test
     void stepUseEnvVarWhenConfigNotSet() throws Exception {
         OtlpConfig config = k -> null;
         withEnvironmentVariable("OTEL_METRIC_EXPORT_INTERVAL", "20000")
-            .execute(() -> assertThat(config.step()).isEqualTo(Duration.ofMillis(20000)));
+            .execute(() -> assertThat(config.step()).isEqualTo(Duration.ofSeconds(20)));
     }
 
     @Test

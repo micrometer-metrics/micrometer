@@ -75,6 +75,7 @@ class ObservationMessagingIntegrationTest {
     }
 
     @Test
+    @SuppressWarnings("FutureReturnValueIgnored")
     void shouldManageProducerAndConsumerMetrics() throws ExecutionException, InterruptedException, TimeoutException {
 
         // tag::registry_setup[]
@@ -132,7 +133,7 @@ class ObservationMessagingIntegrationTest {
         consumer.subscribe(Collections.singletonList(topic));
 
         // Consumer polls for a message
-        consumer.poll(Duration.ofMillis(1000));
+        consumer.poll(Duration.ofSeconds(1));
         // end::consumer_side[]
 
         // tag::test_assertions[]

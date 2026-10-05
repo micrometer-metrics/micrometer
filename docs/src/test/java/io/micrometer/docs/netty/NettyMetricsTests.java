@@ -158,10 +158,12 @@ class NettyMetricsTests {
         }
         // end::channelInstrumentation[]
 
+        @SuppressWarnings("UnusedVariable")
         private boolean isEventLoopInstrumented(EventLoop eventLoop) {
             return false;
         }
 
+        @SuppressWarnings("UnusedVariable")
         private boolean isAllocatorInstrumented(ByteBufAllocator allocator) {
             return false;
         }

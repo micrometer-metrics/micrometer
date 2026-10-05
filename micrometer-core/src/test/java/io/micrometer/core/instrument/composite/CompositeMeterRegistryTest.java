@@ -332,7 +332,7 @@ class CompositeMeterRegistryTest {
 
         Map<Meter.Id, Integer> publishCountById = new HashMap<>();
 
-        public CountingMeterRegistry() {
+        CountingMeterRegistry() {
             super(new StepRegistryConfig() {
                 @Override
                 public String prefix() {
@@ -358,11 +358,11 @@ class CompositeMeterRegistryTest {
             }
         }
 
-        public int count(Meter m) {
+        int count(Meter m) {
             return count(m.getId());
         }
 
-        public int count(Meter.Id id) {
+        int count(Meter.Id id) {
             return publishCountById.getOrDefault(id, 0);
         }
 

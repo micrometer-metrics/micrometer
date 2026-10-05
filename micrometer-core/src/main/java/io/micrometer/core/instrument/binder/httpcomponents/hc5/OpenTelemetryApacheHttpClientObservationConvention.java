@@ -257,6 +257,7 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
                 return request.getUri();
             }
             catch (URISyntaxException ignored) {
+                // ignore invalid URI syntax
             }
         }
         return null;

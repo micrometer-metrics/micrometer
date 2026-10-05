@@ -72,6 +72,7 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
     }
 
     // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
+    @SuppressWarnings("ReferenceEquality")
     private void updateExemplar(double amount, CounterExemplarSampler exemplarSampler) {
         Exemplar prev;
         Exemplar next;

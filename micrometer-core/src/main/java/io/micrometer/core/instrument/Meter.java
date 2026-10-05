@@ -278,6 +278,7 @@ public interface Meter {
         /**
          * @return A set of dimensions that allows you to break down the name.
          */
+        @SuppressWarnings("ReferenceEquality")
         public List<Tag> getTags() {
             if (this.tags == Tags.empty()) {
                 return Collections.emptyList();

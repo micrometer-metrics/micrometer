@@ -32,7 +32,6 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -64,7 +63,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         String clusterId = await().untilAtomic(clusterIdRef, notNullValue());
 
         // tag::example[]
-        mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", new Date()));
+        mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", "test"));
 
         Tags tags = Tags.of("cluster.id", clusterId, "server.address", String.format("%s:%s", host, port), "command",
                 "insert", "database", "test", "collection", "testCol", "status", "SUCCESS");
@@ -112,7 +111,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         assertThat(mongo).isNotNull();
         String clusterId = await().untilAtomic(clusterIdRef, notNullValue());
 
-        mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", new Date()));
+        mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", "test"));
         Tags tags = Tags.of("cluster.id", clusterId, "server.address", String.format("%s:%s", host, port), "command",
                 "insert", "database", "test", "collection", "testCol", "status", "SUCCESS", "mongoz", "5150");
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
@@ -160,7 +159,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
             commandThreadMap.put("insert",
                     new Thread(() -> requireNonNull(mongo).getDatabase("test")
                         .getCollection("testCol")
-                        .insertOne(new Document("testField", new Date()))));
+                        .insertOne(new Document("testField", "test"))));
 
             commandThreadMap.put("update",
                     new Thread(() -> requireNonNull(mongo).getDatabase("test")

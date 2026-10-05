@@ -135,7 +135,7 @@ class HighCardinalityTagsDetectorTests {
             this.name = name;
         }
 
-        public @Nullable String getName() {
+        @Nullable String getName() {
             return this.name;
         }
 

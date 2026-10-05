@@ -41,7 +41,6 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
 import java.net.SocketException;
-import java.util.function.Function;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.http.Fault.CONNECTION_RESET_BY_PEER;
@@ -61,7 +60,9 @@ class OkHttpObservationInterceptorTest {
 
     private static final String URI_EXAMPLE_VALUE = "uriExample";
 
-    private static final Function<Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
+    private static String uriMapper(@Nullable Request req) {
+        return URI_EXAMPLE_VALUE;
+    }
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
@@ -76,7 +77,7 @@ class OkHttpObservationInterceptorTest {
     private OkHttpObservationInterceptor.Builder defaultInterceptorBuilder() {
         return OkHttpObservationInterceptor.builder(observationRegistry, "okhttp.requests")
             .tags(KeyValues.of("foo", "bar"))
-            .uriMapper(URI_MAPPER);
+            .uriMapper(OkHttpObservationInterceptorTest::uriMapper);
     }
     // end::setup[]
 

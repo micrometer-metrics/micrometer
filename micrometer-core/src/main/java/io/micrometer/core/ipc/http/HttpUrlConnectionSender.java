@@ -114,6 +114,7 @@ public class HttpUrlConnectionSender implements HttpSender {
                 }
             }
             catch (IOException ignored) {
+                // best effort reading response body
             }
 
             return new Response(status, body);
@@ -125,6 +126,7 @@ public class HttpUrlConnectionSender implements HttpSender {
                 }
             }
             catch (Exception ignore) {
+                // best effort disconnect
             }
         }
     }

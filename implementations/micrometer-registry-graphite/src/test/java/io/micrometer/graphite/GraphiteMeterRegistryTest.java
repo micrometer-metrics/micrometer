@@ -49,6 +49,7 @@ class GraphiteMeterRegistryTest {
                 return port;
             }
             catch (Exception ignored) {
+                // port in use, try next
             }
         }
         throw new RuntimeException("no available UDP port");

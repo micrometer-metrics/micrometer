@@ -91,6 +91,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     }
 
     @Override
+    @SuppressWarnings("AmbiguousMethodReference")
     default Validated<?> validate() {
         return validate(this);
     }
@@ -101,6 +102,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      * @return validation result
      * @since 1.5.0
      */
+    @SuppressWarnings("AmbiguousMethodReference")
     static Validated<?> validate(PushRegistryConfig config) {
         return checkAll(config, check("step", PushRegistryConfig::step),
                 check("connectTimeout", PushRegistryConfig::connectTimeout),

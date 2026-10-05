@@ -108,13 +108,6 @@ abstract class AbstractPostgreSQLDatabaseMetricsIntegrationTest {
         final List<String> COUNTERS = Arrays.asList(BLOCKS_HITS, BLOCKS_READS, TRANSACTIONS, ROWS_FETCHED,
                 ROWS_INSERTED, ROWS_UPDATED, ROWS_DELETED, BUFFERS_CHECKPOINT);
 
-        /*
-         * the following counters are zero on a clean database and hard to increase
-         * reliably
-         */
-        final List<String> ZERO_COUNTERS = Arrays.asList(TEMP_WRITES, CHECKPOINTS_TIMED, CHECKPOINTS_REQUESTED,
-                BUFFERS_CLEAN, BUFFERS_BACKEND);
-
         for (String name : COUNTERS) {
             assertThat(get(name).functionCounter().count()).withFailMessage("Counter " + name + " is zero.")
                 .isGreaterThan(0);

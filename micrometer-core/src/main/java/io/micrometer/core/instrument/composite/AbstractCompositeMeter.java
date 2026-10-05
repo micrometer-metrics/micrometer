@@ -24,6 +24,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@SuppressWarnings("IdentityHashMapUsage")
 abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter implements CompositeMeter {
 
     private static final IdentityHashMap<MeterRegistry, Meter> EMPTY_CHILDREN = new IdentityHashMap<>(0);
@@ -60,8 +61,8 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
             return noopMeter;
         }
         else {
-            // noinspection ConstantConditions
-            return this.noopMeter = newNoopMeter();
+            this.noopMeter = newNoopMeter();
+            return this.noopMeter;
         }
     }
 
