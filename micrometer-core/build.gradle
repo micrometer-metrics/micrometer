@@ -221,11 +221,7 @@ dependencies {
     // Dependencies for @ClassPathExclusions
     testImplementation("org.junit.platform:junit-platform-engine")
     testImplementation(libs.junitPlatformLauncher)
-    testImplementation(libs.mavenResolverConnectorBasic)
-    testImplementation(libs.mavenResolverProvider) {
-        exclude(group: "javax.inject", module: "javax.inject")
-    }
-    testImplementation(libs.mavenResolverTransportHttp) {
+    testImplementation(libs.mavenResolverSupplier) {
         exclude group: "org.slf4j", module: "jcl-over-slf4j"
     }
     // gRPC
