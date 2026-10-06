@@ -180,6 +180,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         getMeters().stream()
             .filter(StepMeter.class::isInstance)
             .map(StepMeter.class::cast)
+            // filter needed due to https://github.com/uber/NullAway/issues/1808
             .filter(Objects::nonNull)
             .forEach(StepMeter::_closingRollover);
     }
