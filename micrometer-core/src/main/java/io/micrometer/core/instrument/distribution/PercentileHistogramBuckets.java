@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.distribution;
 
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.TreeSet;
 
 /**
@@ -78,10 +79,9 @@ public class PercentileHistogramBuckets {
      * @return The set of histogram buckets for use in computing aggregable percentiles.
      */
     public static NavigableSet<Double> buckets(DistributionStatisticConfig distributionStatisticConfig) {
-        Double min = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
-        Double max = distributionStatisticConfig.getMaximumExpectedValueAsDouble();
-        return PERCENTILE_BUCKETS.subSet(min == null ? 1.0 : min, true, max == null ? Double.POSITIVE_INFINITY : max,
-                true);
+        return PERCENTILE_BUCKETS.subSet(
+                Objects.requireNonNull(distributionStatisticConfig.getMinimumExpectedValueAsDouble()), true,
+                Objects.requireNonNull(distributionStatisticConfig.getMaximumExpectedValueAsDouble()), true);
     }
 
 }
