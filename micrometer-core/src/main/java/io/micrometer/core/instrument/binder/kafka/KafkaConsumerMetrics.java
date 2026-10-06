@@ -370,7 +370,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
                 MBeanServerNotification mbs2 = (MBeanServerNotification) notification2;
                 ObjectName o2 = mbs2.getMBeanName();
                 if (o2.equals(o)) {
-                    meters.forEach(registry::remove);
+                    meters.stream().forEach(registry::remove);
                 }
                 removeNotificationListener(this);
             }
