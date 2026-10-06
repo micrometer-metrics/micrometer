@@ -29,7 +29,9 @@ import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 /**
@@ -161,8 +163,27 @@ public class ObservedAspect {
             Object result = pjp.proceed();
             if (result != null && CompletionStage.class.isAssignableFrom(method.getReturnType())) {
                 CompletionStage<?> stage = (CompletionStage<?>) result;
-                stage.whenComplete((res, error) -> stopObservation(observation, pjp, res, error));
-                return result;
+                // AtomicBoolean ensures stopObservation is called exactly once when both
+                // paths race:
+                // normal/error completion via stage, and cancellation of the returned
+                // observed stage.
+                AtomicBoolean stopped = new AtomicBoolean(false);
+                CompletionStage<?> observedStage = stage.whenComplete((res, error) -> {
+                    if (stopped.compareAndSet(false, true)) {
+                        stopObservation(observation, pjp, res, error);
+                    }
+                });
+                // If observedStage is cancelled before stage completes,
+                // stage.whenComplete won't fire
+                // (dependent stage already done), so we must stop the observation
+                // directly here.
+                observedStage.whenComplete((res, error) -> {
+                    if (error instanceof CancellationException && stopped.compareAndSet(false, true)) {
+                        stage.toCompletableFuture().cancel(true);
+                        stopObservation(observation, pjp, res, error);
+                    }
+                });
+                return observed;
             }
             stopObservation(observation, pjp, result, null);
             return result;
