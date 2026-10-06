@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 VMware, Inc.
+ * Copyright 2026 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class HttpSenderTests {
         HttpSender sender = request -> {
             String authorization = request.getRequestHeaders().get("Authorization");
             assertThat(authorization).isNotNull().startsWith("Basic ");
-            String credentials = new String(Base64.getDecoder().decode(authorization.substring(6)),
+            String credentials = new String(Base64.getDecoder().decode(authorization.substring("Basic ".length())),
                     StandardCharsets.UTF_8);
             assertThat(credentials).isEqualTo("user:" + password);
             return new HttpSender.Response(200, null);
@@ -46,7 +46,8 @@ class HttpSenderTests {
     @NullAndEmptySource
     void basicAuthenticationAllowsEmptyPassword(@Nullable String password) throws Throwable {
         HttpSender sender = request -> {
-            assertThat(request.getRequestHeaders()).containsEntry("Authorization", "Basic dXNlcjo=");
+            assertThat(request.getRequestHeaders()).containsEntry("Authorization",
+                    "Basic " + Base64.getEncoder().encodeToString("user:".getBytes(StandardCharsets.UTF_8)));
             return new HttpSender.Response(200, null);
         };
 
