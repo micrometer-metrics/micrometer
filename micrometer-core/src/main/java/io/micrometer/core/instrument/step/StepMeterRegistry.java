@@ -28,6 +28,7 @@ import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -176,11 +177,11 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
      * Performs closing rollover on StepMeters.
      */
     private void closingRolloverStepMeters() {
-        for (Meter meter : getMeters()) {
-            if (meter instanceof StepMeter) {
-                ((StepMeter) meter)._closingRollover();
-            }
-        }
+        getMeters().stream()
+            .filter(StepMeter.class::isInstance)
+            .map(StepMeter.class::cast)
+            .filter(Objects::nonNull)
+            .forEach(StepMeter::_closingRollover);
     }
 
     /**
