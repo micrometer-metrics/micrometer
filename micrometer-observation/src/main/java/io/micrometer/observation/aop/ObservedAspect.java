@@ -183,7 +183,7 @@ public class ObservedAspect {
                         stopObservation(observation, pjp, res, error);
                     }
                 });
-                return observed;
+                return observedStage;
             }
             stopObservation(observation, pjp, result, null);
             return result;
