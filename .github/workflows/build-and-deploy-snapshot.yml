@@ -1,0 +1,241 @@
+name: Build and Deploy Snapshot
+on:
+  push:
+    branches: [ 'main', '[0-9]+.[0-9]+.x', 'release/**' ]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx4g"'
+jobs:
+  build-jdk21:
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ github.repository_owner == 'micrometer-metrics' }}
+    steps:
+      - name: "Check Out Code"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # 7.0.1
+        with:
+          fetch-depth: "0"
+          ref: "${{ github.ref }}"
+      - name: Setup Build
+        uses: ./.github/actions/setup-build
+        with:
+          java-version: 21
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      - name: Build
+        shell: bash
+        run: ./gradlew build -PtoolchainVersion=21
+      - name: Shenandoah Test
+        shell: bash
+        run: ./gradlew shenandoahTest -PtoolchainVersion=21
+      - name: ZGC Test
+        shell: bash
+        run: ./gradlew zgcTest -PtoolchainVersion=21
+      - name: Generational ZGC Test
+        shell: bash
+        run: ./gradlew zgcGenerationalTest -PtoolchainVersion=21
+      - name: Upload Build Reports
+        uses: ./.github/actions/upload-build-reports
+        if: ${{ failure() }}
+
+  build-jdk11:
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ github.repository_owner == 'micrometer-metrics' }}
+    steps:
+      - name: "Check Out Code"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # 7.0.1
+        with:
+          fetch-depth: "0"
+          ref: "${{ github.ref }}"
+      - name: Setup Build
+        uses: ./.github/actions/setup-build
+        with:
+          java-version: |-
+            11
+            25
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      - name: Build
+        shell: bash
+        run: ./gradlew build -PtoolchainVersion=11
+      - name: Upload Build Reports
+        uses: ./.github/actions/upload-build-reports
+        if: ${{ failure() }}
+
+  build-jdk17:
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ github.repository_owner == 'micrometer-metrics' }}
+    steps:
+      - name: "Check Out Code"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # 7.0.1
+        with:
+          fetch-depth: "0"
+          ref: "${{ github.ref }}"
+      - name: Setup Build
+        uses: ./.github/actions/setup-build
+        with:
+          java-version: 17
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      - name: Build
+        shell: bash
+        run: ./gradlew build -PtoolchainVersion=17
+      - name: Upload Build Reports
+        uses: ./.github/actions/upload-build-reports
+        if: ${{ failure() }}
+
+  build-jdk25:
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ github.repository_owner == 'micrometer-metrics' }}
+    steps:
+      - name: "Check Out Code"
+        uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # 7.0.0
+        with:
+          fetch-depth: "0"
+          ref: "${{ github.ref }}"
+      - name: Setup Build
+        uses: ./.github/actions/setup-build
+        with:
+          java-version: 25
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      - name: Build
+        shell: bash
+        run: ./gradlew build -PtoolchainVersion=25
+      - name: Generational Shenandoah Test
+        shell: bash
+        run: ./gradlew generationalShenandoahTest -PtoolchainVersion=25
+      - name: Upload Build Reports
+        uses: ./.github/actions/upload-build-reports
+        if: ${{ failure() }}
+
+  build-jdk26:
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ github.repository_owner == 'micrometer-metrics' }}
+    steps:
+      - name: "Check Out Code"
+        uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # 7.0.0
+        with:
+          fetch-depth: "0"
+          ref: "${{ github.ref }}"
+      - name: Setup Build
+        uses: ./.github/actions/setup-build
+        with:
+          java-version: 26
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      - name: Build
+        shell: bash
+        run: ./gradlew build -PtoolchainVersion=26
+      - name: Upload Build Reports
+        uses: ./.github/actions/upload-build-reports
+        if: ${{ failure() }}
+
+  docker-tests:
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ github.repository_owner == 'micrometer-metrics' }}
+    steps:
+      - name: "Check Out Code"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # 7.0.1
+        with:
+          fetch-depth: "0"
+          ref: "${{ github.ref }}"
+      - name: Setup Build
+        uses: ./.github/actions/setup-build
+        with:
+          java-version: 25
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      - name: Docker Test
+        shell: bash
+        run: ./gradlew dockerTest
+      - name: Upload Build Reports
+        uses: ./.github/actions/upload-build-reports
+        if: ${{ failure() }}
+
+  concurrency-tests:
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ github.repository_owner == 'micrometer-metrics' }}
+    steps:
+      - name: "Check Out Code"
+        uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # 7.0.0
+        with:
+          fetch-depth: "0"
+          ref: "${{ github.ref }}"
+      - name: Setup Build
+        uses: ./.github/actions/setup-build
+        with:
+          java-version: 25
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      - name: Concurrency Tests
+        run: ./gradlew jcstress
+      - name: Upload Build Reports
+        uses: ./.github/actions/upload-build-reports
+        if: ${{ failure() }}
+
+  stackdriver-it:
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ github.repository_owner == 'micrometer-metrics' }}
+    steps:
+      - name: "Check Out Code"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # 7.0.1
+        with:
+          fetch-depth: "0"
+          ref: "${{ github.ref }}"
+      - name: Setup Build
+        uses: ./.github/actions/setup-build
+        with:
+          java-version: 25
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      - name: StackDriver Integration Tests
+        env:
+          GOOGLE_CLOUD_SERVICE_KEY_B64: ${{ secrets.GOOGLE_CLOUD_SERVICE_KEY_B64 }}
+          GOOGLE_CLOUD_PROJECT_ID: ${{ secrets.GOOGLE_CLOUD_PROJECT_ID }}
+        run: |
+          echo $GOOGLE_CLOUD_SERVICE_KEY_B64 | base64 --decode > $HOME/gcloud-service-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud-service-key.json
+          ./gradlew stackdriverTest
+      - name: Upload Build Reports
+        uses: ./.github/actions/upload-build-reports
+        if: ${{ failure() }}
+
+  deploy:
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
+    if: ${{ github.repository_owner == 'micrometer-metrics' }}
+    needs: [ build-jdk25, build-jdk11, build-jdk17, build-jdk21, build-jdk26, docker-tests, concurrency-tests, stackdriver-it ]
+    steps:
+      - name: "Check Out Code"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # 7.0.1
+        with:
+          fetch-depth: "0"
+          ref: "${{ github.ref }}"
+      - name: Setup Build
+        uses: ./.github/actions/setup-build
+        with:
+          java-version: 25
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      - name: Setup Deploy Parameters
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" == release/* ]]; then
+            echo "DEPLOY_OPTS=publishNebulaPublicationToCommercialSnapshotRepository -Prelease.version=$RELEASE_VERSION -Prelease.ignoreSuppliedVersionVerification=true" >> "$GITHUB_ENV"
+            echo "ORG_GRADLE_PROJECT_COMMERCIAL_ARTIFACTORY_URL=${{ secrets.COMMERCIAL_ARTIFACTORY_URL }}" >> "$GITHUB_ENV"
+            echo "ORG_GRADLE_PROJECT_COMMERCIAL_ARTIFACTORY_USERNAME=${{ secrets.COMMERCIAL_ARTIFACTORY_USERNAME }}" >> "$GITHUB_ENV"
+            echo "ORG_GRADLE_PROJECT_COMMERCIAL_ARTIFACTORY_PASSWORD=${{ secrets.COMMERCIAL_ARTIFACTORY_PASSWORD }}" >> "$GITHUB_ENV"
+          else
+            echo "DEPLOY_OPTS=publishNebulaPublicationToSnapshotRepository" >> "$GITHUB_ENV"
+            echo "ORG_GRADLE_PROJECT_ARTIFACTORY_USERNAME=${{ secrets.ARTIFACTORY_USERNAME }}" >> "$GITHUB_ENV"
+            echo "ORG_GRADLE_PROJECT_ARTIFACTORY_PASSWORD=${{ secrets.ARTIFACTORY_PASSWORD }}" >> "$GITHUB_ENV"
+          fi
+      - name: Deploy Info
+        shell: bash
+        run: |
+          echo 'Deploy Opts: ${{ env.DEPLOY_OPTS }}'
+      - name: Deploy
+        shell: bash
+        env:
+          ORG_GRADLE_PROJECT_SIGNING_KEYID: ${{ secrets.GPG_KEYID }}
+          ORG_GRADLE_PROJECT_SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
+        run: ./gradlew snapshot ${{ env.DEPLOY_OPTS }} -Prelease.stage=SNAPSHOT --stacktrace --console=plain -x test
+      - name: Upload Build Reports
+        uses: ./.github/actions/upload-build-reports
+        if: ${{ failure() }}
