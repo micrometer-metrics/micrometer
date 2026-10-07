@@ -537,13 +537,15 @@ class PrometheusMeterRegistryTest {
     }
 
     private Condition<Iterable<? extends MetricSnapshot>> withNameAndQuantile(String name) {
-        return new Condition<>(metricSnapshots -> ((MetricSnapshots) metricSnapshots).stream()
-            .filter(snapshot -> snapshot.getMetadata().getPrometheusName().equals(name))
-            .flatMap(snapshot -> snapshot.getDataPoints().stream())
-            .filter(Objects::nonNull)
-            .filter(SummarySnapshot.SummaryDataPointSnapshot.class::isInstance)
-            .map(SummarySnapshot.SummaryDataPointSnapshot.class::cast)
-            .anyMatch(summaryDataPoint -> summaryDataPoint != null && summaryDataPoint.getQuantiles().size() > 0),
+        return new Condition<>(
+                metricSnapshots -> ((MetricSnapshots) metricSnapshots).stream()
+                    .filter(snapshot -> snapshot.getMetadata().getPrometheusName().equals(name))
+                    .flatMap(snapshot -> snapshot.getDataPoints().stream())
+                    .filter(SummarySnapshot.SummaryDataPointSnapshot.class::isInstance)
+                    .map(SummarySnapshot.SummaryDataPointSnapshot.class::cast)
+                    // filter needed due to https://github.com/uber/NullAway/issues/1808
+                    .filter(Objects::nonNull)
+                    .anyMatch(summaryDataPoint -> summaryDataPoint.getQuantiles().size() > 0),
                 "a summary with name `%s` and at least one quantile", name);
     }
 
