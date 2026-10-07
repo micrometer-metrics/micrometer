@@ -123,33 +123,14 @@ jobs:
       - gradlew-build:
           command: dockerTest
 
-  deploy:
-    executor: jdk25-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
-            - gradle-dependencies-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
-            - gradle-dependencies-
-      - run:
-          name: Deployment
-          command: sh ./gradle/deploy.sh
-
-  stackdriver-it:
-    executor: jdk25-executor
-    steps:
-      - run:
-          name: Setup Google Cloud auth
-          command: |
-            echo "$GCLOUD_SERVICE_KEY" >> "$HOME"/gcloud-service-key.json
-            echo 'export GOOGLE_APPLICATION_CREDENTIALS="$HOME"/gcloud-service-key.json' >> "$BASH_ENV"
-      - gradlew-build:
-          command: stackdriverTest
-
 workflows:
-  version: 2
-  build_prs_deploy_snapshots:
+  build_prs:
+    unless:
+      or:
+        - equal: [ main, << pipeline.git.branch >> ]
+        - matches:
+            pattern: '^\d+\.\d+\.x$'
+            value: << pipeline.git.branch >>
     jobs:
       - build-jdk11
       - build-jdk17
@@ -157,26 +138,3 @@ workflows:
       - build-jdk25
       - concurrency-tests
       - docker-tests
-      - stackdriver-it:
-          context:
-            - gcp-metrics-writer
-          filters:
-            branches:
-              only:
-                - main
-                - /\d+\.\d+\.x/
-      - deploy:
-          context:
-            - deploy
-          requires:
-            - build-jdk11
-            - build-jdk17
-            - build-jdk21
-            - build-jdk25
-            - concurrency-tests
-            - docker-tests
-          filters:
-            branches:
-              only:
-                - main
-                - /\d+\.\d+\.x/

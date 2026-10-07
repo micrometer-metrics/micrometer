@@ -331,26 +331,38 @@ subprojects {
                 }
             }
             repositories {
-                maven {
-                    name = 'Snapshot'
-                    url = 'https://repo.spring.io/snapshot'
-                    credentials {
-                        username = findProperty('SNAPSHOT_REPO_USER')
-                        password = findProperty('SNAPSHOT_REPO_PASSWORD')
-                    }
-                }
-                if (project.hasProperty("deploymentRepository")) {
+                if (project.hasProperty('deploymentRepository')) {
                     maven {
                         name = 'Deployment'
-                        url = project.property("deploymentRepository")
+                        url = project.property('deploymentRepository')
+                    }
+                }
+                else if (project.hasProperty('COMMERCIAL_ARTIFACTORY_URL')) {
+                    maven {
+                        name = 'CommercialSnapshot'
+                        url = project.property('COMMERCIAL_ARTIFACTORY_URL') + '/spring-enterprise-maven-dev-local'
+                        credentials {
+                            username = project.property('COMMERCIAL_ARTIFACTORY_USERNAME')
+                            password = project.property('COMMERCIAL_ARTIFACTORY_PASSWORD')
+                        }
+                    }
+                }
+                else {
+                    maven {
+                        name = 'Snapshot'
+                        url = 'https://repo.spring.io/snapshot'
+                        credentials {
+                            username = findProperty('ARTIFACTORY_USERNAME')
+                            password = findProperty('ARTIFACTORY_PASSWORD')
+                        }
                     }
                 }
             }
         }
 
         signing {
-            required = System.env.CIRCLE_STAGE == 'deploy'
-            useInMemoryPgpKeys(findProperty('SIGNING_KEY'), findProperty('SIGNING_PASSWORD'))
+            required = project.hasProperty('SIGNING_KEYID')
+            useInMemoryPgpKeys(findProperty('SIGNING_KEYID'), findProperty('SIGNING_KEY'), findProperty('SIGNING_PASSWORD'))
             sign publishing.publications.nebula
         }
 
@@ -537,15 +549,13 @@ subprojects {
 
     repositories {
         mavenCentral()
-        if (System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_URL") != null) {
-            repositories {
-                maven {
-                    name = "Release Train"
-                    url = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_URL")
-                    credentials {
-                        username = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_USERNAME")
-                        password = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_PASSWORD")
-                    }
+        if (System.getenv('RELEASE_TRAIN_MAVEN_REPOSITORY_URL') != null) {
+            maven {
+                name = 'Release Train'
+                url = System.getenv('RELEASE_TRAIN_MAVEN_REPOSITORY_URL')
+                credentials {
+                    username = System.getenv('RELEASE_TRAIN_MAVEN_REPOSITORY_USERNAME')
+                    password = System.getenv('RELEASE_TRAIN_MAVEN_REPOSITORY_PASSWORD')
                 }
             }
         }

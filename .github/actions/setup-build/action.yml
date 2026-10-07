@@ -1,0 +1,45 @@
+name: Setup Build
+description: Prepare action for build
+inputs:
+  java-version:
+    description: The Java version to use for the build
+    required: true
+  java-distribution:
+    description: The Java distribution to use for the build
+    required: false
+    default: liberica
+  develocity-access-key:
+    description: The key to authenticate with Develocity (Gradle Enterprise)
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Setup Java
+      uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # 5.4.0
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: ${{ inputs.java-distribution }}
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # 5.0.2
+      with:
+        validate-wrappers: true
+        develocity-access-key: ${{ inputs.develocity-access-key }}
+    - name: Setup Build Parameters
+      shell: bash
+      run: |
+        if [[ "$GITHUB_REF_NAME" == release/* ]]; then
+          RELEASE_VERSION="$(echo "${GITHUB_REF_NAME#release/}" | sed -E 's/-(M|RC)[0-9]+$//')-INTERNAL-SNAPSHOT"
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
+          echo "SPRING_BUILD_TYPE=internal" >> "$GITHUB_ENV"
+        fi
+    - name: Build Info
+      shell: bash
+      run: |
+        echo 'Triggered by: ${{ github.event_name }}'
+        echo 'Ref type: ${{ github.ref_type }}'
+        echo 'Ref name: ${{ github.ref_name }}'
+        echo 'Ref: ${{ github.ref }}'
+        echo 'Commit: ${{ github.sha }}'
+        echo 'Release Version: ${{ env.RELEASE_VERSION }}'
+        echo 'Spring Build Type Override: ${{ env.SPRING_BUILD_TYPE }}'
+        ./gradlew --version

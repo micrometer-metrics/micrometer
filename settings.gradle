@@ -5,7 +5,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.spring.develocity.conventions' version '0.0.27'
+    id 'io.spring.develocity.conventions' version '0.0.27' apply false
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
@@ -13,14 +13,14 @@ rootProject.name = 'micrometer'
 
 enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
-develocity {
-    server = 'https://ge.spring.io'
+// The develocity-conventions plugin reads spring.build-type from gradle.properties directly
+// so it cannot be overridden with cli parameters or env vars.
+if (providers.environmentVariable('SPRING_BUILD_TYPE').getOrElse('oss') == 'oss') {
+    apply plugin: 'io.spring.develocity.conventions'
 }
-
-buildCache {
-    remote(develocity.buildCache) {
-        server = 'https://ge.spring.io'
-    }
+else {
+    apply plugin: 'com.gradle.develocity'
+    develocity.buildScan.publishing.onlyIf { false }
 }
 
 include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
