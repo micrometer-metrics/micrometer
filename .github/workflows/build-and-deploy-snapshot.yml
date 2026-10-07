@@ -12,7 +12,7 @@ env:
   GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx4g"'
 jobs:
   build-jdk21:
-    runs-on: ubuntu22-4-16
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
     steps:
       - name: "Check Out Code"
@@ -42,7 +42,7 @@ jobs:
         if: ${{ failure() }}
 
   build-jdk11:
-    runs-on: ubuntu22-4-16
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
     steps:
       - name: "Check Out Code"
@@ -65,7 +65,7 @@ jobs:
         if: ${{ failure() }}
 
   build-jdk17:
-    runs-on: ubuntu22-4-16
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
     steps:
       - name: "Check Out Code"
@@ -86,7 +86,7 @@ jobs:
         if: ${{ failure() }}
 
   build-jdk25:
-    runs-on: ubuntu22-4-16
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
     steps:
       - name: "Check Out Code"
@@ -110,7 +110,7 @@ jobs:
         if: ${{ failure() }}
 
   docker-tests:
-    runs-on: ubuntu22-4-16
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
     steps:
       - name: "Check Out Code"
@@ -131,7 +131,7 @@ jobs:
         if: ${{ failure() }}
 
   concurrency-tests:
-    runs-on: ubuntu22-4-16
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
     steps:
       - name: "Check Out Code"
@@ -151,7 +151,7 @@ jobs:
         if: ${{ failure() }}
 
   stackdriver-it:
-    runs-on: ubuntu22-4-16
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
     steps:
       - name: "Check Out Code"
@@ -177,7 +177,7 @@ jobs:
         if: ${{ failure() }}
 
   deploy:
-    runs-on: ubuntu22-4-16
+    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
     needs: [ build-jdk25, build-jdk11, build-jdk17, build-jdk21, docker-tests, concurrency-tests, stackdriver-it ]
     steps:
