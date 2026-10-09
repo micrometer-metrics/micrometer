@@ -209,7 +209,7 @@ plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version 
 plugin-noHttp = { module = "io.spring.nohttp:nohttp-gradle", version = "0.0.11" }
 plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "spring-javaformat" }
 plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.6" }
-plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "8.10.3" }
+plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "8.10.4" }
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:7.4.0"
 
 [plugins]
