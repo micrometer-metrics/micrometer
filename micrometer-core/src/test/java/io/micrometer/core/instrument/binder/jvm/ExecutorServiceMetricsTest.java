@@ -423,19 +423,23 @@ class ExecutorServiceMetricsTest {
     }
 
     @Test
+    // see gh-2317; ExecutorServiceMetrics not available for inaccessible JDK internals
+    @EnabledForJreRange(min = JRE.JAVA_16)
     void newSingleThreadScheduledExecutor() {
         String executorServiceName = "myExecutorService";
         ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
         // timer metrics still available, even on Java 16+
         registry.get("executor").tag("name", executorServiceName).timer();
-        if (isJava16OrLater())
-            return; // see gh-2317; ExecutorServiceMetrics not available for inaccessible
-                    // JDK internal types
-        registry.get("executor.completed").tag("name", executorServiceName).functionCounter();
+        assertThat(registry.find("executor.completed").tag("name", executorServiceName).functionCounter()).isNull();
     }
 
-    private boolean isJava16OrLater() {
-        return JRE.currentVersion().compareTo(JRE.JAVA_16) >= 0;
+    @Test
+    @EnabledForJreRange(max = JRE.JAVA_15)
+    void newSingleThreadScheduledExecutor15() {
+        String executorServiceName = "myExecutorService";
+        ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
+        registry.get("executor").tag("name", executorServiceName).timer();
+        registry.get("executor.completed").tag("name", executorServiceName).functionCounter();
     }
 
     @Test

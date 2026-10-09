@@ -56,8 +56,6 @@ import io.micrometer.stackdriver.StackdriverMeterRegistry;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
-import io.micrometer.wavefront.WavefrontConfig;
-import io.micrometer.wavefront.WavefrontMeterRegistry;
 import org.jspecify.annotations.Nullable;
 
 import java.io.*;
@@ -350,12 +348,15 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
-    public static WavefrontMeterRegistry wavefront() {
-        return new WavefrontMeterRegistry(WavefrontConfig.DEFAULT_PROXY, Clock.SYSTEM);
+    @SuppressWarnings("deprecation")
+    public static io.micrometer.wavefront.WavefrontMeterRegistry wavefront() {
+        return new io.micrometer.wavefront.WavefrontMeterRegistry(io.micrometer.wavefront.WavefrontConfig.DEFAULT_PROXY,
+                Clock.SYSTEM);
     }
 
-    public static WavefrontMeterRegistry wavefrontDirect(String apiToken) {
-        return new WavefrontMeterRegistry(new WavefrontConfig() {
+    @SuppressWarnings("deprecation")
+    public static io.micrometer.wavefront.WavefrontMeterRegistry wavefrontDirect(String apiToken) {
+        return new io.micrometer.wavefront.WavefrontMeterRegistry(new io.micrometer.wavefront.WavefrontConfig() {
             @Override
             public @Nullable String get(String key) {
                 return null;

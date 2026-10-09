@@ -34,7 +34,6 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -90,7 +89,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private final AtomicBoolean started = new AtomicBoolean();
 
-    DirectProcessor<String> processor = DirectProcessor.create();
+    @SuppressWarnings("deprecation")
+    reactor.core.publisher.DirectProcessor<String> processor = reactor.core.publisher.DirectProcessor.create();
 
     FluxSink<String> sink = new NoopFluxSink();
 

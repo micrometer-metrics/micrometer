@@ -49,6 +49,7 @@ import static io.javalin.apibuilder.ApiBuilder.path;
  */
 public class PrometheusSample {
 
+    @SuppressWarnings("deprecation")
     public static void main(String[] args) {
         PrometheusMeterRegistry meterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
@@ -118,6 +119,7 @@ class MicrometerPlugin implements Plugin {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void apply(@NonNull Javalin app) {
         Server server = app.jettyServer().server();
 

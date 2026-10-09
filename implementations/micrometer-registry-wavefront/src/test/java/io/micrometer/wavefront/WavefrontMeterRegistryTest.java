@@ -47,6 +47,7 @@ import static org.mockito.Mockito.*;
  * @author Johnny Lim
  * @author Stephane Nicoll
  */
+@Deprecated
 class WavefrontMeterRegistryTest {
 
     private final WavefrontConfig config = new WavefrontConfig() {

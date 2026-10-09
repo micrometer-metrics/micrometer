@@ -136,9 +136,6 @@ subprojects {
                     // Error Prone 2.43.0 requires JDK 21+
                     enabled = false
                 }
-                if (System.env.CI != null) {
-                    disableAllWarnings = true
-                }
             }
         }
         if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks') || project.name.contains('osgi-test')) {
@@ -194,6 +191,10 @@ subprojects {
                 licenseHeaderFile(rootProject.file('gradle/licenseHeader.txt'),
                     '(package|import|public|class|module) |@|\\n/\\*\\*|// spotless-license-check:off')
             }
+        }
+
+        tasks.withType(JavaCompile).configureEach {
+            options.compilerArgs << '-Xlint:-options'
         }
 
         tasks {

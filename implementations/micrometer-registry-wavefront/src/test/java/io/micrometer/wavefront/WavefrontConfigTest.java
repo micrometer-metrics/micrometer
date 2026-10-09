@@ -27,6 +27,7 @@ import java.util.Properties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+@Deprecated
 class WavefrontConfigTest {
 
     @Issue("#3903")

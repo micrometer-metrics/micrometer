@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link JerseyTags}.
  */
+@Deprecated
 class JerseyTagsTests {
 
     @Test
