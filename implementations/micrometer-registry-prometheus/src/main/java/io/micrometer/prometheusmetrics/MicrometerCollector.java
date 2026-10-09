@@ -83,6 +83,7 @@ class MicrometerCollector implements MultiCollector {
     }
 
     @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public MetricSnapshots collect() {
         Map<String, Family> families = new HashMap<>();
 
@@ -117,6 +118,7 @@ class MicrometerCollector implements MultiCollector {
 
         final Function<Family<T>, MetricSnapshot> metricSnapshotFactory;
 
+        @SafeVarargs
         Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory,
                 MetricMetadata metadata, T... dataPointSnapshots) {
             this.conventionName = conventionName;

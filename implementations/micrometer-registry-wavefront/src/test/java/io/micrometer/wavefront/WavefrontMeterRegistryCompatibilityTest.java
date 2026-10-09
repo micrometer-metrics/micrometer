@@ -22,6 +22,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
+@Deprecated
 class WavefrontMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     @Override

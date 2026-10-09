@@ -30,6 +30,7 @@ class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
 
     @BeforeEach
     @Override
+    @SuppressWarnings("deprecation")
     void beforeEach() throws Exception {
         super.beforeEach();
         observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));

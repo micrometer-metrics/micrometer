@@ -35,7 +35,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 class ObservationDocumentationTests {
 
-    ObservationConvention mockObservationConvention = mock(ObservationConvention.class);
+    @SuppressWarnings("unchecked")
+    ObservationConvention<Observation.Context> mockObservationConvention = mock(ObservationConvention.class);
 
     @Test
     void iseShouldBeThrownWhenDocumentedObservationHasNotOverriddenDefaultConvention() {

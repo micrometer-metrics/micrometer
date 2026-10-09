@@ -22,6 +22,7 @@ import io.prometheus.client.CollectorRegistry;
 
 import java.time.Duration;
 
+@Deprecated
 class PrometheusMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     @Override

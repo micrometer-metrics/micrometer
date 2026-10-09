@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.server.*;
@@ -406,9 +407,10 @@ class TimedHandlerTest {
         }
 
         @Override
-        protected void onComplete(final Request request, final Throwable failure) {
+        protected void onComplete(final Request request, final int status, final HttpFields headers,
+                final Throwable failure) {
             try {
-                super.onComplete(request, failure);
+                super.onComplete(request, status, headers, failure);
             }
             finally {
                 onCompleteLatch.countDown();

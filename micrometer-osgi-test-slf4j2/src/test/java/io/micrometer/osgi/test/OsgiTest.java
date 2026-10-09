@@ -52,6 +52,7 @@ class OsgiTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testPrometheusMeterRegistryResolves() {
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         testMetrics(registry);

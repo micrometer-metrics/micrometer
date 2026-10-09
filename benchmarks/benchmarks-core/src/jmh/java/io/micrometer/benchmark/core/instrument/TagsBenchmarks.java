@@ -56,18 +56,22 @@ public class TagsBenchmarks {
 
     private static final int MASK = COUNT - 1;
 
+    @SuppressWarnings("UnnecessaryLambda")
     private static final Supplier<Iterable<Tag>> NULL_GENERATOR = () -> null;
 
     private static final Supplier<Iterable<Tag>> TAGS_GENERATOR = TagsBenchmarkSupport::container;
 
+    @SuppressWarnings("UnnecessaryLambda")
     private static final Supplier<Iterable<Tag>> LIST_GENERATOR = () -> TagsBenchmarkSupport.container()
         .stream()
         .collect(Collectors.toList());
 
+    @SuppressWarnings("UnnecessaryLambda")
     private static final Supplier<Iterable<Tag>> SET_GENERATOR = () -> TagsBenchmarkSupport.container()
         .stream()
         .collect(Collectors.toSet());
 
+    @SuppressWarnings({ "UnnecessaryLambda", "UnnecessaryMethodReference" })
     private static final Supplier<Iterable<Tag>> ITERABLE_GENERATOR = () -> TagsBenchmarkSupport.container()::iterator;
 
     private static final Map<String, Supplier<Iterable<Tag>>> GENERATORS = new HashMap<>();
