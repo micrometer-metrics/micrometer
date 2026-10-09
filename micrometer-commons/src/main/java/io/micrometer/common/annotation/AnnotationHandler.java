@@ -57,7 +57,7 @@ public class AnnotationHandler<T> {
 
     private final Class<? extends Annotation> annotationClass;
 
-    private final BiFunction<Annotation, @Nullable Object, @Nullable KeyValue> toKeyValue;
+    private final BiFunction<Annotation, @Nullable Object, KeyValue> toKeyValue;
 
     /**
      * Creates a new instance of {@link AnnotationHandler}.
@@ -74,8 +74,7 @@ public class AnnotationHandler<T> {
     public AnnotationHandler(BiConsumer<KeyValue, T> keyValueConsumer,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider,
-            Class<? extends Annotation> annotation,
-            BiFunction<Annotation, @Nullable Object, @Nullable KeyValue> toKeyValue) {
+            Class<? extends Annotation> annotation, BiFunction<Annotation, @Nullable Object, KeyValue> toKeyValue) {
         this.keyValueConsumer = keyValueConsumer;
         this.resolverProvider = resolverProvider;
         this.expressionResolverProvider = expressionResolverProvider;
@@ -181,7 +180,7 @@ public class AnnotationHandler<T> {
         Set<String> seen = new HashSet<>();
         for (AnnotatedObject container : toBeAdded) {
             KeyValue keyValue = toKeyValue.apply(container.annotation, container.object);
-            if (keyValue != null && seen.add(keyValue.getKey())) {
+            if (seen.add(keyValue.getKey())) {
                 keyValueConsumer.accept(keyValue, objectToModify);
             }
         }
