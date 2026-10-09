@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponseInterceptor;
@@ -45,12 +44,14 @@ import java.util.function.Function;
  *             .build();
  * }</pre>
  * <p>
- * See {@link ObservationExecChainHandler} for Apache HTTP client 5 support.
+ * See
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler}
+ * for Apache HTTP client 5 support.
  *
  * @author Jon Schneider
  * @since 1.4.0
  * @deprecated as of 1.12.0 in favor of HttpComponents 5.x and
- * {@link ObservationExecChainHandler}.
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler}.
  */
 @Incubating(since = "1.4.0")
 @Deprecated

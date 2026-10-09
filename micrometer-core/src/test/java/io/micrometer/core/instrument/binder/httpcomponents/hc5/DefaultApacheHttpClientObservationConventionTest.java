@@ -31,7 +31,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.IOException;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -40,7 +39,24 @@ import static org.mockito.Mockito.mock;
  *
  * @author Brian Clozel
  */
+@SuppressWarnings("deprecation")
 class DefaultApacheHttpClientObservationConventionTest {
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames EXCEPTION = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.EXCEPTION;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames METHOD = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.METHOD;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames OUTCOME = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames STATUS = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.STATUS;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames TARGET_HOST = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.TARGET_HOST;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames TARGET_PORT = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.TARGET_PORT;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames TARGET_SCHEME = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.TARGET_SCHEME;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames URI = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.URI;
 
     private final ApacheHttpClientObservationConvention observationConvention = DefaultApacheHttpClientObservationConvention.INSTANCE;
 

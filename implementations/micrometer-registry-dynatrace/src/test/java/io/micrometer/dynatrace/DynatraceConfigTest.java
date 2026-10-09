@@ -50,6 +50,7 @@ class DynatraceConfigTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void invalid() {
         DynatraceConfig config = new DynatraceConfig() {
             @Override
@@ -72,6 +73,7 @@ class DynatraceConfigTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void invalidOverrideTechnologyType() {
         Validated<?> validate = new DynatraceConfig() {
             @Override
@@ -153,6 +155,7 @@ class DynatraceConfigTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testFallbackToV1() {
         Map<String, String> properties = new HashMap<>();
         properties.put("dynatrace.apiToken", "secret");
@@ -166,6 +169,7 @@ class DynatraceConfigTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testV2Defaults() {
         Map<String, String> properties = new HashMap<>();
         properties.put("dynatrace.apiVersion", "v2");
@@ -185,6 +189,7 @@ class DynatraceConfigTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testV1Defaults() {
         Map<String, String> properties = new HashMap<>();
         properties.put("dynatrace.apiVersion", "v1");
@@ -250,6 +255,7 @@ class DynatraceConfigTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testDeviceIdSetFallsBackToV1() {
         DynatraceConfig config = new DynatraceConfig() {
             @Override
@@ -266,6 +272,7 @@ class DynatraceConfigTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testDeviceIdSetAndVersionOverwritten() {
         DynatraceConfig config = new DynatraceConfig() {
             @Override
@@ -288,6 +295,7 @@ class DynatraceConfigTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testDeviceIdNotSetAndVersionOverwritten() {
         // This is a nonsense config, v1 always needs a deviceId, but it shows that it is
         // possible

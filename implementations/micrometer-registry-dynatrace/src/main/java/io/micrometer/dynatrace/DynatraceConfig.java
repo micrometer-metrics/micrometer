@@ -49,6 +49,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return "dynatrace";
     }
 
+    @SuppressWarnings("deprecation")
     default String apiToken() {
         Validated<String> secret = getSecret(this, "apiToken");
         if (apiVersion() == V1) {
@@ -61,6 +62,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
                         : DynatraceFileBasedConfigurationProvider.getInstance().getMetricIngestToken());
     }
 
+    @SuppressWarnings("deprecation")
     default String uri() {
         Validated<String> uri = getUrlString(this, "uri");
         if (apiVersion() == V1) {
@@ -106,6 +108,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * Dynatrace API.
      * @since 1.8.0
      */
+    @SuppressWarnings("deprecation")
     default DynatraceApiVersion apiVersion() {
         // If a device id is specified, use v1 as default. If it is not, use v2.
         // The version can be overwritten explicitly when creating a MM config
@@ -138,6 +141,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * @return whether to enrich with Dynatrace metadata
      * @since 1.8.0
      */
+    @SuppressWarnings("deprecation")
     default boolean enrichWithDynatraceMetadata() {
         if (apiVersion() == V1) {
             return false;
@@ -153,6 +157,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * instruments.
      * @since 1.9.0
      */
+    @SuppressWarnings("deprecation")
     default boolean useDynatraceSummaryInstruments() {
         if (apiVersion() == V1) {
             return false;
@@ -170,6 +175,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * @return true if metadata should be exported, false otherwise.
      * @since 1.12.0
      */
+    @SuppressWarnings("deprecation")
     default boolean exportMeterMetadata() {
         if (apiVersion() == V1) {
             return false;
@@ -178,6 +184,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     default Validated<?> validate() {
         return checkAll(this, config -> StepRegistryConfig.validate(config),
                 checkRequired("apiVersion", DynatraceConfig::apiVersion).andThen(apiVersionValidation -> {

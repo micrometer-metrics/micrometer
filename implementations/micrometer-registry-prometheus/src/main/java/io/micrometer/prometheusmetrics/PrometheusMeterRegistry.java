@@ -106,7 +106,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         this.registry = registry;
         PrometheusProperties prometheusProperties = config.prometheusProperties() != null
                 ? PrometheusPropertiesLoader.load(config.prometheusProperties()) : PrometheusPropertiesLoader.load();
-        this.expositionFormats = ExpositionFormats.init(prometheusProperties.getExporterProperties());
+        this.expositionFormats = ExpositionFormats.init(prometheusProperties);
         this.exemplarSamplerFactory = spanContext != null
                 ? new DefaultExemplarSamplerFactory(spanContext, prometheusProperties.getExemplarProperties()) : null;
 

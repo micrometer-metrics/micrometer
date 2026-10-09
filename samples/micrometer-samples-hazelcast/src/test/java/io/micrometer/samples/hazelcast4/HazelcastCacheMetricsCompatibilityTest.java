@@ -38,6 +38,7 @@ class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibili
 
     private Config config = new Config();
 
+    @SuppressWarnings("HidingField")
     private IMap<String, String> cache;
 
     @BeforeEach

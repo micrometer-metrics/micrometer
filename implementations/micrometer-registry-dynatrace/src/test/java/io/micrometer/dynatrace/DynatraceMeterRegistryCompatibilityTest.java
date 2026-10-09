@@ -24,6 +24,7 @@ import java.time.Duration;
 
 class DynatraceMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
+    @SuppressWarnings("deprecation")
     private final DynatraceConfig config = new DynatraceConfig() {
         @Override
         public boolean enabled() {

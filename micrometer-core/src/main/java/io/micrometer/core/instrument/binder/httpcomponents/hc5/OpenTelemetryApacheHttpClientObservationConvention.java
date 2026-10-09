@@ -19,8 +19,6 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.binder.http.HttpMethods;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.OpenTelemetryApacheHttpClientObservationDocumentation.HighCardinalityKeyNames;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames;
 import org.apache.hc.client5.http.RouteInfo;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.HttpRequest;
@@ -49,19 +47,26 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
      */
     public static final OpenTelemetryApacheHttpClientObservationConvention INSTANCE = new OpenTelemetryApacheHttpClientObservationConvention();
 
-    private static final KeyValue METHOD_OTHER = LowCardinalityKeyNames.METHOD.withValue("_OTHER");
+    private static final KeyValue METHOD_OTHER = OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.METHOD
+        .withValue("_OTHER");
 
-    private static final KeyValue URL_UNKNOWN = HighCardinalityKeyNames.URL.withValue("UNKNOWN");
+    private static final KeyValue URL_UNKNOWN = OpenTelemetryApacheHttpClientObservationDocumentation.HighCardinalityKeyNames.URL
+        .withValue("UNKNOWN");
 
-    private static final KeyValue STATUS_UNKNOWN = LowCardinalityKeyNames.STATUS.withValue("0");
+    private static final KeyValue STATUS_UNKNOWN = OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.STATUS
+        .withValue("0");
 
-    private static final KeyValue EXCEPTION_NONE = LowCardinalityKeyNames.ERROR_TYPE.withNoneValue();
+    private static final KeyValue EXCEPTION_NONE = OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.ERROR_TYPE
+        .withNoneValue();
 
-    private static final KeyValue OUTCOME_UNKNOWN = LowCardinalityKeyNames.OUTCOME.withValue(Outcome.UNKNOWN.name());
+    private static final KeyValue OUTCOME_UNKNOWN = OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.OUTCOME
+        .withValue(Outcome.UNKNOWN.name());
 
-    private static final KeyValue SERVER_ADDRESS_UNKNOWN = LowCardinalityKeyNames.SERVER_ADDRESS.withValue("UNKNOWN");
+    private static final KeyValue SERVER_ADDRESS_UNKNOWN = OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_ADDRESS
+        .withValue("UNKNOWN");
 
-    private static final KeyValue SERVER_PORT_UNKNOWN = LowCardinalityKeyNames.SERVER_PORT.withValue("-1");
+    private static final KeyValue SERVER_PORT_UNKNOWN = OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_PORT
+        .withValue("-1");
 
     /**
      * Create an {@link OpenTelemetryApacheHttpClientObservationConvention} instance.
@@ -139,7 +144,8 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
         if (request != null) {
             String method = maybeGetKnownMethod(request);
             if (method != null) {
-                return LowCardinalityKeyNames.METHOD.withValue(method);
+                return OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.METHOD
+                    .withValue(method);
             }
         }
         return METHOD_OTHER;
@@ -152,7 +158,9 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
      */
     protected KeyValue serverAddress(ApacheHttpClientContext context) {
         String serverAddressValue = getServerAddressValue(context);
-        return serverAddressValue != null ? LowCardinalityKeyNames.SERVER_ADDRESS.withValue(serverAddressValue)
+        return serverAddressValue != null
+                ? OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_ADDRESS
+                    .withValue(serverAddressValue)
                 : SERVER_ADDRESS_UNKNOWN;
     }
 
@@ -175,7 +183,9 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
      */
     protected KeyValue serverPort(ApacheHttpClientContext context) {
         Integer serverPortValue = getServerPortValue(context);
-        return serverPortValue != null ? LowCardinalityKeyNames.SERVER_PORT.withValue(String.valueOf(serverPortValue))
+        return serverPortValue != null
+                ? OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_PORT
+                    .withValue(String.valueOf(serverPortValue))
                 : SERVER_PORT_UNKNOWN;
     }
 
@@ -199,7 +209,8 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
     protected KeyValue exception(ApacheHttpClientContext context) {
         Throwable error = context.getError();
         if (error != null) {
-            return LowCardinalityKeyNames.ERROR_TYPE.withValue(error.getClass().getSimpleName());
+            return OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.ERROR_TYPE
+                .withValue(error.getClass().getSimpleName());
         }
         return EXCEPTION_NONE;
     }
@@ -218,7 +229,8 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
         if (response == null) {
             return STATUS_UNKNOWN;
         }
-        return LowCardinalityKeyNames.STATUS.withValue(String.valueOf(response.getCode()));
+        return OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.STATUS
+            .withValue(String.valueOf(response.getCode()));
     }
 
     /**
@@ -231,7 +243,8 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
         if (response == null) {
             return OUTCOME_UNKNOWN;
         }
-        return LowCardinalityKeyNames.OUTCOME.withValue(Outcome.forStatus(response.getCode()).name());
+        return OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.OUTCOME
+            .withValue(Outcome.forStatus(response.getCode()).name());
     }
 
     /**
@@ -244,7 +257,8 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
         if (request != null) {
             URI uri = getUri(context);
             if (uri != null) {
-                return HighCardinalityKeyNames.URL.withValue(uri.toString());
+                return OpenTelemetryApacheHttpClientObservationDocumentation.HighCardinalityKeyNames.URL
+                    .withValue(uri.toString());
             }
         }
         return URL_UNKNOWN;

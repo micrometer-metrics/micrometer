@@ -69,6 +69,7 @@ class ObservationThreadLocalAccessorTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void capturedThreadLocalValuesShouldBeCapturedRestoredAndCleared()
             throws InterruptedException, ExecutionException, TimeoutException {
         observationRegistry.observationConfig().observationHandler(new TracingHandler());
@@ -174,6 +175,7 @@ class ObservationThreadLocalAccessorTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void uses2DifferentObservationRegistries() {
         AtomicReference<String> calledHandler = new AtomicReference<>("");
 
@@ -309,6 +311,7 @@ class ObservationThreadLocalAccessorTests {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public void onScopeReset(Observation.Context context) {
             value.remove();
             System.out.println("on reset [" + context.getName() + "]");

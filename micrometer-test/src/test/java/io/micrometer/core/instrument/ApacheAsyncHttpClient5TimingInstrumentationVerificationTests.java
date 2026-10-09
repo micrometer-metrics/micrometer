@@ -49,6 +49,7 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected @Nullable CloseableHttpAsyncClient clientInstrumentedWithObservations() {
         CloseableHttpAsyncClient client = HttpAsyncClients.custom()
             .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(getObservationRegistry()))
@@ -63,6 +64,7 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected void sendHttpRequest(CloseableHttpAsyncClient instrumentedClient, HttpMethod method,
             byte @Nullable [] body, URI baseUri, String templatedPath, String... pathVariables) {
         try {

@@ -127,6 +127,7 @@ class ObservationValidator implements ObservationHandler<Context> {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onScopeReset(Context context) {
         History history = addHistoryElement(context, EventName.SCOPE_RESET);
         // In some cases (Reactor) scope reset can happen after the observation is stopped
