@@ -17,7 +17,6 @@ package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.dynatrace.v1.DynatraceNamingConventionV1;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -33,6 +32,7 @@ import org.jspecify.annotations.Nullable;
  * @since 1.1.0
  */
 @Deprecated
+@SuppressWarnings("deprecation")
 public class DynatraceNamingConvention implements NamingConvention {
 
     private final NamingConvention versionSpecificNamingConvention;
@@ -47,7 +47,7 @@ public class DynatraceNamingConvention implements NamingConvention {
         if (version != DynatraceApiVersion.V1) {
             throw new IllegalArgumentException("At the moment, V1 is the only supported version");
         }
-        this.versionSpecificNamingConvention = new DynatraceNamingConventionV1(delegate);
+        this.versionSpecificNamingConvention = new io.micrometer.dynatrace.v1.DynatraceNamingConventionV1(delegate);
     }
 
     public DynatraceNamingConvention(NamingConvention delegate) {

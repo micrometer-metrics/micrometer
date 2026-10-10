@@ -412,6 +412,7 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
+    @SuppressWarnings("deprecation")
     public static DynatraceMeterRegistry dynatrace(String apiToken, String uri) {
         return new DynatraceMeterRegistry(new DynatraceConfig() {
             @Override

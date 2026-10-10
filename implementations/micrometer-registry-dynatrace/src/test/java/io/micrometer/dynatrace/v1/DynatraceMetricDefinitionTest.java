@@ -22,6 +22,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("deprecation")
 class DynatraceMetricDefinitionTest {
 
     private final String[] technologyTypes = { "java" };

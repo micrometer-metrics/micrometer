@@ -54,6 +54,7 @@ public abstract class ConcreteContextObservationHandlerCompatibilityKit<T extend
 
     @Test
     @DisplayName("compatibility test provides a concrete context accepting observation handler")
+    @SuppressWarnings("deprecation")
     void handlerSupportsConcreteContextForHandlerMethods() {
         assertThatCode(() -> handler.onStart(context())).doesNotThrowAnyException();
         assertThatCode(() -> handler.onStop(context())).doesNotThrowAnyException();

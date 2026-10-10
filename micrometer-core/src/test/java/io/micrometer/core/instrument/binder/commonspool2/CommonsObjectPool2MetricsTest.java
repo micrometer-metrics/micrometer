@@ -29,6 +29,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -120,7 +121,7 @@ class CommonsObjectPool2MetricsTest {
 
         try (GenericObjectPool<Object> genericObjectPool = createGenericObjectPool()) {
             assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-            Object object = genericObjectPool.borrowObject(10_000L);
+            Object object = genericObjectPool.borrowObject(Duration.ofSeconds(10));
 
             assertThat(registry.get("commons.pool2.num.active").gauge().value()).isEqualTo(1.0);
             assertThat(registry.get("commons.pool2.num.idle").gauge().value()).isEqualTo(0.0);

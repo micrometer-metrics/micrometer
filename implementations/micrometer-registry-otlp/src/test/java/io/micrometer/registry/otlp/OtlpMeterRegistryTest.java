@@ -796,7 +796,6 @@ abstract class OtlpMeterRegistryTest {
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
             assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
         });
     }

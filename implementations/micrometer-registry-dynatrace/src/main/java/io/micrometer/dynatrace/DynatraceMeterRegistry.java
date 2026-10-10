@@ -29,7 +29,6 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.dynatrace.types.DynatraceDistributionSummary;
 import io.micrometer.dynatrace.types.DynatraceLongTaskTimer;
 import io.micrometer.dynatrace.types.DynatraceTimer;
-import io.micrometer.dynatrace.v1.DynatraceExporterV1;
 import io.micrometer.dynatrace.v2.DynatraceExporterV2;
 
 import java.util.Arrays;
@@ -72,6 +71,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
+    @SuppressWarnings("deprecation")
     private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory,
             HttpSender httpClient) {
         super(config, clock);
@@ -89,7 +89,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             logger.info("Exporting to Dynatrace metrics API v1");
             logger.warn(
                     "Dynatrace v1 API is deprecated. It will be removed in the future. Please use the v2 API instead.");
-            this.exporter = new DynatraceExporterV1(config, clock, httpClient);
+            this.exporter = new io.micrometer.dynatrace.v1.DynatraceExporterV1(config, clock, httpClient);
         }
 
         if (shouldAddZeroPercentile) {

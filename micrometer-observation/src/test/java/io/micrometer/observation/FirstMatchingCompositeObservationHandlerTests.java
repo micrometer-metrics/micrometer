@@ -90,6 +90,7 @@ class FirstMatchingCompositeObservationHandlerTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void should_run_on_scope_reset_for_handlers() {
         FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
@@ -169,6 +170,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public void onScopeReset(Observation.Context context) {
             this.scopeReset = true;
         }

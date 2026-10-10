@@ -40,6 +40,7 @@ class AnyContextObservationHandlerCompatibilityKitTests extends AnyContextObserv
             }
 
             @Override
+            @SuppressWarnings("deprecation")
             public void onScopeReset(Observation.Context context) {
             }
 

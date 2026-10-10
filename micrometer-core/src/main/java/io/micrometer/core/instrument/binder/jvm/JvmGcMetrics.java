@@ -186,7 +186,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     .register(registry);
             }
         }
-        catch (Exception ignore) {
+        catch (Exception ignored) {
+            // best effort
         }
 
         for (GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {

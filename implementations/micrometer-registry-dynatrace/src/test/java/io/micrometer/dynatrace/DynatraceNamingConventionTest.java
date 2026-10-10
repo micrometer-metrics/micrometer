@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Georg Pirklbauer
  */
+@SuppressWarnings("deprecation")
 class DynatraceNamingConventionTest {
 
     private final DynatraceNamingConvention dynatraceConvention = new DynatraceNamingConvention();
