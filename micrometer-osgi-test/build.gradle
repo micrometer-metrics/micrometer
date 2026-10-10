@@ -15,9 +15,7 @@ dependencies {
     testImplementation project(':micrometer-core')
 
     testImplementation project(':micrometer-registry-jmx')
-    // osgi test fails when the new prometheus client is used
-    //testImplementation project(':micrometer-registry-prometheus')
-    testImplementation project(':micrometer-registry-prometheus-simpleclient')
+    testImplementation project(':micrometer-registry-prometheus')
 
     testImplementation libs.felixFramework
 
@@ -29,6 +27,11 @@ dependencies {
 
     testRuntimeOnly libs.felixScr
     testRuntimeOnly libs.slfj4Simple
+    // prometheus-metrics-config imports javax.annotation, which nothing else on the runtime provides
+    testRuntimeOnly libs.jsr305
+    // prometheus-metrics-core imports io.prometheus.metrics.tracer.initializer without resolution:=optional,
+    // so the bundle has to be on the runtime even though micrometer-registry-prometheus excludes the artifact
+    testRuntimeOnly libs.prometheusMetricsTracerInitializer
 }
 
 def testingBundle = tasks.register('testingBundle', Bundle) {
