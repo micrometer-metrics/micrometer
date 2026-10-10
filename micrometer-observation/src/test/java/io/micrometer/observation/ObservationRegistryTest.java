@@ -63,7 +63,7 @@ class ObservationRegistryTest {
 
     @Test
     void observationShouldBeNoopWhenPredicateApplicable() {
-        registry.observationConfig().observationPredicate((name, context) -> !name.equals("test.timer"));
+        registry.observationConfig().observationPredicate((name, context) -> !"test.timer".equals(name));
 
         Observation sample = Observation.start("test.timer", registry);
 

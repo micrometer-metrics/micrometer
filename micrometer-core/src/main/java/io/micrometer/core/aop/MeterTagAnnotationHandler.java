@@ -43,9 +43,6 @@ public class MeterTagAnnotationHandler extends AnnotationHandler<Timer.Builder> 
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         super((keyValue, builder) -> builder.tag(keyValue.getKey(), keyValue.getValue()), resolverProvider,
                 expressionResolverProvider, MeterTag.class, (annotation, o) -> {
-                    if (!(annotation instanceof MeterTag)) {
-                        return null;
-                    }
                     MeterTag meterTag = (MeterTag) annotation;
                     return KeyValue.of(MeterTagSupport.resolveTagKey(meterTag),
                             MeterTagSupport.resolveTagValue(meterTag, o, resolverProvider, expressionResolverProvider));

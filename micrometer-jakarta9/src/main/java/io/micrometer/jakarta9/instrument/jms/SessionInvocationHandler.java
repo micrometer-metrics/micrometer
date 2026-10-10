@@ -63,7 +63,7 @@ class SessionInvocationHandler implements InvocationHandler {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public @Nullable Object invoke(Object proxy, Method method, @Nullable Object @Nullable [] args) throws Throwable {
         try {
             Object result = method.invoke(this.target, args);
             if (result instanceof MessageProducer) {
@@ -83,7 +83,8 @@ class SessionInvocationHandler implements InvocationHandler {
             return result;
         }
         catch (InvocationTargetException exc) {
-            throw exc.getTargetException();
+            Throwable targetException = exc.getTargetException();
+            throw targetException != null ? targetException : exc;
         }
     }
 

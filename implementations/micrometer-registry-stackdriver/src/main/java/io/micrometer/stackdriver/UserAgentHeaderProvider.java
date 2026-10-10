@@ -54,7 +54,8 @@ class UserAgentHeaderProvider implements HeaderProvider {
 
     private String computeUserAgent(String component) {
         String library = "micrometer-registry-" + component;
-        String version = getClass().getPackage().getImplementationVersion();
+        Package pkg = getClass().getPackage();
+        String version = pkg != null ? pkg.getImplementationVersion() : null;
 
         return "Micrometer/" + version + " " + library + "/" + version;
     }
