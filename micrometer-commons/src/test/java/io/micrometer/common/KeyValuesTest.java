@@ -216,6 +216,28 @@ class KeyValuesTest {
     }
 
     @Test
+    void ofKeyValueArrayShouldNotModifyTheGivenArray() {
+        KeyValue[] keyValues = { KeyValue.of("t2", "v2"), KeyValue.of("t1", "v1") };
+        KeyValues.of(keyValues);
+        assertThat(keyValues).containsExactly(KeyValue.of("t2", "v2"), KeyValue.of("t1", "v1"));
+    }
+
+    @Test
+    void ofKeyValueArrayShouldNotBeAffectedByLaterChangesToTheArray() {
+        KeyValue[] keyValues = { KeyValue.of("t1", "v1") };
+        KeyValues of = KeyValues.of(keyValues);
+        keyValues[0] = KeyValue.of("t1", "v2");
+        assertKeyValues(of, "t1", "v1");
+    }
+
+    @Test
+    void andKeyValueArrayShouldNotModifyTheGivenArray() {
+        KeyValue[] keyValues = { KeyValue.of("t3", "v3"), KeyValue.of("t2", "v2") };
+        KeyValues.of("t1", "v1").and(keyValues);
+        assertThat(keyValues).containsExactly(KeyValue.of("t3", "v3"), KeyValue.of("t2", "v2"));
+    }
+
+    @Test
     void andKeyValuesShouldReturnANewInstanceWithKeyValues() {
         KeyValues source = KeyValues.of("t1", "v1");
         KeyValues merged = source.and(KeyValue.of("t2", "v2"));
