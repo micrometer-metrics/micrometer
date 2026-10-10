@@ -559,6 +559,32 @@ class PrometheusMeterRegistryTest {
             .contains("my_long_task_timer_seconds_duration_sum");
     }
 
+    @Issue("#2744")
+    @Test
+    void longTaskTimerHistogramBucketsDoNotGrowOnEveryScrape() {
+        LongTaskTimer timer = LongTaskTimer.builder("my.long.task.timer")
+            .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(60))
+            .register(registry);
+        timer.start();
+        clock.add(Duration.ofSeconds(1));
+
+        List<String> firstScrape = longTaskTimerBucketLines();
+        assertThat(firstScrape).isNotEmpty();
+
+        clock.add(Duration.ofSeconds(1));
+        assertThat(longTaskTimerBucketLines()).isEqualTo(firstScrape);
+    }
+
+    private List<String> longTaskTimerBucketLines() {
+        List<String> lines = new ArrayList<>();
+        for (String line : registry.scrape().split("\n", -1)) {
+            if (line.startsWith("my_long_task_timer_seconds_bucket")) {
+                lines.add(line);
+            }
+        }
+        return lines;
+    }
+
     @Issue("#2087")
     @Test
     void meterTriggeringAnotherMeterWhenCollectingValue() {
