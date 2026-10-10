@@ -1233,6 +1233,39 @@ abstract class OtlpMeterRegistryTest {
         assertThat(writeToMetrics(other2)).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
             .singleElement()
             .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM));
+
+        meterRegistry.clear();
+
+        LongTaskTimer expo3 = LongTaskTimer.builder("expo").publishPercentileHistogram().register(meterRegistry);
+        LongTaskTimer other3 = LongTaskTimer.builder("other").publishPercentileHistogram().register(meterRegistry);
+        assertThat(writeToMetrics(expo3)).filteredOn(m -> m.getType() == MetricDataType.EXPONENTIAL_HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM));
+        assertThat(writeToMetrics(other3)).filteredOn(m -> m.getType() == MetricDataType.HISTOGRAM)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getType()).isEqualTo(MetricDataType.HISTOGRAM));
+    }
+
+    @Test
+    @Issue("gh-7201")
+    void longTaskTimerUsesExplicitBucketsWhenTheExponentialFlavorDoesNotApply() {
+        LongTaskTimer noHistogram = LongTaskTimer.builder("ltt.no.histogram")
+            .register(registryWithExponentialHistogram);
+        LongTaskTimer withSlos = LongTaskTimer.builder("ltt.slos")
+            .serviceLevelObjectives(Duration.ofMillis(100))
+            .register(registryWithExponentialHistogram);
+        LongTaskTimer withPercentiles = LongTaskTimer.builder("ltt.percentiles")
+            .publishPercentiles(0.5)
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        noHistogram.start();
+        withSlos.start();
+        withPercentiles.start();
+        clock.add(exponentialHistogramOtlpConfig().step());
+
+        assertThat(writeToMetric(noHistogram).getType()).isEqualTo(MetricDataType.HISTOGRAM);
+        assertThat(writeToMetric(withSlos).getType()).isEqualTo(MetricDataType.HISTOGRAM);
+        assertThat(writeToMetric(withPercentiles).getType()).isEqualTo(MetricDataType.SUMMARY);
     }
 
     @Test
