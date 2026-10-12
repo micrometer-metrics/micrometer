@@ -26,6 +26,8 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.statsd.internal.*;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.AttributeKey;
 import org.jspecify.annotations.Nullable;
@@ -80,6 +82,8 @@ import java.util.stream.DoubleStream;
 public class StatsdMeterRegistry extends MeterRegistry {
 
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
+
+    private static final WarnThenDebugLogger portUnreachableLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
 
     private final StatsdConfig statsdConfig;
 
@@ -253,6 +257,20 @@ public class StatsdMeterRegistry extends MeterRegistry {
         AtomicReference<UdpClient> udpClientReference = new AtomicReference<>();
         UdpClient udpClient = UdpClient.create()
             .remoteAddress(remoteAddress)
+            .doOnConnected(connection -> connection.addHandlerLast("portUnreachableLogger",
+                    new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                            // otherwise Reactor Netty logs a warning for each packet
+                            if (cause instanceof PortUnreachableException) {
+                                portUnreachableLogger.log(() -> "Failed to send metrics to "
+                                        + ctx.channel().remoteAddress() + ". Is the StatsD server running?", cause);
+                            }
+                            else {
+                                super.exceptionCaught(ctx, cause);
+                            }
+                        }
+                    }))
             .handle((in, out) -> out.sendString(publisher)
                 .neverComplete()
                 .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException)))
