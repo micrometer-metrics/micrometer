@@ -23,6 +23,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Deprecated
 class PrometheusConfigTest {
 
     private final Map<String, String> props = new HashMap<>();

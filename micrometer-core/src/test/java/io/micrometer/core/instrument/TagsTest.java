@@ -346,6 +346,7 @@ class TagsTest {
     @Issue("#3313")
     @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
             disabledReason = "Sun ThreadMXBean with allocation counter not available")
+    @SuppressWarnings("deprecation")
     void andEmptyDoesNotAllocate() {
         ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
         long currentThreadId = Thread.currentThread().getId();
@@ -364,6 +365,7 @@ class TagsTest {
     @Issue("#3313")
     @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
             disabledReason = "Sun ThreadMXBean with allocation counter not available")
+    @SuppressWarnings("deprecation")
     void ofEmptyDoesNotAllocate() {
         ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
         long currentThreadId = Thread.currentThread().getId();

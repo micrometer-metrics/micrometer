@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationConvention;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.MicrometerHttpClientInterceptor;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
@@ -77,6 +77,7 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
         }
     }
 
+    @SuppressWarnings("deprecation")
     private SimpleHttpRequest makeRequest(HttpMethod method, byte @Nullable [] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         SimpleRequestBuilder builder = SimpleRequestBuilder.create(method.name());

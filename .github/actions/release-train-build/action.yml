@@ -21,4 +21,4 @@ runs:
         ./gradlew --version
     - name: Build Release
       shell: bash
-      run: ./gradlew publishNebulaPublicationToDeploymentRepository -PdeploymentRepository=$(pwd)/deployment-repository -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --stacktrace --console=plain -x test
+      run: ./gradlew publishNebulaPublicationToDeploymentRepository -PdeploymentRepository=$(pwd)/deployment-repository -Prelease.version=${{ env.RELEASE_VERSION }} -Prelease.ignoreSuppliedVersionVerification=true --no-build-cache --stacktrace --console=plain -x test

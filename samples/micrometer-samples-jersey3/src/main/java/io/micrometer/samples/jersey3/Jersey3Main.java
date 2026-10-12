@@ -19,8 +19,6 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider;
-import io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
@@ -53,7 +51,8 @@ public class Jersey3Main {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));
         Application application = new ResourceConfig(HelloWorldResource.class)
-            .register(new MetricsApplicationEventListener(registry, new DefaultJerseyTagsProvider(),
+            .register(new io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener(registry,
+                    new io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider(),
                     "http.server.requests", true));
         server.createContext("/", RuntimeDelegate.getInstance().createEndpoint(application, HttpHandler.class));
 

@@ -58,6 +58,7 @@ class MeterRegistryAllocationTest {
         newIdBytes = measureAllocatedBytes(() -> new Meter.Id("name", Tags.empty(), null, null, Meter.Type.OTHER));
     }
 
+    @SuppressWarnings("deprecation")
     private static long measureAllocatedBytes(Runnable runnable) {
         long currentThreadId = Thread.currentThread().getId();
         long allocatedBytesBefore = threadMXBean.getThreadAllocatedBytes(currentThreadId);

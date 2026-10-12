@@ -106,6 +106,7 @@ class ObservationExecChainHandlerIntegrationTest {
         }
 
         @Test
+        @SuppressWarnings("deprecation")
         void recordClientErrorExchangesWithUriPatternHeader(@WiremockResolver.Wiremock WireMockServer server)
                 throws Exception {
             String uriPattern = "/resources/{id}";
@@ -306,6 +307,7 @@ class ObservationExecChainHandlerIntegrationTest {
         }
 
         @Test
+        @SuppressWarnings("deprecation")
         void recordClientErrorExchangesWithUriPatternHeader(@WiremockResolver.Wiremock WireMockServer server)
                 throws Exception {
             String uriPattern = "/resources/{id}";

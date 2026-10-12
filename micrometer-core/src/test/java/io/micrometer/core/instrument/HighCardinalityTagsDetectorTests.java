@@ -35,7 +35,7 @@ import static org.awaitility.Awaitility.await;
  */
 class HighCardinalityTagsDetectorTests {
 
-    private TestMeterNameConsumer testMeterNameConsumer;
+    private TestMeterInfoConsumer testMeterInfoConsumer;
 
     private SimpleMeterRegistry registry;
 
@@ -43,10 +43,12 @@ class HighCardinalityTagsDetectorTests {
 
     @BeforeEach
     void setUp() {
-        this.testMeterNameConsumer = new TestMeterNameConsumer();
+        this.testMeterInfoConsumer = new TestMeterInfoConsumer();
         this.registry = new SimpleMeterRegistry();
-        this.highCardinalityTagsDetector = new HighCardinalityTagsDetector(registry, 3, Duration.ofMinutes(1),
-                testMeterNameConsumer);
+        this.highCardinalityTagsDetector = new HighCardinalityTagsDetector.Builder(registry).threshold(3)
+            .delay(Duration.ofMinutes(1))
+            .highCardinalityMeterInfoConsumer(testMeterInfoConsumer)
+            .build();
     }
 
     @AfterEach
@@ -61,7 +63,9 @@ class HighCardinalityTagsDetectorTests {
         }
         highCardinalityTagsDetector.start();
 
-        await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(testMeterNameConsumer.getName()));
+        await().atMost(Duration.ofSeconds(1))
+            .untilAsserted(() -> assertThat(testMeterInfoConsumer.getMeterInfo()).isNotNull()
+                .satisfies(info -> assertThat(info.getName()).isEqualTo("test.counter")));
     }
 
     @Test
@@ -97,11 +101,31 @@ class HighCardinalityTagsDetectorTests {
             Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
         }
 
+        TestMeterInfoConsumer meterInfoConsumer = new TestMeterInfoConsumer();
         registry.config()
-            .withHighCardinalityTagsDetector(
-                    r -> new HighCardinalityTagsDetector(r, 3, Duration.ofMinutes(1), testMeterNameConsumer));
+            .withHighCardinalityTagsDetector(r -> new HighCardinalityTagsDetector.Builder(r).threshold(3)
+                .delay(Duration.ofMinutes(1))
+                .highCardinalityMeterInfoConsumer(meterInfoConsumer)
+                .build());
 
-        await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(testMeterNameConsumer.getName()));
+        await().atMost(Duration.ofSeconds(1))
+            .untilAsserted(() -> assertThat(meterInfoConsumer.getMeterInfo()).isNotNull()
+                .satisfies(info -> assertThat(info.getName()).isEqualTo("test.counter")));
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void deprecatedConstructor() {
+        for (int i = 0; i < 4; i++) {
+            Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
+        }
+
+        TestMeterNameConsumer meterNameConsumer = new TestMeterNameConsumer();
+        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector(registry, 3, Duration.ofMinutes(1),
+                meterNameConsumer)) {
+            detector.start();
+            await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(meterNameConsumer.getName()));
+        }
     }
 
     @Test
@@ -148,6 +172,10 @@ class HighCardinalityTagsDetectorTests {
         @Override
         public void accept(HighCardinalityMeterInfo meterInfo) {
             this.meterInfo = meterInfo;
+        }
+
+        @Nullable HighCardinalityMeterInfo getMeterInfo() {
+            return this.meterInfo;
         }
 
     }

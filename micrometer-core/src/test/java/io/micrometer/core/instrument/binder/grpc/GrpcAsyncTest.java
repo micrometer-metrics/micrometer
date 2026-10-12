@@ -224,6 +224,7 @@ class GrpcAsyncTest {
         static ThreadLocal<String> requestIdHolder = new ThreadLocal<>();
 
         @Override
+        @SuppressWarnings("deprecation")
         public void unaryRpc(SimpleRequest request, StreamObserver<SimpleResponse> responseObserver) {
             StringBuilder sb = new StringBuilder();
             sb.append("message=");

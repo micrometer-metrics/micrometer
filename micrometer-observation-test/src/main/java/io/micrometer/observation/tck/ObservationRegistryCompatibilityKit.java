@@ -508,6 +508,7 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void functionShouldBeObserved() {
         @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
@@ -534,6 +535,7 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void functionThrowingErrorShouldBeObserved() {
         @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
@@ -561,6 +563,7 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void checkedFunctionShouldBeObserved() throws Throwable {
         @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
@@ -587,6 +590,7 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void checkedFunctionThrowingErrorShouldBeObserved() {
         @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);

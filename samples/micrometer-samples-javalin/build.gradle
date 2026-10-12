@@ -15,7 +15,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_11
 }
 
-compileJava {
+tasks.named('compileJava') {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
     options.release = 11

@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 public class ObservationBenchmark {
 
+    @SuppressWarnings("StaticAssignmentOfThrowable")
     private static final Exception error = new IllegalStateException("error");
 
     ObservationRegistry observationRegistry = ObservationRegistry.create();

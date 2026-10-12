@@ -145,6 +145,7 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public Observation start() {
         if (this.convention != null) {
             this.context.addLowCardinalityKeyValues(convention.getLowCardinalityKeyValues(context));

@@ -19,7 +19,6 @@
  * development, and is currently in maintenance mode.
  */
 @NullMarked
-@Deprecated
 package io.micrometer.core.instrument.binder.hystrix;
 
 import org.jspecify.annotations.NullMarked;

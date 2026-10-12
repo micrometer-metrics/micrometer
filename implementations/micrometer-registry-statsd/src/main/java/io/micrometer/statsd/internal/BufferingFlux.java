@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd.internal;
 
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 
 import java.nio.charset.StandardCharsets;
@@ -43,6 +42,7 @@ public class BufferingFlux {
      * @see <a href="https://en.wikipedia.org/wiki/Nagle%27s_algorithm">Nagle's
      * algorithm</a>
      */
+    @SuppressWarnings("deprecation")
     public static Flux<String> create(final Flux<String> source, final String delimiter, final int maxByteArraySize,
             final long maxMillisecondsBetweenEmits) {
         return Flux.defer(() -> {
@@ -50,7 +50,8 @@ public class BufferingFlux {
             final AtomicInteger byteSize = new AtomicInteger();
             final AtomicLong lastTime = new AtomicLong();
 
-            final DirectProcessor<Void> intervalEnd = DirectProcessor.create();
+            final reactor.core.publisher.DirectProcessor<Void> intervalEnd = reactor.core.publisher.DirectProcessor
+                .create();
 
             final Flux<String> heartbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
                 .map(l -> "")

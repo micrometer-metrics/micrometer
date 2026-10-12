@@ -136,9 +136,6 @@ subprojects {
                     // Error Prone 2.43.0 requires JDK 21+
                     enabled = false
                 }
-                if (System.env.CI != null) {
-                    disableAllWarnings = true
-                }
             }
         }
         if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks') || project.name.contains('osgi-test')) {
@@ -196,6 +193,10 @@ subprojects {
             }
         }
 
+        tasks.withType(JavaCompile).configureEach {
+            options.compilerArgs << '-Xlint:-options'
+        }
+
         tasks {
             compileJava {
                 options.encoding = 'UTF-8'
@@ -231,7 +232,10 @@ subprojects {
                                 'implNote:a:Implementation Note:'
                         )
                         options.addBooleanOption('Xdoclint:all,-missing', true)
-                        options.addBooleanOption('-no-fonts', true)
+                        if (javaLanguageVersion.canCompileOrRun(23)) {
+                            // Exclude web fonts from generated documentation for JDK 23+
+                            options.addBooleanOption('-no-fonts', true)
+                        }
                     }
                 }
             }

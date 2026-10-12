@@ -360,6 +360,7 @@ class KeyValuesTest {
             disabledReason = "Sun ThreadMXBean with allocation counter not available")
     @DisabledForJreRange(min = JRE.JAVA_19, max = JRE.JAVA_19,
             disabledReason = "https://github.com/micrometer-metrics/micrometer/issues/3436")
+    @SuppressWarnings("deprecation")
     void andEmptyDoesNotAllocate() {
         ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
         long currentThreadId = Thread.currentThread().getId();
@@ -380,6 +381,7 @@ class KeyValuesTest {
             disabledReason = "Sun ThreadMXBean with allocation counter not available")
     @DisabledForJreRange(min = JRE.JAVA_19, max = JRE.JAVA_19,
             disabledReason = "https://github.com/micrometer-metrics/micrometer/issues/3436")
+    @SuppressWarnings("deprecation")
     void ofEmptyDoesNotAllocate() {
         ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
         long currentThreadId = Thread.currentThread().getId();

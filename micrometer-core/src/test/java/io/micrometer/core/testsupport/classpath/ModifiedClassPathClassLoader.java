@@ -176,6 +176,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
                 return createdBy != null && createdBy.contains("IntelliJ");
             }
             catch (Exception ex) {
+                // Ignore manifest parsing errors
             }
         }
         return false;
@@ -314,6 +315,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
                     }
                 }
                 catch (URISyntaxException ex) {
+                    // Ignore URI syntax errors
                 }
             }
             return false;
