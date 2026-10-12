@@ -232,7 +232,10 @@ subprojects {
                                 'implNote:a:Implementation Note:'
                         )
                         options.addBooleanOption('Xdoclint:all,-missing', true)
-                        options.addBooleanOption('-no-fonts', true)
+                        if (javaLanguageVersion.canCompileOrRun(23)) {
+                            // Exclude web fonts from generated documentation for JDK 23+
+                            options.addBooleanOption('-no-fonts', true)
+                        }
                     }
                 }
             }
