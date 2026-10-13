@@ -37,6 +37,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.CompletionException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -106,7 +107,7 @@ class MicrometerHttpClientTests {
         observedClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         then(meterRegistry.get("http.client.requests")
-            .tag("clientName", request.uri().getHost())
+            .tag("clientName", Objects.requireNonNull(request.uri().getHost()))
             .tag("method", "GET")
             .tag("status", "200")
             .tag("outcome", "SUCCESS")

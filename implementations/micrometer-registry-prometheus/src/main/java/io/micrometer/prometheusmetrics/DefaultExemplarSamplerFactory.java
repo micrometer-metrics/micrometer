@@ -19,6 +19,7 @@ import io.prometheus.metrics.config.ExemplarsProperties;
 import io.prometheus.metrics.core.exemplars.ExemplarSampler;
 import io.prometheus.metrics.core.exemplars.ExemplarSamplerConfig;
 import io.prometheus.metrics.tracer.common.SpanContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,7 +73,7 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) {
                 return true;
             }

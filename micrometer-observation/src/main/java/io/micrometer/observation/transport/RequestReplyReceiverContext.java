@@ -53,7 +53,7 @@ public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> impl
     }
 
     @Override
-    public void setResponse(RES response) {
+    public void setResponse(@Nullable RES response) {
         this.response = response;
     }
 
