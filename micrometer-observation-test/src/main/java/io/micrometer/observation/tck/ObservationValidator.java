@@ -101,6 +101,7 @@ class ObservationValidator implements ObservationHandler<Context> {
     }
 
     @Override
+    @SuppressWarnings("ReferenceEquality")
     public void onScopeClosed(Context context) {
         History history = addHistoryElement(context, EventName.SCOPE_CLOSE);
         // In some cases (Reactor) scope close can happen after the observation is stopped
@@ -127,7 +128,7 @@ class ObservationValidator implements ObservationHandler<Context> {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({ "deprecation", "ReferenceEquality" })
     public void onScopeReset(Context context) {
         History history = addHistoryElement(context, EventName.SCOPE_RESET);
         // In some cases (Reactor) scope reset can happen after the observation is stopped

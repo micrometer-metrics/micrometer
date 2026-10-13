@@ -159,6 +159,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
         return this;
     }
 
+    @SuppressWarnings("ReferenceEquality")
     private void forbidSelfContainingComposite(MeterRegistry registry) {
         if (registry == this) {
             throw new IllegalArgumentException("Adding a composite meter registry to itself is not allowed!");

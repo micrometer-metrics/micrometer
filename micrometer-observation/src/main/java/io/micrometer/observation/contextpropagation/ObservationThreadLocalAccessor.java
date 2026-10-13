@@ -172,6 +172,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     }
 
     @Override
+    @SuppressWarnings("ReferenceEquality")
     public void restore(Observation value) {
         Observation.Scope scope = observationRegistry.getCurrentObservationScope();
         if (log.isTraceEnabled()) {

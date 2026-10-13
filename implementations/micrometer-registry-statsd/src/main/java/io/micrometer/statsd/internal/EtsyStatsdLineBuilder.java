@@ -48,6 +48,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
         return nameByStatistic(stat) + ":" + amount + "|" + type;
     }
 
+    @SuppressWarnings("ReferenceEquality")
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {

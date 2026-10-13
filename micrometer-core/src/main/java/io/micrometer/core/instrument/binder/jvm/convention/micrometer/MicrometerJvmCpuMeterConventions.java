@@ -16,9 +16,6 @@
 package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.SimpleMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConventions;
 
 /**
  * Historical convention used in Micrometer JVM-derived CPU related metrics.
@@ -32,7 +29,8 @@ import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConvention
  */
 @Deprecated
 @SuppressWarnings("deprecation")
-public class MicrometerJvmCpuMeterConventions implements JvmCpuMeterConventions {
+public class MicrometerJvmCpuMeterConventions
+        implements io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConventions {
 
     private final Tags extraTags;
 
@@ -45,18 +43,18 @@ public class MicrometerJvmCpuMeterConventions implements JvmCpuMeterConventions 
     }
 
     @Override
-    public MeterConvention<Object> cpuTimeConvention() {
-        return new SimpleMeterConvention<>("process.cpu.time", getCommonTags());
+    public io.micrometer.core.instrument.binder.MeterConvention<Object> cpuTimeConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("process.cpu.time", getCommonTags());
     }
 
     @Override
-    public MeterConvention<Object> cpuCountConvention() {
-        return new SimpleMeterConvention<>("system.cpu.count", getCommonTags());
+    public io.micrometer.core.instrument.binder.MeterConvention<Object> cpuCountConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("system.cpu.count", getCommonTags());
     }
 
     @Override
-    public MeterConvention<Object> processCpuLoadConvention() {
-        return new SimpleMeterConvention<>("process.cpu.usage", getCommonTags());
+    public io.micrometer.core.instrument.binder.MeterConvention<Object> processCpuLoadConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("process.cpu.usage", getCommonTags());
     }
 
 }

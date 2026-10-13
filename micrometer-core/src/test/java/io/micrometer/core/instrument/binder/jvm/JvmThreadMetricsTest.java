@@ -129,6 +129,7 @@ class JvmThreadMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void otelThreadStates() {
         new JvmThreadMetrics(Tags.empty(), new OpenTelemetryJvmThreadMeterConventions(Tags.empty())).bindTo(registry);
         double initialThreadCount = registry.get("jvm.threads.started").functionCounter().count();
@@ -149,6 +150,7 @@ class JvmThreadMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void otelThreadStatesWithExtraTags() {
         Tags extraTags = Tags.of("extra", "tag");
         new JvmThreadMetrics(extraTags, new OpenTelemetryJvmThreadMeterConventions(extraTags)).bindTo(registry);

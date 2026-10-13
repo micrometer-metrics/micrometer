@@ -18,10 +18,8 @@ package io.micrometer.core.instrument.binder.jvm;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmClassCountMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadedMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmClassUnloadedMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmClassCountMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmClassLoadedMeterConvention;
@@ -75,13 +73,15 @@ public class ClassLoaderMetrics implements MeterBinder {
      * @deprecated use {@link #builder()} to provide individual conventions
      */
     @Deprecated
-    public ClassLoaderMetrics(JvmClassLoadingMeterConventions conventions) {
+    @SuppressWarnings("deprecation")
+    public ClassLoaderMetrics(
+            io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterConventions conventions) {
         this.extraTags = Tags.empty();
-        MeterConvention<Object> count = conventions.currentClassCountConvention();
+        io.micrometer.core.instrument.binder.MeterConvention<Object> count = conventions.currentClassCountConvention();
         this.classCountConvention = JvmClassCountMeterConvention.of(count.getName(), count.getTags(null));
-        MeterConvention<Object> loaded = conventions.loadedConvention();
+        io.micrometer.core.instrument.binder.MeterConvention<Object> loaded = conventions.loadedConvention();
         this.classLoadedConvention = JvmClassLoadedMeterConvention.of(loaded.getName(), loaded.getTags(null));
-        MeterConvention<Object> unloaded = conventions.unloadedConvention();
+        io.micrometer.core.instrument.binder.MeterConvention<Object> unloaded = conventions.unloadedConvention();
         this.classUnloadedConvention = JvmClassUnloadedMeterConvention.of(unloaded.getName(), unloaded.getTags(null));
     }
 

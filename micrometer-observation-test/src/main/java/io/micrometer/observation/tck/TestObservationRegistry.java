@@ -121,6 +121,7 @@ public final class TestObservationRegistry
         }
 
         @Override
+        @SuppressWarnings("ReferenceEquality")
         public void onStop(Observation.Context context) {
             this.contexts.stream()
                 .filter(testContext -> testContext.getContext() == context)
@@ -134,6 +135,7 @@ public final class TestObservationRegistry
         }
 
         @Override
+        @SuppressWarnings("ReferenceEquality")
         public void onEvent(Observation.Event event, Observation.Context context) {
             this.contexts.stream()
                 .filter(testContext -> testContext.getContext() == context)

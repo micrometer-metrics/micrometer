@@ -16,9 +16,6 @@
 package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.SimpleMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterConventions;
 
 /**
  * Micrometer's historical conventions for JVM class loading metrics.
@@ -32,7 +29,8 @@ import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterC
  */
 @Deprecated
 @SuppressWarnings("deprecation")
-public class MicrometerJvmClassLoadingMeterConventions implements JvmClassLoadingMeterConventions {
+public class MicrometerJvmClassLoadingMeterConventions
+        implements io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterConventions {
 
     private final Tags extraTags;
 
@@ -49,18 +47,20 @@ public class MicrometerJvmClassLoadingMeterConventions implements JvmClassLoadin
     }
 
     @Override
-    public MeterConvention<Object> loadedConvention() {
-        return new SimpleMeterConvention<>("jvm.classes.loaded.count", getCommonTags());
+    public io.micrometer.core.instrument.binder.MeterConvention<Object> loadedConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.classes.loaded.count",
+                getCommonTags());
     }
 
     @Override
-    public MeterConvention<Object> unloadedConvention() {
-        return new SimpleMeterConvention<>("jvm.classes.unloaded", getCommonTags());
+    public io.micrometer.core.instrument.binder.MeterConvention<Object> unloadedConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.classes.unloaded",
+                getCommonTags());
     }
 
     @Override
-    public MeterConvention<Object> currentClassCountConvention() {
-        return new SimpleMeterConvention<>("jvm.classes.loaded", getCommonTags());
+    public io.micrometer.core.instrument.binder.MeterConvention<Object> currentClassCountConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.classes.loaded", getCommonTags());
     }
 
 }

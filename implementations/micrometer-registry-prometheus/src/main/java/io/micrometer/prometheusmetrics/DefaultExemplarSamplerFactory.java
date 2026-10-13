@@ -60,13 +60,13 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
         return new ExemplarSampler(config, spanContext);
     }
 
-    private static final class DoubleArrayKey {
+    static final class DoubleArrayKey {
 
         private final double[] array;
 
         private final int hashCode;
 
-        private DoubleArrayKey(double[] array) {
+        DoubleArrayKey(double[] array) {
             this.array = array;
             this.hashCode = Arrays.hashCode(array);
         }

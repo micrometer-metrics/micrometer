@@ -51,6 +51,7 @@ class ClassLoaderMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void otelConventions() {
         new ClassLoaderMetrics(new OpenTelemetryJvmClassLoadingMeterConventions()).bindTo(registry);
 
@@ -60,6 +61,7 @@ class ClassLoaderMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void otelConventionsWithExtraTags() {
         Tags extraTags = Tags.of("extra", "tag");
         new ClassLoaderMetrics(new OpenTelemetryJvmClassLoadingMeterConventions(extraTags)).bindTo(registry);
@@ -118,6 +120,7 @@ class ClassLoaderMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void customConventions() {
         new ClassLoaderMetrics(new MyClassLoaderConventions()).bindTo(registry);
 
@@ -131,6 +134,7 @@ class ClassLoaderMetricsTest {
             .isNotNegative();
     }
 
+    @SuppressWarnings("deprecation")
     static class MyClassLoaderConventions extends MicrometerJvmClassLoadingMeterConventions {
 
         @Override

@@ -15,10 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
-
 /**
- * Get {@link MeterConvention} for CPU-related metrics from the JVM.
+ * Get {@link io.micrometer.core.instrument.binder.MeterConvention} for CPU-related
+ * metrics from the JVM.
  *
  * @see io.micrometer.core.instrument.binder.system.ProcessorMetrics
  * @since 1.16.0
@@ -27,12 +26,13 @@ import io.micrometer.core.instrument.binder.MeterConvention;
  * {@link io.micrometer.core.instrument.binder.system.ProcessorMetrics.Builder} instead
  */
 @Deprecated
+@SuppressWarnings("deprecation")
 public interface JvmCpuMeterConventions {
 
-    MeterConvention<Object> cpuTimeConvention();
+    io.micrometer.core.instrument.binder.MeterConvention<Object> cpuTimeConvention();
 
-    MeterConvention<Object> cpuCountConvention();
+    io.micrometer.core.instrument.binder.MeterConvention<Object> cpuCountConvention();
 
-    MeterConvention<Object> processCpuLoadConvention();
+    io.micrometer.core.instrument.binder.MeterConvention<Object> processCpuLoadConvention();
 
 }

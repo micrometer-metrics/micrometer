@@ -15,12 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
-
 import java.lang.management.MemoryPoolMXBean;
 
 /**
- * Get {@link MeterConvention} related to computer memory from the JVM metrics.
+ * Get {@link io.micrometer.core.instrument.binder.MeterConvention} related to computer
+ * memory from the JVM metrics.
  *
  * @see io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
  * @since 1.16.0
@@ -31,12 +30,13 @@ import java.lang.management.MemoryPoolMXBean;
  * {@link io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics.Builder} instead
  */
 @Deprecated
+@SuppressWarnings("deprecation")
 public interface JvmMemoryMeterConventions {
 
-    MeterConvention<MemoryPoolMXBean> getMemoryUsedConvention();
+    io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> getMemoryUsedConvention();
 
-    MeterConvention<MemoryPoolMXBean> getMemoryCommittedConvention();
+    io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> getMemoryCommittedConvention();
 
-    MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention();
+    io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention();
 
 }

@@ -18,7 +18,6 @@
  * Deprecated since 1.18.0 due to AppOptics' End of Life Announcement.
  */
 @NullMarked
-@Deprecated
 package io.micrometer.appoptics;
 
 import org.jspecify.annotations.NullMarked;

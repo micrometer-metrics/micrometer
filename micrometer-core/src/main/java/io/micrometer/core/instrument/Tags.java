@@ -209,6 +209,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
+    @SuppressWarnings("ReferenceEquality")
     public Tags and(@Nullable Iterable<? extends Tag> tags) {
         if (tags == null || tags == EMPTY || !tags.iterator().hasNext()) {
             return this;
@@ -283,6 +284,7 @@ public final class Tags implements Iterable<Tag> {
         return this == obj || (obj != null && getClass() == obj.getClass() && tagsEqual((Tags) obj));
     }
 
+    @SuppressWarnings("ReferenceEquality")
     private boolean tagsEqual(Tags obj) {
         if (sortedSet == obj.sortedSet)
             return true;
@@ -326,6 +328,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
+    @SuppressWarnings("ReferenceEquality")
     public static Tags of(@Nullable Iterable<? extends Tag> tags) {
         if (tags == null || tags == EMPTY || !tags.iterator().hasNext()) {
             return Tags.empty();

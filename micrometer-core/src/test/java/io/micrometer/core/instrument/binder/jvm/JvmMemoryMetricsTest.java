@@ -146,6 +146,7 @@ class JvmMemoryMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void otelMemoryMetrics() {
         Tags extraTags = Tags.empty();
         new JvmMemoryMetrics(extraTags, new OpenTelemetryJvmMemoryMeterConventions(extraTags)).bindTo(registry);
@@ -158,6 +159,7 @@ class JvmMemoryMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void otelMemoryMetricsWithExtraTags() {
         Tags extraTags = Tags.of("extra", "tag");
         new JvmMemoryMetrics(extraTags, new OpenTelemetryJvmMemoryMeterConventions(extraTags)).bindTo(registry);

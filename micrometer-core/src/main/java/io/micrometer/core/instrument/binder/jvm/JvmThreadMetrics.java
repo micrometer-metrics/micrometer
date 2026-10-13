@@ -22,9 +22,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadCountMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmThreadCountMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmThreadCountMeterConvention;
 import org.jspecify.annotations.Nullable;
@@ -70,9 +68,12 @@ public class JvmThreadMetrics implements MeterBinder {
      * @deprecated use {@link #builder()} to provide individual conventions
      */
     @Deprecated
-    public JvmThreadMetrics(Iterable<? extends Tag> extraTags, JvmThreadMeterConventions conventions) {
+    @SuppressWarnings("deprecation")
+    public JvmThreadMetrics(Iterable<? extends Tag> extraTags,
+            io.micrometer.core.instrument.binder.jvm.convention.JvmThreadMeterConventions conventions) {
         this.extraTags = Tags.of(extraTags);
-        MeterConvention<Thread.State> threadCount = conventions.threadCountConvention();
+        io.micrometer.core.instrument.binder.MeterConvention<Thread.State> threadCount = conventions
+            .threadCountConvention();
         this.threadCountConvention = JvmThreadCountMeterConvention.of(threadCount.getName(), threadCount::getTags);
     }
 

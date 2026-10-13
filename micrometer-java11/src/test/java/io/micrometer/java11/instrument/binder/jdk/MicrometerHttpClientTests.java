@@ -96,7 +96,8 @@ class MicrometerHttpClientTests {
 
         // tag::customConventionInstrumentation[]
         ObservationRegistry observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+        observationRegistry.observationConfig()
+            .observationHandler(DefaultMeterObservationHandler.builder(meterRegistry).build());
 
         HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry)
             .observationRegistry(observationRegistry)

@@ -16,9 +16,6 @@
 package io.micrometer.core.instrument.binder.jvm.convention.otel;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.SimpleMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmThreadMeterConventions;
 
 import java.util.Locale;
 
@@ -34,7 +31,8 @@ import java.util.Locale;
  */
 @Deprecated
 @SuppressWarnings("deprecation")
-public class OpenTelemetryJvmThreadMeterConventions extends MicrometerJvmThreadMeterConventions {
+public class OpenTelemetryJvmThreadMeterConventions
+        extends io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmThreadMeterConventions {
 
     public OpenTelemetryJvmThreadMeterConventions(Tags extraTags) {
         super(extraTags);
@@ -45,8 +43,9 @@ public class OpenTelemetryJvmThreadMeterConventions extends MicrometerJvmThreadM
     }
 
     @Override
-    public MeterConvention<Thread.State> threadCountConvention() {
-        return new SimpleMeterConvention<>("jvm.thread.count", this::getThreadStateTags);
+    public io.micrometer.core.instrument.binder.MeterConvention<Thread.State> threadCountConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.thread.count",
+                this::getThreadStateTags);
     }
 
 }

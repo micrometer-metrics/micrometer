@@ -99,6 +99,7 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
      * @return this
      * @throws AssertionError if there is a current observation remaining in the registry
      */
+    @SuppressWarnings("ReferenceEquality")
     public SELF doesNotHaveRemainingCurrentObservationSameAs(Observation observation) {
         isNotNull();
         Observation current = actual.getCurrentObservation();
@@ -116,6 +117,7 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
      * @return this
      * @throws AssertionError if there is no current observation remaining in the registry
      */
+    @SuppressWarnings("ReferenceEquality")
     public SELF hasRemainingCurrentObservationSameAs(Observation observation) {
         isNotNull();
         Observation current = actual.getCurrentObservation();
@@ -171,6 +173,7 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
      * @throws AssertionError if there is a current scope remaining in the registry and it
      * is the same as the provided scope
      */
+    @SuppressWarnings("ReferenceEquality")
     public SELF doesNotHaveRemainingCurrentScopeSameAs(Observation.Scope scope) {
         isNotNull();
         Observation.Scope current = actual.getCurrentObservationScope();
@@ -189,6 +192,7 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
      * @throws AssertionError if the provided scope is not the current scope remaining in
      * the registry
      */
+    @SuppressWarnings("ReferenceEquality")
     public SELF hasRemainingCurrentScopeSameAs(Observation.Scope scope) {
         isNotNull();
         Observation.Scope current = actual.getCurrentObservationScope();

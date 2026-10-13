@@ -16,9 +16,6 @@
 package io.micrometer.core.instrument.binder.jvm.convention.otel;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.SimpleMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuMeterConventions;
 
 /**
  * Conventions for JVM CPU related metrics based on OpenTelemetry semantic conventions.
@@ -35,25 +32,27 @@ import io.micrometer.core.instrument.binder.jvm.convention.micrometer.Micrometer
  */
 @Deprecated
 @SuppressWarnings("deprecation")
-public class OpenTelemetryJvmCpuMeterConventions extends MicrometerJvmCpuMeterConventions {
+public class OpenTelemetryJvmCpuMeterConventions
+        extends io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuMeterConventions {
 
     public OpenTelemetryJvmCpuMeterConventions(Tags extraTags) {
         super(extraTags);
     }
 
     @Override
-    public MeterConvention<Object> cpuTimeConvention() {
-        return new SimpleMeterConvention<>("jvm.cpu.time", getCommonTags());
+    public io.micrometer.core.instrument.binder.MeterConvention<Object> cpuTimeConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.cpu.time", getCommonTags());
     }
 
     @Override
-    public MeterConvention<Object> cpuCountConvention() {
-        return new SimpleMeterConvention<>("jvm.cpu.count", getCommonTags());
+    public io.micrometer.core.instrument.binder.MeterConvention<Object> cpuCountConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.cpu.count", getCommonTags());
     }
 
     @Override
-    public MeterConvention<Object> processCpuLoadConvention() {
-        return new SimpleMeterConvention<>("jvm.cpu.recent_utilization", getCommonTags());
+    public io.micrometer.core.instrument.binder.MeterConvention<Object> processCpuLoadConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.cpu.recent_utilization",
+                getCommonTags());
     }
 
 }

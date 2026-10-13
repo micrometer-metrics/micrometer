@@ -201,6 +201,7 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static boolean isStatisticsEnabled(Cache<?, ?> cache) {
         try {
             CompleteConfiguration<?, ?> config = cache.getConfiguration(CompleteConfiguration.class);
