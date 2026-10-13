@@ -52,7 +52,7 @@ public abstract class NullContextObservationHandlerCompatibilityKit {
 
     @Test
     @DisplayName("compatibility test provides a null context accepting observation handler")
-    @SuppressWarnings("NullAway")
+    @SuppressWarnings({ "NullAway", "deprecation" })
     void handlerSupportsNullContext() {
         assertThatCode(() -> handler.onStart(null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onStop(null)).doesNotThrowAnyException();

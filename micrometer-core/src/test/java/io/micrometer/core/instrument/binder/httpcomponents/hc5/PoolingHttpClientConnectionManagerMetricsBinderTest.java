@@ -34,6 +34,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  */
+@SuppressWarnings("deprecation")
 class PoolingHttpClientConnectionManagerMetricsBinderTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());

@@ -55,7 +55,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
-import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.*;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -65,7 +64,24 @@ import static org.assertj.core.api.Assertions.*;
  * @author Brian Clozel
  */
 @ExtendWith(WiremockResolver.class)
+@SuppressWarnings("deprecation")
 class ObservationExecChainHandlerIntegrationTest {
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames EXCEPTION = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.EXCEPTION;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames METHOD = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.METHOD;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames OUTCOME = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames STATUS = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.STATUS;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames TARGET_HOST = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.TARGET_HOST;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames TARGET_PORT = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.TARGET_PORT;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames TARGET_SCHEME = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.TARGET_SCHEME;
+
+    private static final ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames URI = ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.URI;
 
     private static final String DEFAULT_METER_NAME = "httpcomponents.httpclient.request";
 

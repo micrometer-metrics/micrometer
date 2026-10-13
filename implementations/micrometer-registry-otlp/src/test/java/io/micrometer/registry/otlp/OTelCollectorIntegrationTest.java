@@ -211,6 +211,7 @@ class OTelCollectorIntegrationTest {
     }
 
     @Test
+    @SuppressWarnings("NonCanonicalType")
     void collectorShouldExportExponentialHistograms() throws Exception {
         MeterRegistry registry = createOtlpMeterRegistryForContainerWithExponentialHistogram(container);
         Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(registry);
@@ -240,8 +241,8 @@ class OTelCollectorIntegrationTest {
         // @formatter:on
     }
 
-    private List<io.prometheus.metrics.expositionformats.generated.Metrics.MetricFamily> parse(Response response)
-            throws IOException {
+    @SuppressWarnings("NonCanonicalType")
+    private List<Metrics.MetricFamily> parse(Response response) throws IOException {
         List<Metrics.MetricFamily> families = new ArrayList<>();
         try (InputStream is = response.body().asInputStream()) {
             Metrics.MetricFamily family;

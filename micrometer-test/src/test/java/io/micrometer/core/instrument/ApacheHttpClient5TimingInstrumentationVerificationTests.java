@@ -46,6 +46,7 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected @Nullable CloseableHttpClient clientInstrumentedWithObservations() {
         return HttpClientBuilder.create()
             .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(getObservationRegistry()))
@@ -58,6 +59,7 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected ObservationDocumentation observationDocumentation() {
         return ApacheHttpClientObservationDocumentation.DEFAULT;
     }

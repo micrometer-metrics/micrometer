@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  * @author Johnny Lim
  */
+@SuppressWarnings("deprecation")
 class DynatraceNamingConventionV1Test {
 
     private final DynatraceNamingConventionV1 convention = new DynatraceNamingConventionV1();

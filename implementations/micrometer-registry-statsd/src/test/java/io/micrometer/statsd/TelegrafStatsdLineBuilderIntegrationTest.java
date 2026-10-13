@@ -140,7 +140,9 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         registry.close();
     }
 
-    private void verifyMetric(String expectedMetricName, Matcher<? super String>... expectedTags) {
+    @SafeVarargs
+    @SuppressWarnings("varargs")
+    private final void verifyMetric(String expectedMetricName, Matcher<? super String>... expectedTags) {
         whenGetMetricFromInfluxDb(getFluxQuery(expectedMetricName)).then().statusCode(200).body(allOf(expectedTags));
     }
 
