@@ -180,11 +180,11 @@ class DefaultMailSendObservationConventionTests {
         Message message = new MimeMessage((Session) null);
         String newsgroup = "news.announce";
         String mail = "test@exemple.com";
-        Address address = recipientType == MimeMessage.RecipientType.NEWSGROUPS ? new NewsAddress(newsgroup)
+        Address address = MimeMessage.RecipientType.NEWSGROUPS.equals(recipientType) ? new NewsAddress(newsgroup)
                 : new InternetAddress(mail);
         message.addRecipient(recipientType, address);
         assertThat(getHighCardinalityKeyValues(message)).containsExactly(KeyValue.of(getKey(recipientType),
-                recipientType == MimeMessage.RecipientType.NEWSGROUPS ? newsgroup : mail));
+                MimeMessage.RecipientType.NEWSGROUPS.equals(recipientType) ? newsgroup : mail));
     }
 
     @ParameterizedTest
@@ -195,10 +195,10 @@ class DefaultMailSendObservationConventionTests {
         InternetAddress[] internetAddresses = { new InternetAddress("test@exemple.com"),
                 new InternetAddress("other@example.com") };
         message.addRecipients(recipientType,
-                recipientType == MimeMessage.RecipientType.NEWSGROUPS ? newsAddresses : internetAddresses);
-        assertThat(getHighCardinalityKeyValues(message))
-            .containsExactly(KeyValue.of(getKey(recipientType), recipientType == MimeMessage.RecipientType.NEWSGROUPS
-                    ? "news.announce, news.misc" : "test@exemple.com, other@example.com"));
+                MimeMessage.RecipientType.NEWSGROUPS.equals(recipientType) ? newsAddresses : internetAddresses);
+        assertThat(getHighCardinalityKeyValues(message)).containsExactly(
+                KeyValue.of(getKey(recipientType), MimeMessage.RecipientType.NEWSGROUPS.equals(recipientType)
+                        ? "news.announce, news.misc" : "test@exemple.com, other@example.com"));
     }
 
     @Test

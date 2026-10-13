@@ -27,7 +27,7 @@ public final class MeterEquivalence {
     }
 
     // TODO fix somehow or report bug?
-    @SuppressWarnings("NullAway")
+    @SuppressWarnings({ "NullAway", "ReferenceEquality" })
     public static boolean equals(@Nullable Meter m1, @Nullable Object o) {
         if (m1 == null && o != null)
             return false;

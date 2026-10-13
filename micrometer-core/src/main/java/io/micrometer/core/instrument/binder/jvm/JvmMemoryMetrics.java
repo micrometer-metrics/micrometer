@@ -21,10 +21,8 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryCommittedMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMaxMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryUsedAfterLastGcMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryUsedMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmMemoryCommittedMeterConvention;
@@ -89,13 +87,18 @@ public class JvmMemoryMetrics implements MeterBinder {
      * @deprecated use {@link #builder()} to provide individual conventions
      */
     @Deprecated
-    public JvmMemoryMetrics(Iterable<? extends Tag> extraTags, JvmMemoryMeterConventions conventions) {
+    @SuppressWarnings("deprecation")
+    public JvmMemoryMetrics(Iterable<? extends Tag> extraTags,
+            io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMeterConventions conventions) {
         this.extraTags = Tags.of(extraTags);
-        MeterConvention<MemoryPoolMXBean> used = conventions.getMemoryUsedConvention();
+        io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> used = conventions
+            .getMemoryUsedConvention();
         this.memoryUsedConvention = JvmMemoryUsedMeterConvention.of(used.getName(), used::getTags);
-        MeterConvention<MemoryPoolMXBean> committed = conventions.getMemoryCommittedConvention();
+        io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> committed = conventions
+            .getMemoryCommittedConvention();
         this.memoryCommittedConvention = JvmMemoryCommittedMeterConvention.of(committed.getName(), committed::getTags);
-        MeterConvention<MemoryPoolMXBean> max = conventions.getMemoryMaxConvention();
+        io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> max = conventions
+            .getMemoryMaxConvention();
         this.memoryMaxConvention = JvmMemoryMaxMeterConvention.of(max.getName(), max::getTags);
         this.memoryUsedAfterLastGcConvention = new MicrometerJvmMemoryUsedAfterLastGcMeterConvention();
     }

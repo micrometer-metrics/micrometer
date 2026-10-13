@@ -20,8 +20,6 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.sun.net.httpserver.HttpServer;
-import io.micrometer.appoptics.AppOpticsConfig;
-import io.micrometer.appoptics.AppOpticsMeterRegistry;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
@@ -73,8 +71,8 @@ public class SampleRegistries {
 
     @Deprecated
     @SuppressWarnings("deprecation")
-    public static AppOpticsMeterRegistry appOptics(String apiToken) {
-        return new AppOpticsMeterRegistry(new AppOpticsConfig() {
+    public static io.micrometer.appoptics.AppOpticsMeterRegistry appOptics(String apiToken) {
+        return new io.micrometer.appoptics.AppOpticsMeterRegistry(new io.micrometer.appoptics.AppOpticsConfig() {
             @Override
             public String apiToken() {
                 return apiToken;

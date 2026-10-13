@@ -15,10 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
-
 /**
- * Get {@link MeterConvention} for metrics related to class loading.
+ * Get {@link io.micrometer.core.instrument.binder.MeterConvention} for metrics related to
+ * class loading.
  *
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
  * @since 1.16.0
@@ -28,12 +27,13 @@ import io.micrometer.core.instrument.binder.MeterConvention;
  * {@link io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics.Builder} instead
  */
 @Deprecated
+@SuppressWarnings("deprecation")
 public interface JvmClassLoadingMeterConventions {
 
-    MeterConvention<Object> loadedConvention();
+    io.micrometer.core.instrument.binder.MeterConvention<Object> loadedConvention();
 
-    MeterConvention<Object> unloadedConvention();
+    io.micrometer.core.instrument.binder.MeterConvention<Object> unloadedConvention();
 
-    MeterConvention<Object> currentClassCountConvention();
+    io.micrometer.core.instrument.binder.MeterConvention<Object> currentClassCountConvention();
 
 }

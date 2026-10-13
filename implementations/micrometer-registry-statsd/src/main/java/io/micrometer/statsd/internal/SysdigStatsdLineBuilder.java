@@ -57,6 +57,7 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
         return name + tagsByStatistic(stat) + ":" + amount + "|" + type;
     }
 
+    @SuppressWarnings("ReferenceEquality")
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {

@@ -271,8 +271,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
          * { "timestamp": "2016-06-06T13:00:02+02:00", "attributes": { "name": "value1" }
          * }
          */
-        // VisibleForTesting
-        String writeEvent(Meter meter, Attribute... attributes) {
+        private String writeEvent(Meter meter, Attribute... attributes) {
             StringBuilder sb = new StringBuilder();
 
             String name = getConventionName(meter.getId());

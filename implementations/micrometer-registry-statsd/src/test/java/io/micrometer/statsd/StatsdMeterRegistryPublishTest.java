@@ -106,6 +106,7 @@ class StatsdMeterRegistryPublishTest {
 
     @ParameterizedTest
     @EnumSource
+    @SuppressWarnings("ReferenceEquality")
     void resumeSendingMetrics_whenServerIntermittentlyFails(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
         CountDownLatch serverLatch = new CountDownLatch(1);

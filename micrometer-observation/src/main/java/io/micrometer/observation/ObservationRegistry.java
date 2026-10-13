@@ -109,6 +109,7 @@ public interface ObservationRegistry {
      * Checks whether this {@link ObservationRegistry} is no-op.
      * @return {@code true} when this is a no-op observation registry
      */
+    @SuppressWarnings("ReferenceEquality")
     default boolean isNoop() {
         return this == NOOP;
     }

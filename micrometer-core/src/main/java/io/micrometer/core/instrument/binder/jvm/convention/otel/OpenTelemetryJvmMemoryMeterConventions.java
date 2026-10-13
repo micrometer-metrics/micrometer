@@ -16,9 +16,6 @@
 package io.micrometer.core.instrument.binder.jvm.convention.otel;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.SimpleMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmMemoryMeterConventions;
 
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
@@ -39,7 +36,8 @@ import java.lang.management.MemoryType;
  */
 @Deprecated
 @SuppressWarnings("deprecation")
-public class OpenTelemetryJvmMemoryMeterConventions extends MicrometerJvmMemoryMeterConventions {
+public class OpenTelemetryJvmMemoryMeterConventions
+        extends io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmMemoryMeterConventions {
 
     public OpenTelemetryJvmMemoryMeterConventions(Tags extraTags) {
         super(extraTags);
@@ -52,8 +50,9 @@ public class OpenTelemetryJvmMemoryMeterConventions extends MicrometerJvmMemoryM
     }
 
     @Override
-    public MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention() {
-        return new SimpleMeterConvention<>("jvm.memory.limit", this::getCommonTags);
+    public io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.memory.limit",
+                this::getCommonTags);
     }
 
 }

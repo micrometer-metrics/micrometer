@@ -233,6 +233,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
+    @SuppressWarnings("ReferenceEquality")
     public KeyValues and(@Nullable Iterable<? extends KeyValue> keyValues) {
         if (keyValues == null || keyValues == EMPTY || !keyValues.iterator().hasNext()) {
             return this;
@@ -299,6 +300,7 @@ public final class KeyValues implements Iterable<KeyValue> {
         return this == obj || (obj != null && getClass() == obj.getClass() && keyValuesEqual((KeyValues) obj));
     }
 
+    @SuppressWarnings("ReferenceEquality")
     private boolean keyValuesEqual(KeyValues obj) {
         if (sortedSet == obj.sortedSet)
             return true;
@@ -358,6 +360,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
+    @SuppressWarnings({ "unchecked", "ReferenceEquality" })
     public static KeyValues of(@Nullable Iterable<? extends KeyValue> keyValues) {
         if (keyValues == null || keyValues == EMPTY || !keyValues.iterator().hasNext()) {
             return KeyValues.empty();

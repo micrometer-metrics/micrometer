@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuCountMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuLoadMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuTimeMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuCountMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuLoadMeterConvention;
@@ -105,7 +104,9 @@ public class ProcessorMetrics implements MeterBinder {
      * @deprecated use {@link #builder()} to provide individual conventions
      */
     @Deprecated
-    public ProcessorMetrics(Iterable<? extends Tag> extraTags, JvmCpuMeterConventions conventions) {
+    @SuppressWarnings("deprecation")
+    public ProcessorMetrics(Iterable<? extends Tag> extraTags,
+            io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConventions conventions) {
         this(Tags.of(extraTags),
                 JvmCpuTimeMeterConvention.of(conventions.cpuTimeConvention().getName(),
                         conventions.cpuTimeConvention().getTags(null)),

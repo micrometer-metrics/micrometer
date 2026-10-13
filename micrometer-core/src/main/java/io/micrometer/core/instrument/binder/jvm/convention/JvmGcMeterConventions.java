@@ -17,16 +17,16 @@ package io.micrometer.core.instrument.binder.jvm.convention;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
-
 import javax.management.Notification;
 import javax.management.openmbean.CompositeData;
 
 // intentionally not public for now
+@Deprecated
+@SuppressWarnings("deprecation")
 interface JvmGcMeterConventions {
 
-    default MeterConvention<Notification> gcTimeConvention() {
-        return new MeterConvention<Notification>() {
+    default io.micrometer.core.instrument.binder.MeterConvention<Notification> gcTimeConvention() {
+        return new io.micrometer.core.instrument.binder.MeterConvention<Notification>() {
             @Override
             public String getName() {
                 return "jvm.gc.duration";

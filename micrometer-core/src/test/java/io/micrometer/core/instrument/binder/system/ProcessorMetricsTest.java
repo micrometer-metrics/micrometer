@@ -138,6 +138,7 @@ class ProcessorMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void otelCpuMetrics() {
         Tags extraTags = Tags.empty();
         new ProcessorMetrics(extraTags, new OpenTelemetryJvmCpuMeterConventions(extraTags)).bindTo(registry);
@@ -154,6 +155,7 @@ class ProcessorMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void otelCpuMetricsWithExtraTags() {
         Tags extraTags = Tags.of("tag", "value");
         new ProcessorMetrics(extraTags, new OpenTelemetryJvmCpuMeterConventions(extraTags)).bindTo(registry);

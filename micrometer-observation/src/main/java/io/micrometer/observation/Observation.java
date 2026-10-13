@@ -486,6 +486,7 @@ public interface Observation extends ObservationView {
      * Checks whether this {@link Observation} is no-op.
      * @return {@code true} when this is a no-op observation
      */
+    @SuppressWarnings("ReferenceEquality")
     default boolean isNoop() {
         return this == Observation.NOOP || this == NoopButScopeHandlingObservation.INSTANCE;
     }
@@ -995,6 +996,7 @@ public interface Observation extends ObservationView {
          * Checks whether this {@link Scope} is no-op.
          * @return {@code true} when this is a no-op scope
          */
+        @SuppressWarnings("ReferenceEquality")
         default boolean isNoop() {
             return this == NOOP;
         }

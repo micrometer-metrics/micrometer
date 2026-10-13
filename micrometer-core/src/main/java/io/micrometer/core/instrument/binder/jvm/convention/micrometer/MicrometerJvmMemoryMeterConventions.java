@@ -16,9 +16,6 @@
 package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.SimpleMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMeterConventions;
 
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
@@ -36,7 +33,8 @@ import java.lang.management.MemoryType;
  */
 @Deprecated
 @SuppressWarnings("deprecation")
-public class MicrometerJvmMemoryMeterConventions implements JvmMemoryMeterConventions {
+public class MicrometerJvmMemoryMeterConventions
+        implements io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMeterConventions {
 
     protected final Tags extraTags;
 
@@ -54,18 +52,19 @@ public class MicrometerJvmMemoryMeterConventions implements JvmMemoryMeterConven
     }
 
     @Override
-    public MeterConvention<MemoryPoolMXBean> getMemoryUsedConvention() {
-        return new SimpleMeterConvention<>("jvm.memory.used", this::getCommonTags);
+    public io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> getMemoryUsedConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.memory.used", this::getCommonTags);
     }
 
     @Override
-    public MeterConvention<MemoryPoolMXBean> getMemoryCommittedConvention() {
-        return new SimpleMeterConvention<>("jvm.memory.committed", this::getCommonTags);
+    public io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> getMemoryCommittedConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.memory.committed",
+                this::getCommonTags);
     }
 
     @Override
-    public MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention() {
-        return new SimpleMeterConvention<>("jvm.memory.max", this::getCommonTags);
+    public io.micrometer.core.instrument.binder.MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention() {
+        return new io.micrometer.core.instrument.binder.SimpleMeterConvention<>("jvm.memory.max", this::getCommonTags);
     }
 
 }

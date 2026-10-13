@@ -304,7 +304,8 @@ class MicrometerCollector implements MultiCollector {
     public MetricSnapshots collect() {
         int familyCount = descriptorsByFamilyName.size();
         // descriptors are canonical per family
-        Map<MetricFamilyDescriptor, List<DataPointSnapshot>> dataPointsByFamily = new IdentityHashMap<>(familyCount);
+        IdentityHashMap<MetricFamilyDescriptor, List<DataPointSnapshot>> dataPointsByFamily = new IdentityHashMap<>(
+                familyCount);
 
         for (Child child : children.values()) {
             child.collect((family, dataPoint) -> dataPointsByFamily

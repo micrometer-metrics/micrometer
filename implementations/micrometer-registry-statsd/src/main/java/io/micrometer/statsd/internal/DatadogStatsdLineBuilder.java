@@ -107,6 +107,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         return name + amount + "|" + type + tagsByStatistic(stat);
     }
 
+    @SuppressWarnings("ReferenceEquality")
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
