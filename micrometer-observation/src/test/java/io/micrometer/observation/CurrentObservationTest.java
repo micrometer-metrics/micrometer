@@ -129,6 +129,7 @@ class CurrentObservationTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void nestedScopes_makeCurrent() {
         Observation observation = Observation.createNotStarted("test.observation", registry);
         assertThat(registry.getCurrentObservationScope()).isNull();

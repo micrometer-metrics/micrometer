@@ -147,7 +147,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 }));
 
         if (config.enabled()) {
-            this.sink = processor.sink();
+            @SuppressWarnings("deprecation")
+            FluxSink<String> fluxSink = processor.sink();
+            this.sink = fluxSink;
             start();
         }
     }

@@ -211,6 +211,7 @@ class OTelCollectorIntegrationTest {
     }
 
     @Test
+    @SuppressWarnings("NonCanonicalType")
     void collectorShouldExportExponentialHistograms() throws Exception {
         // Shows that the collector received the exemplars:
         // container.followOutput(frame -> System.out.println(frame.getUtf8String()));
@@ -242,8 +243,8 @@ class OTelCollectorIntegrationTest {
         // @formatter:on
     }
 
-    private List<io.prometheus.metrics.expositionformats.generated.Metrics.MetricFamily> parse(Response response)
-            throws IOException {
+    @SuppressWarnings("NonCanonicalType")
+    private List<Metrics.MetricFamily> parse(Response response) throws IOException {
         List<Metrics.MetricFamily> families = new ArrayList<>();
         try (InputStream is = response.body().asInputStream()) {
             Metrics.MetricFamily family;

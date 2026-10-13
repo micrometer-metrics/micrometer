@@ -40,8 +40,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.EXCEPTION;
-import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -54,6 +52,7 @@ import static org.mockito.Mockito.verify;
  *
  * @author Brian Clozel
  */
+@SuppressWarnings("deprecation")
 class ObservationExecChainHandlerTest {
 
     private final TestObservationRegistry observationRegistry = TestObservationRegistry.create();
@@ -86,7 +85,8 @@ class ObservationExecChainHandlerTest {
             handler.execute(request, this.scope, chain);
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.withValue("SUCCESS"));
+                .hasLowCardinalityKeyValue(
+                        ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME.withValue("SUCCESS"));
         }
 
         @Test
@@ -98,8 +98,10 @@ class ObservationExecChainHandlerTest {
                 .isInstanceOf(IllegalArgumentException.class);
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
-                .hasLowCardinalityKeyValue(EXCEPTION.withValue("IllegalArgumentException"));
+                .hasLowCardinalityKeyValue(
+                        ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.EXCEPTION
+                    .withValue("IllegalArgumentException"));
         }
 
         @Test
@@ -111,8 +113,10 @@ class ObservationExecChainHandlerTest {
                 .isInstanceOf(RequestFailedException.class);
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
-                .hasLowCardinalityKeyValue(EXCEPTION.withValue("RequestFailedException"));
+                .hasLowCardinalityKeyValue(
+                        ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.EXCEPTION
+                    .withValue("RequestFailedException"));
         }
 
     }
@@ -142,7 +146,8 @@ class ObservationExecChainHandlerTest {
 
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.withValue("SUCCESS"));
+                .hasLowCardinalityKeyValue(
+                        ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME.withValue("SUCCESS"));
         }
 
         @Test
@@ -156,8 +161,10 @@ class ObservationExecChainHandlerTest {
 
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
-                .hasLowCardinalityKeyValue(EXCEPTION.withValue("IllegalArgumentException"));
+                .hasLowCardinalityKeyValue(
+                        ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.EXCEPTION
+                    .withValue("IllegalArgumentException"));
         }
 
         @Test
@@ -169,8 +176,10 @@ class ObservationExecChainHandlerTest {
 
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
-                .hasLowCardinalityKeyValue(EXCEPTION.withNoneValue());
+                .hasLowCardinalityKeyValue(
+                        ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(
+                        ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.EXCEPTION.withNoneValue());
         }
 
     }

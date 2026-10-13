@@ -51,6 +51,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Johnny Lim
  */
+@SuppressWarnings("deprecation")
 class DynatraceExporterV1Test {
 
     private static final MockLoggerFactory FACTORY = new MockLoggerFactory();

@@ -36,6 +36,7 @@ public abstract class AnyContextObservationHandlerCompatibilityKit
 
     @Test
     @DisplayName("compatibility test provides a test context accepting observation handler")
+    @SuppressWarnings("deprecation")
     void handlerSupportsAnyContext() {
         TestContext testContext = new TestContext();
         assertThatCode(() -> handler.onStart(testContext)).doesNotThrowAnyException();

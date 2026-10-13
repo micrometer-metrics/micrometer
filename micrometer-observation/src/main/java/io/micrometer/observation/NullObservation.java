@@ -47,11 +47,13 @@ public class NullObservation extends SimpleObservation {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     void notifyOnScopeMakeCurrent() {
         // Don't want to call handlers
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     void notifyOnScopeReset() {
         // Don't want to call handlers
     }

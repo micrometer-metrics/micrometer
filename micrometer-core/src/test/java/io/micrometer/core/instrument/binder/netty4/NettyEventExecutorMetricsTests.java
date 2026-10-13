@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.netty4;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.channel.*;
+import io.netty.channel.local.LocalIoHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
@@ -46,7 +47,7 @@ class NettyEventExecutorMetricsTests {
     @Test
     void shouldHaveTasksPendingMetricForEachEventLoop() throws Exception {
         Set<String> names = new LinkedHashSet<>();
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
         try {
             new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
             eventExecutors.spliterator().forEachRemaining(eventExecutor -> {
@@ -70,7 +71,7 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveTasksPendingMetricForSingleEventLoop() throws Exception {
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
         try {
             EventLoop eventLoop = eventExecutors.next();
             new NettyEventExecutorMetrics(eventLoop).bindTo(this.registry);
@@ -89,7 +90,7 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveCustomTags() throws Exception {
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
         try {
             EventLoop eventLoop = eventExecutors.next();
             Tags extraTags = Tags.of("testKey", "testValue");
@@ -110,7 +111,8 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveWorkersMetric() throws Exception {
-        DefaultEventLoopGroup group = new DefaultEventLoopGroup(4, new DefaultThreadFactory("test-workers"));
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4, new DefaultThreadFactory("test-workers"),
+                LocalIoHandler.newFactory());
         try {
             new NettyEventExecutorMetrics(group).bindTo(this.registry);
 
@@ -123,7 +125,8 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveWorkersMetricWithCustomTags() throws Exception {
-        DefaultEventLoopGroup group = new DefaultEventLoopGroup(2, new DefaultThreadFactory("test-workers"));
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(2, new DefaultThreadFactory("test-workers"),
+                LocalIoHandler.newFactory());
         try {
             Tags extraTags = Tags.of("testKey", "testValue");
             new NettyEventExecutorMetrics(group, extraTags).bindTo(this.registry);

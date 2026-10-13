@@ -169,7 +169,7 @@ class ObservationValidatorTests {
     }
 
     @Test
-    @SuppressWarnings("resource")
+    @SuppressWarnings({ "resource", "deprecation" })
     void scopeResetAfterStopShouldBeValid() {
         Observation observation = Observation.start("test", registry);
         Scope scope = observation.openScope();
