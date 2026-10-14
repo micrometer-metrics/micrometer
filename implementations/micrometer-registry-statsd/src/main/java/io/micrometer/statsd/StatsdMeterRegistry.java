@@ -81,9 +81,10 @@ import java.util.stream.DoubleStream;
  */
 public class StatsdMeterRegistry extends MeterRegistry {
 
-    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
+    private static final WarnThenDebugLogger failedMeterPollingLogger = new WarnThenDebugLogger(
+            StatsdMeterRegistry.class);
 
-    private static final WarnThenDebugLogger portUnreachableLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
+    private final WarnThenDebugLogger portUnreachableLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
 
     private final StatsdConfig statsdConfig;
 
@@ -192,7 +193,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 pollableMeter.getValue().poll();
             }
             catch (RuntimeException e) {
-                warnThenDebugLogger.log(() -> "Failed to poll a meter '" + pollableMeter.getKey().getName() + "'.", e);
+                failedMeterPollingLogger.log(() -> "Failed to poll a meter '" + pollableMeter.getKey().getName() + "'.",
+                        e);
             }
         }
     }
@@ -258,19 +260,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         UdpClient udpClient = UdpClient.create()
             .remoteAddress(remoteAddress)
             .doOnConnected(connection -> connection.addHandlerLast("portUnreachableLogger",
-                    new ChannelInboundHandlerAdapter() {
-                        @Override
-                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                            // otherwise Reactor Netty logs a warning for each packet
-                            if (cause instanceof PortUnreachableException) {
-                                portUnreachableLogger.log(() -> "Failed to send metrics to "
-                                        + ctx.channel().remoteAddress() + ". Is the StatsD server running?", cause);
-                            }
-                            else {
-                                super.exceptionCaught(ctx, cause);
-                            }
-                        }
-                    }))
+                    new PortUnreachableLoggingHandler(portUnreachableLogger)))
             .handle((in, out) -> out.sendString(publisher)
                 .neverComplete()
                 .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException)))
@@ -586,6 +576,28 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         public StatsdMeterRegistry build() {
             return new StatsdMeterRegistry(config, nameMapper, namingConvention, clock, lineBuilderFunction, lineSink);
+        }
+
+    }
+
+    private static final class PortUnreachableLoggingHandler extends ChannelInboundHandlerAdapter {
+
+        private final WarnThenDebugLogger logger;
+
+        PortUnreachableLoggingHandler(WarnThenDebugLogger logger) {
+            this.logger = logger;
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            // otherwise Reactor Netty logs a warning for each packet
+            if (cause instanceof PortUnreachableException) {
+                logger.log(() -> "Failed to send metrics to " + ctx.channel().remoteAddress()
+                        + ". Is the StatsD server running?", cause);
+            }
+            else {
+                super.exceptionCaught(ctx, cause);
+            }
         }
 
     }

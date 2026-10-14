@@ -18,6 +18,10 @@ package io.micrometer.statsd;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import io.micrometer.common.util.internal.logging.InternalLogLevel;
+import io.micrometer.common.util.internal.logging.LogEvent;
+import io.micrometer.common.util.internal.logging.MockLogger;
+import io.micrometer.common.util.internal.logging.MockLoggerFactory;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
@@ -46,6 +50,7 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.PortUnreachableException;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -269,8 +274,10 @@ class StatsdMeterRegistryPublishTest {
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         fluxReceiveLogger.addAppender(appender);
-        StatsdMeterRegistry meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(StatsdProtocol.UDP, port),
-                Clock.SYSTEM);
+        MockLoggerFactory loggerFactory = new MockLoggerFactory();
+        MockLogger registryLogger = loggerFactory.getLogger(StatsdMeterRegistry.class);
+        StatsdMeterRegistry meterRegistry = loggerFactory
+            .injectLogger(() -> new StatsdMeterRegistry(getUnbufferedConfig(StatsdProtocol.UDP, port), Clock.SYSTEM));
         try {
             await().until(() -> meterRegistry.statsdConnection.get() != null);
             ((Connection) meterRegistry.statsdConnection.get()).addHandlerFirst(new ChannelInboundHandlerAdapter() {
@@ -289,6 +296,15 @@ class StatsdMeterRegistryPublishTest {
                 await().until(() -> portUnreachableCount.get() >= expectedCount);
             }
             assertThat(appender.list).isEmpty();
+            await().until(() -> registryLogger.getLogEvents().size() >= 5);
+            List<LogEvent> logEvents = registryLogger.getLogEvents();
+            assertThat(logEvents.get(0).getLevel()).isSameAs(InternalLogLevel.WARN);
+            assertThat(logEvents.get(0).getMessage()).startsWith("Failed to send metrics to ")
+                .endsWith(":" + port
+                        + ". Is the StatsD server running? Note that subsequent logs will be logged at debug level.");
+            assertThat(logEvents.get(0).getCause()).isInstanceOf(PortUnreachableException.class);
+            assertThat(logEvents.subList(1, logEvents.size())).extracting(LogEvent::getLevel)
+                .containsOnly(InternalLogLevel.DEBUG);
         }
         finally {
             meterRegistry.close();
