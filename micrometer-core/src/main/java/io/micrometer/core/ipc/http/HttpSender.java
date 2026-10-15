@@ -172,7 +172,7 @@ public interface HttpSender {
             public final Builder withBasicAuthentication(@Nullable String user, @Nullable String password) {
                 if (StringUtils.isNotBlank(user)) {
                     String encoded = Base64.getEncoder()
-                        .encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
+                        .encodeToString((user.trim() + ":" + (password == null ? "" : password))
                             .getBytes(StandardCharsets.UTF_8));
                     withAuthentication("Basic", encoded);
                 }
