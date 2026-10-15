@@ -359,6 +359,8 @@ class DatadogMeterRegistryTest {
         registry.publish();
 
         server.verify(2, putRequestedFor(urlPathMatching("/api/v1/metrics/.*")));
+
+        registry.close();
     }
 
     @Issue("#4056")
@@ -376,6 +378,28 @@ class DatadogMeterRegistryTest {
 
         server.verify(1, putRequestedFor(urlEqualTo("/api/v1/metrics/first.counter")));
         server.verify(1, putRequestedFor(urlEqualTo("/api/v1/metrics/second.counter")));
+
+        registry.close();
+    }
+
+    @Issue("#4056")
+    @Test
+    void metadataOfOtherMetricsIsSentAfterAnErrorSpecificToAMetric(@WiremockResolver.Wiremock WireMockServer server) {
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(metadataConfig(server), new MockClock());
+        server.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(202)));
+        server.stubFor(put(urlEqualTo("/api/v1/metrics/first.counter"))
+            .willReturn(aResponse().withStatus(422).withBody("{\"errors\":[\"Unprocessable\"]}")));
+        server.stubFor(put(urlEqualTo("/api/v1/metrics/second.counter")).willReturn(aResponse().withStatus(200)));
+
+        Counter.builder("first.counter").description("first description").register(registry);
+        Counter.builder("second.counter").description("second description").register(registry);
+        registry.publish();
+        registry.publish();
+
+        server.verify(2, putRequestedFor(urlEqualTo("/api/v1/metrics/first.counter")));
+        server.verify(1, putRequestedFor(urlEqualTo("/api/v1/metrics/second.counter")));
+
+        registry.close();
     }
 
     @Test
@@ -392,6 +416,8 @@ class DatadogMeterRegistryTest {
 
         server.verify(2, putRequestedFor(urlEqualTo("/api/v1/metrics/first.counter")));
         server.verify(2, putRequestedFor(urlEqualTo("/api/v1/metrics/second.counter")));
+
+        registry.close();
     }
 
     private static DatadogConfig metadataConfig(WireMockServer server) {

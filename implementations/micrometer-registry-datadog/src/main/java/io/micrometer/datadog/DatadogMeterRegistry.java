@@ -270,8 +270,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     /**
      * Set up metric metadata once per time series.
      * @return {@code false} if the metadata of the other metrics should not be sent
-     * during this publish, because Datadog failed to process this request for a reason
-     * that is not specific to this metric (rate limiting, invalid keys or a server error)
+     * during this publish, because the request failed for a reason that is not specific
+     * to this metric (invalid keys, rate limiting, a server error or an exception)
      */
     // VisibleForTesting
     @SuppressWarnings("JdkObsolete")
@@ -301,18 +301,40 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             if (msg.contains("metric_name not found")) {
                 return true;
             }
-            logger.error("failed to send metric metadata to datadog: {}", msg);
-            if (response.code() == 400) {
-                // the metadata of this metric is invalid and would be rejected again
-                verifiedMetadata.add(metricName);
+            int code = response.code();
+            if (code < 400) {
+                // not a failure Datadog reported, try again on the next publish
                 return true;
             }
-            return false;
+            if (isNotSpecificToTheMetric(code)) {
+                if (code == 429) {
+                    logger.warn("failed to send metric metadata to datadog, rate limited: {}", msg);
+                }
+                else {
+                    logger.error("failed to send metric metadata to datadog: {}", msg);
+                }
+                return false;
+            }
+            logger.error("failed to send metric metadata to datadog: {}", msg);
+            if (code == 400) {
+                // the metadata of this metric is invalid and would be rejected again
+                verifiedMetadata.add(metricName);
+            }
+            return true;
         }
         catch (Throwable e) {
             logger.warn("failed to send metric metadata to datadog", e);
             return false;
         }
+    }
+
+    /**
+     * Whether a failure of a metadata request is not specific to its metric, so that the
+     * requests for the other metrics would most likely fail as well: invalid keys, rate
+     * limiting or a server error.
+     */
+    private static boolean isNotSpecificToTheMetric(int code) {
+        return code == 401 || code == 403 || code == 429 || code >= 500;
     }
 
     @Override
