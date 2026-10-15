@@ -23,6 +23,7 @@ import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -61,7 +62,7 @@ public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache
 
         if (!cache.policy().isRecordingStats()) {
             log.warn(
-                    "The cache '{}' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.",
+                    "The cache '{}' is not recording statistics. Only meters that do not require cache statistics will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.",
                     cacheName);
         }
     }
@@ -172,7 +173,23 @@ public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         C cache = getCache();
-        if (cache == null || !cache.policy().isRecordingStats()) {
+        if (cache == null) {
+            return;
+        }
+
+        if (utilization() != null) {
+            Gauge.builder("cache.utilization", cache, c -> {
+                Double utilization = utilization();
+                return utilization == null ? 0 : utilization;
+            })
+                .tags(getTagsWithCacheName())
+                .description(
+                        "The utilization of this cache as a percentage. This may be an approximation, depending on the type of cache.")
+                .baseUnit(BaseUnits.PERCENT)
+                .register(registry);
+        }
+
+        if (!cache.policy().isRecordingStats()) {
             return;
         }
 
@@ -200,6 +217,22 @@ public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache
                 .description(DESCRIPTION_CACHE_LOAD)
                 .register(registry);
         }
+    }
+
+    private @Nullable Double utilization() {
+        C cache = getCache();
+        if (cache == null) {
+            return null;
+        }
+
+        return cache.policy().eviction().map((eviction) -> {
+            long maximum = eviction.getMaximum();
+            if (maximum == 0) {
+                return null;
+            }
+            long size = eviction.weightedSize().orElseGet(cache::estimatedSize);
+            return 100.0 * size / maximum;
+        }).orElse(null);
     }
 
     private @Nullable Long getOrDefault(Function<C, Long> function, @Nullable Long defaultValue) {
