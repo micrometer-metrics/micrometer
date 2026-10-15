@@ -16,8 +16,14 @@
 package io.micrometer.stackdriver;
 
 import com.google.api.Distribution;
+import com.google.api.MetricDescriptor;
+import com.google.monitoring.v3.TimeInterval;
+import com.google.monitoring.v3.TimeSeries;
+import com.google.protobuf.Timestamp;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
@@ -27,6 +33,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -223,6 +230,142 @@ class StackdriverMeterRegistryTest {
         // still returns count for the previous step
         assertThat(ds.count()).isOne();
         assertThat(distribution.getCount()).isEqualTo(2);
+    }
+
+    @Test
+    @Issue("#3150")
+    void cumulativeCountersAccumulateWithAFixedStartTime() {
+        StackdriverMeterRegistry registry = new StackdriverMeterRegistry(cumulativeCountersConfig(), clock);
+        Counter counter = registry.counter("my.counter");
+
+        counter.increment();
+        clock.add(config.step());
+        long firstPublish = clock.wallTime();
+        TimeSeries first = registry.createCounter(registry.new Batch(), counter).findFirst().get();
+
+        counter.increment(2);
+        clock.add(config.step());
+        long secondPublish = clock.wallTime();
+        TimeSeries second = registry.createCounter(registry.new Batch(), counter).findFirst().get();
+
+        assertThat(first.getMetricKind()).isEqualTo(MetricDescriptor.MetricKind.CUMULATIVE);
+        assertThat(first.getPoints(0).getValue().getDoubleValue()).isEqualTo(1);
+        assertThat(second.getPoints(0).getValue().getDoubleValue()).isEqualTo(3);
+        assertThat(first.getPoints(0).getInterval())
+            .isEqualTo(interval(firstPublish - config.step().toMillis(), firstPublish));
+        assertThat(second.getPoints(0).getInterval())
+            .isEqualTo(interval(firstPublish - config.step().toMillis(), secondPublish));
+    }
+
+    @Test
+    @Issue("#3150")
+    void cumulativeFunctionCountersPublishTheTotalCountWithAFixedStartTime() {
+        StackdriverMeterRegistry registry = new StackdriverMeterRegistry(cumulativeCountersConfig(), clock);
+        AtomicLong total = new AtomicLong();
+        FunctionCounter functionCounter = FunctionCounter.builder("my.function.counter", total, AtomicLong::get)
+            .register(registry);
+
+        total.set(5);
+        clock.add(config.step());
+        TimeSeries first = registry.createFunctionCounter(registry.new Batch(), functionCounter).findFirst().get();
+
+        total.set(8);
+        clock.add(config.step());
+        TimeSeries second = registry.createFunctionCounter(registry.new Batch(), functionCounter).findFirst().get();
+
+        assertThat(first.getMetricKind()).isEqualTo(MetricDescriptor.MetricKind.CUMULATIVE);
+        assertThat(first.getPoints(0).getValue().getDoubleValue()).isEqualTo(5);
+        assertThat(second.getPoints(0).getValue().getDoubleValue()).isEqualTo(8);
+        assertThat(second.getPoints(0).getInterval().getStartTime())
+            .isEqualTo(first.getPoints(0).getInterval().getStartTime());
+    }
+
+    @Test
+    @Issue("#3150")
+    void eachCumulativeCounterStartsAtItsFirstPublish() {
+        StackdriverMeterRegistry registry = new StackdriverMeterRegistry(cumulativeCountersConfig(), clock);
+        Counter firstCounter = registry.counter("first.counter");
+        clock.add(config.step());
+        long firstPublish = clock.wallTime();
+        registry.createCounter(registry.new Batch(), firstCounter);
+
+        Counter secondCounter = registry.counter("second.counter");
+        clock.add(config.step());
+        long secondPublish = clock.wallTime();
+        StackdriverMeterRegistry.Batch batch = registry.new Batch();
+        TimeSeries first = registry.createCounter(batch, firstCounter).findFirst().get();
+        TimeSeries second = registry.createCounter(batch, secondCounter).findFirst().get();
+
+        assertThat(first.getPoints(0).getInterval().getStartTime())
+            .isEqualTo(timestamp(firstPublish - config.step().toMillis()));
+        assertThat(second.getPoints(0).getInterval().getStartTime())
+            .isEqualTo(timestamp(secondPublish - config.step().toMillis()));
+    }
+
+    @Test
+    @Issue("#3150")
+    void removedCumulativeCounterStartsAgainWhenRegisteredAgain() {
+        StackdriverMeterRegistry registry = new StackdriverMeterRegistry(cumulativeCountersConfig(), clock);
+        Counter counter = registry.counter("my.counter");
+        clock.add(config.step());
+        registry.createCounter(registry.new Batch(), counter);
+
+        registry.remove(counter);
+        Counter registeredAgain = registry.counter("my.counter");
+        clock.add(config.step());
+        long publish = clock.wallTime();
+        TimeSeries series = registry.createCounter(registry.new Batch(), registeredAgain).findFirst().get();
+
+        assertThat(series.getPoints(0).getInterval().getStartTime())
+            .isEqualTo(timestamp(publish - config.step().toMillis()));
+    }
+
+    @Test
+    @Issue("#3150")
+    void countersArePublishedAsStepGaugesByDefault() {
+        Counter counter = meterRegistry.counter("my.counter");
+        counter.increment();
+        clock.add(config.step());
+        meterRegistry.createCounter(meterRegistry.new Batch(), counter);
+        counter.increment(2);
+        clock.add(config.step());
+        TimeSeries series = meterRegistry.createCounter(meterRegistry.new Batch(), counter).findFirst().get();
+
+        assertThat(series.getMetricKind()).isEqualTo(MetricDescriptor.MetricKind.GAUGE);
+        assertThat(series.getPoints(0).getValue().getDoubleValue()).isEqualTo(2);
+        assertThat(series.getPoints(0).getInterval().hasStartTime()).isFalse();
+    }
+
+    private StackdriverConfig cumulativeCountersConfig() {
+        return new StackdriverConfig() {
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            public String projectId() {
+                return "doesnotmatter";
+            }
+
+            @Override
+            public boolean cumulativeCounters() {
+                return true;
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+        };
+    }
+
+    private static TimeInterval interval(long startMillis, long endMillis) {
+        return TimeInterval.newBuilder().setStartTime(timestamp(startMillis)).setEndTime(timestamp(endMillis)).build();
+    }
+
+    private static Timestamp timestamp(long millis) {
+        return Timestamp.newBuilder().setSeconds(millis / 1000).setNanos((int) (millis % 1000) * 1000000).build();
     }
 
 }

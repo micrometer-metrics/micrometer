@@ -84,6 +84,28 @@ public interface StackdriverConfig extends StepRegistryConfig {
     }
 
     /**
+     * Whether to publish counters and function counters as CUMULATIVE metrics with
+     * cumulative values. This is {@code false} by default.
+     * <p>
+     * When this is {@code true}, each point holds the count since the start of the time
+     * series rather than the count of the last step, and all the points of a time series
+     * share the same start time: the time of its first publish minus the {@link #step()
+     * step}. This is what Stackdriver expects from CUMULATIVE metrics, for instance to
+     * compute rates. Unlike {@link #useSemanticMetricTypes()}, which only changes the
+     * MetricKind of the counts of each step, this does not affect timers and distribution
+     * summaries.
+     * <p>
+     * If you have published counters to Stackdriver before with the GAUGE MetricKind,
+     * enabling this will cause their publishing to fail until you delete the old
+     * MetricDescriptor, as described for {@link #useSemanticMetricTypes()}.
+     * @return a flag indicating if counters are published as cumulative metrics
+     * @since 1.18.0
+     */
+    default boolean cumulativeCounters() {
+        return getBoolean(this, "cumulativeCounters").orElse(false);
+    }
+
+    /**
      * Return metric type prefix.
      * <p>
      * Available prefixes defined in
