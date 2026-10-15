@@ -51,6 +51,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     private final DatadogConfig config;
 
+    private final DatadogApiVersion apiVersion;
+
     private final HttpSender httpClient;
 
     /**
@@ -88,6 +90,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         config().namingConvention(new DatadogNamingConvention());
 
         this.config = config;
+        this.apiVersion = config.apiVersion();
         this.httpClient = httpClient;
 
         start(threadFactory);
@@ -108,7 +111,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
 
-        String datadogEndpoint = config.uri() + config.apiVersion().seriesPath();
+        String datadogEndpoint = config.uri() + apiVersion.seriesPath();
 
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
@@ -257,7 +260,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         String metric = "{\"metric\":\"" + escapeJson(getConventionName(fullId)) + "\",";
         long timestamp = wallTime / 1000;
 
-        if (config.apiVersion() == DatadogApiVersion.V2) {
+        if (apiVersion == DatadogApiVersion.V2) {
             // the host is a resource of the series, and the type a number
             String resources = hostName == null ? ""
                     : ",\"resources\":[{\"name\":\"" + escapeJson(hostName) + "\",\"type\":\"host\"}]";
