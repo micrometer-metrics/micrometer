@@ -95,6 +95,9 @@ public interface StackdriverConfig extends StepRegistryConfig {
      * MetricKind of the counts of each step, this does not affect timers and distribution
      * summaries.
      * <p>
+     * The values of function counters must not decrease, as Stackdriver rejects the
+     * points of a CUMULATIVE time series whose values are lower than the previous ones.
+     * <p>
      * If you have published counters to Stackdriver before with the GAUGE MetricKind,
      * enabling this will cause their publishing to fail until you delete the old
      * MetricDescriptor, as described for {@link #useSemanticMetricTypes()}.

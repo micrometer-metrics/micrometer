@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -334,6 +335,57 @@ class StackdriverMeterRegistryTest {
         assertThat(series.getMetricKind()).isEqualTo(MetricDescriptor.MetricKind.GAUGE);
         assertThat(series.getPoints(0).getValue().getDoubleValue()).isEqualTo(2);
         assertThat(series.getPoints(0).getInterval().hasStartTime()).isFalse();
+    }
+
+    @Test
+    @Issue("#3150")
+    void timerCountsKeepTheStartTimeOfTheirBatch() {
+        StackdriverMeterRegistry registry = new StackdriverMeterRegistry(new StackdriverConfig() {
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            public String projectId() {
+                return "doesnotmatter";
+            }
+
+            @Override
+            public boolean cumulativeCounters() {
+                return true;
+            }
+
+            @Override
+            public boolean useSemanticMetricTypes() {
+                return true;
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+        }, clock);
+        Timer timer = registry.timer("my.timer");
+        Counter counter = registry.counter("my.counter");
+
+        clock.add(config.step());
+        StackdriverMeterRegistry.Batch firstBatch = registry.new Batch();
+        TimeSeries firstTimerCount = timerCount(registry.createTimer(firstBatch, timer));
+        TimeSeries firstCounter = registry.createCounter(firstBatch, counter).findFirst().get();
+        clock.add(config.step());
+        StackdriverMeterRegistry.Batch secondBatch = registry.new Batch();
+        TimeSeries secondTimerCount = timerCount(registry.createTimer(secondBatch, timer));
+        TimeSeries secondCounter = registry.createCounter(secondBatch, counter).findFirst().get();
+
+        assertThat(secondTimerCount.getPoints(0).getInterval().getStartTime())
+            .isNotEqualTo(firstTimerCount.getPoints(0).getInterval().getStartTime());
+        assertThat(secondCounter.getPoints(0).getInterval().getStartTime())
+            .isEqualTo(firstCounter.getPoints(0).getInterval().getStartTime());
+    }
+
+    private static TimeSeries timerCount(Stream<TimeSeries> timerSeries) {
+        return timerSeries.filter(series -> series.getMetric().getType().endsWith("/count")).findFirst().get();
     }
 
     private StackdriverConfig cumulativeCountersConfig() {
