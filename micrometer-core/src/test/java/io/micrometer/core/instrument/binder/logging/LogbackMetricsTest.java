@@ -122,6 +122,20 @@ class LogbackMetricsTest {
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
     }
 
+    @Test
+    void doNotReAddFilterToLoggerContextAfterClose() {
+        LoggerContext loggerContext = new LoggerContext();
+        assertThat(loggerContext.getCopyOfListenerList()).isEmpty();
+
+        LogbackMetrics logbackMetrics = new LogbackMetrics(emptyList(), loggerContext);
+        logbackMetrics.bindTo(registry);
+
+        logbackMetrics.close();
+        loggerContext.reset();
+        assertThat(loggerContext.getTurboFilterList()).isEmpty();
+        assertThat(loggerContext.getCopyOfListenerList()).isEmpty();
+    }
+
     @Issue("#2270")
     @Test
     void resetIgnoreMetricsWhenRunnableThrows() {
