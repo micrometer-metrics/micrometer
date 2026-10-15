@@ -29,12 +29,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.epoll.Epoll;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -262,18 +262,18 @@ class StatsdMeterRegistryPublishTest {
 
     @Test
     @Issue("#2624")
+    @EnabledIf(value = "io.netty.channel.epoll.Epoll#isAvailable",
+            disabledReason = "unreachable port errors are only reported to the client with epoll, which is only available on Linux")
     void whenUdpBackendDown_doNotLogWarningForEachPacket() {
-        // unreachable port errors are only reported to the client with epoll
-        assumeTrue(Epoll.isAvailable());
         AtomicInteger portUnreachableCount = new AtomicInteger();
         // start server to secure an open port
         DisposableChannel server = startServer(StatsdProtocol.UDP, 0, new CountDownLatch(0));
         final int port = getPort(server, StatsdProtocol.UDP);
         server.disposeNow();
         Logger fluxReceiveLogger = (Logger) LoggerFactory.getLogger("reactor.netty.channel.FluxReceive");
-        ListAppender<ILoggingEvent> appender = new ListAppender<>();
-        appender.start();
-        fluxReceiveLogger.addAppender(appender);
+        ListAppender<ILoggingEvent> fluxReceiveAppender = new ListAppender<>();
+        fluxReceiveAppender.start();
+        fluxReceiveLogger.addAppender(fluxReceiveAppender);
         MockLoggerFactory loggerFactory = new MockLoggerFactory();
         MockLogger registryLogger = loggerFactory.getLogger(StatsdMeterRegistry.class);
         StatsdMeterRegistry meterRegistry = loggerFactory
@@ -293,10 +293,10 @@ class StatsdMeterRegistryPublishTest {
             for (int i = 1; i <= 5; i++) {
                 counter.increment();
                 int expectedCount = i;
-                await().until(() -> portUnreachableCount.get() >= expectedCount);
+                await().until(() -> portUnreachableCount.get() == expectedCount);
             }
-            assertThat(appender.list).isEmpty();
-            await().until(() -> registryLogger.getLogEvents().size() >= 5);
+            assertThat(fluxReceiveAppender.list).isEmpty();
+            await().until(() -> registryLogger.getLogEvents().size() == 5);
             List<LogEvent> logEvents = registryLogger.getLogEvents();
             assertThat(logEvents.get(0).getLevel()).isSameAs(InternalLogLevel.WARN);
             assertThat(logEvents.get(0).getMessage()).startsWith("Failed to send metrics to ")
@@ -308,7 +308,7 @@ class StatsdMeterRegistryPublishTest {
         }
         finally {
             meterRegistry.close();
-            fluxReceiveLogger.detachAppender(appender);
+            fluxReceiveLogger.detachAppender(fluxReceiveAppender);
         }
     }
 
