@@ -108,7 +108,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
 
-        String datadogEndpoint = config.uri() + "/api/v1/series";
+        String datadogEndpoint = config.uri() + config.apiVersion().seriesPath();
 
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
@@ -241,14 +241,12 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         Iterable<Tag> tags = getConventionTags(fullId);
 
-        // Create host attribute
-        String host = config.hostTag() == null ? ""
-                : stream(tags.spliterator(), false).filter(t -> config.hostTag().equals(t.getKey()))
+        String hostTag = config.hostTag();
+        String hostName = hostTag == null ? null
+                : stream(tags.spliterator(), false).filter(t -> hostTag.equals(t.getKey()))
                     .findAny()
-                    .map(t -> ",\"host\":\"" + escapeJson(t.getValue()) + "\"")
-                    .orElse("");
-        // Create type attribute
-        String type = ",\"type\":\"" + DatadogMetricMetadata.sanitizeType(statistic) + "\"";
+                    .map(Tag::getValue)
+                    .orElse(null);
         // Create unit attribute
         String baseUnit = DatadogMetricMetadata.sanitizeBaseUnit(id.getBaseUnit(), overrideBaseUnit);
         String unit = baseUnit != null ? ",\"unit\":\"" + baseUnit + "\"" : "";
@@ -256,9 +254,29 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         String tagsArray = tags.iterator().hasNext() ? stream(tags.spliterator(), false)
             .map(t -> "\"" + escapeJson(t.getKey()) + ":" + escapeJson(t.getValue()) + "\"")
             .collect(joining(",", ",\"tags\":[", "]")) : "";
+        String metric = "{\"metric\":\"" + escapeJson(getConventionName(fullId)) + "\",";
+        long timestamp = wallTime / 1000;
 
-        return "{\"metric\":\"" + escapeJson(getConventionName(fullId)) + "\"," + "\"points\":[[" + (wallTime / 1000)
-                + ", " + value + "]]" + host + type + unit + tagsArray + "}";
+        if (config.apiVersion() == DatadogApiVersion.V2) {
+            // the host is a resource of the series, and the type a number
+            String resources = hostName == null ? ""
+                    : ",\"resources\":[{\"name\":\"" + escapeJson(hostName) + "\",\"type\":\"host\"}]";
+            return metric + "\"type\":" + v2Type(statistic) + ",\"points\":[{\"timestamp\":" + timestamp + ",\"value\":"
+                    + value + "}]" + resources + unit + tagsArray + "}";
+        }
+
+        // Create host attribute
+        String host = hostName == null ? "" : ",\"host\":\"" + escapeJson(hostName) + "\"";
+        // Create type attribute
+        String type = ",\"type\":\"" + DatadogMetricMetadata.sanitizeType(statistic) + "\"";
+        return metric + "\"points\":[[" + timestamp + ", " + value + "]]" + host + type + unit + tagsArray + "}";
+    }
+
+    /**
+     * Return the type of a series of the v2 API: 1 for a count, and 3 for a gauge.
+     */
+    private static int v2Type(Statistic statistic) {
+        return "count".equals(DatadogMetricMetadata.sanitizeType(statistic)) ? 1 : 3;
     }
 
     /**
