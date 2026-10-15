@@ -265,7 +265,10 @@ public class MicrometerHttpClient extends HttpClient {
             if (throwable != null) {
                 instrumentation.setThrowable(throwable);
                 stopObservationOrTimer(instrumentation, request, response);
-                throw new CompletionException(throwable);
+                // The HttpClient future usually fails with a CompletionException
+                // already, so wrap only other exceptions to keep its exception chain
+                throw throwable instanceof CompletionException ? (CompletionException) throwable
+                        : new CompletionException(throwable);
             }
             else {
                 stopObservationOrTimer(instrumentation, request, response);
