@@ -15,10 +15,18 @@
  */
 package io.micrometer.statsd;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import io.micrometer.common.util.internal.logging.InternalLogLevel;
+import io.micrometer.common.util.internal.logging.LogEvent;
+import io.micrometer.common.util.internal.logging.MockLogger;
+import io.micrometer.common.util.internal.logging.MockLoggerFactory;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.unix.DomainSocketAddress;
@@ -26,9 +34,11 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.netty.Connection;
@@ -38,7 +48,9 @@ import reactor.netty.udp.UdpServer;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.net.PortUnreachableException;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -246,6 +258,58 @@ class StatsdMeterRegistryPublishTest {
 
         meterRegistry.close();
         server.disposeNow();
+    }
+
+    @Test
+    @Issue("#2624")
+    @EnabledIf(value = "io.netty.channel.epoll.Epoll#isAvailable",
+            disabledReason = "unreachable port errors are only reported to the client with epoll, which is only available on Linux")
+    void whenUdpBackendDown_doNotLogWarningForEachPacket() {
+        AtomicInteger portUnreachableCount = new AtomicInteger();
+        // start server to secure an open port
+        DisposableChannel server = startServer(StatsdProtocol.UDP, 0, new CountDownLatch(0));
+        final int port = getPort(server, StatsdProtocol.UDP);
+        server.disposeNow();
+        Logger fluxReceiveLogger = (Logger) LoggerFactory.getLogger("reactor.netty.channel.FluxReceive");
+        ListAppender<ILoggingEvent> fluxReceiveAppender = new ListAppender<>();
+        fluxReceiveAppender.start();
+        fluxReceiveLogger.addAppender(fluxReceiveAppender);
+        MockLoggerFactory loggerFactory = new MockLoggerFactory();
+        MockLogger registryLogger = loggerFactory.getLogger(StatsdMeterRegistry.class);
+        StatsdMeterRegistry meterRegistry = loggerFactory
+            .injectLogger(() -> new StatsdMeterRegistry(getUnbufferedConfig(StatsdProtocol.UDP, port), Clock.SYSTEM));
+        try {
+            await().until(() -> meterRegistry.statsdConnection.get() != null);
+            ((Connection) meterRegistry.statsdConnection.get()).addHandlerFirst(new ChannelInboundHandlerAdapter() {
+                @Override
+                public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                    if (cause instanceof PortUnreachableException) {
+                        portUnreachableCount.incrementAndGet();
+                    }
+                    super.exceptionCaught(ctx, cause);
+                }
+            });
+            Counter counter = Counter.builder("my.counter").register(meterRegistry);
+            for (int i = 1; i <= 5; i++) {
+                counter.increment();
+                int expectedCount = i;
+                await().until(() -> portUnreachableCount.get() == expectedCount);
+            }
+            assertThat(fluxReceiveAppender.list).isEmpty();
+            await().until(() -> registryLogger.getLogEvents().size() == 5);
+            List<LogEvent> logEvents = registryLogger.getLogEvents();
+            assertThat(logEvents.get(0).getLevel()).isSameAs(InternalLogLevel.WARN);
+            assertThat(logEvents.get(0).getMessage()).startsWith("Failed to send metrics to ")
+                .endsWith(":" + port
+                        + ". Is the StatsD server running? Note that subsequent logs will be logged at debug level.");
+            assertThat(logEvents.get(0).getCause()).isInstanceOf(PortUnreachableException.class);
+            assertThat(logEvents.subList(1, logEvents.size())).extracting(LogEvent::getLevel)
+                .containsOnly(InternalLogLevel.DEBUG);
+        }
+        finally {
+            meterRegistry.close();
+            fluxReceiveLogger.detachAppender(fluxReceiveAppender);
+        }
     }
 
     @ParameterizedTest
