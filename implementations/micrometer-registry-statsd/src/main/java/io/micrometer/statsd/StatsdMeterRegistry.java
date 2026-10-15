@@ -37,6 +37,7 @@ import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.netty.ByteBufFlux;
 import reactor.netty.Connection;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
@@ -263,7 +264,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
         TcpClient tcpClient = TcpClient.create()
             .host(statsdConfig.host())
             .port(statsdConfig.port())
-            .handle((in, out) -> out.sendString(publisher).neverComplete())
+            .handle((in, out) -> {
+                if (statsdConfig.buffered()) {
+                    return out.sendString(publisher).neverComplete();
+                }
+                return out.send(ByteBufFlux.fromString(publisher), buffer -> true).neverComplete();
+            })
             .doOnDisconnected(connection -> {
                 Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
                 if (connectionDisposed == null || !connectionDisposed) {

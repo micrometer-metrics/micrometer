@@ -39,6 +39,8 @@ import reactor.netty.udp.UdpServer;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -325,6 +327,47 @@ class StatsdMeterRegistryPublishTest {
 
         meterRegistry.close();
         server.disposeNow();
+    }
+
+    @Test
+    @Issue("#2909")
+    void unbufferedTcpFlushesEachMetric() throws InterruptedException {
+        int n = 10;
+        CountDownLatch serverLatch = new CountDownLatch(n);
+        DisposableChannel server = startServer(StatsdProtocol.TCP, 0, serverLatch);
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(
+                getUnbufferedConfig(StatsdProtocol.TCP, getPort(server, StatsdProtocol.TCP)), Clock.SYSTEM);
+        try {
+            startRegistryAndWaitForClient(registry);
+            List<Integer> writesPerFlush = new CopyOnWriteArrayList<>();
+            AtomicInteger pendingWrites = new AtomicInteger();
+            Connection connection = (Connection) registry.statsdConnection.get();
+            connection.addHandlerFirst("trackFlushes", new ChannelOutboundHandlerAdapter() {
+                @Override
+                public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                    pendingWrites.incrementAndGet();
+                    super.write(ctx, msg, promise);
+                }
+
+                @Override
+                public void flush(ChannelHandlerContext ctx) throws Exception {
+                    int writes = pendingWrites.getAndSet(0);
+                    if (writes > 0) {
+                        writesPerFlush.add(writes);
+                    }
+                    super.flush(ctx);
+                }
+            });
+            Counter counter = registry.counter("my.counter");
+            // Emit on the event loop so the default TCP flush strategy batches writes.
+            connection.channel().eventLoop().execute(() -> IntStream.range(0, n).forEach(i -> counter.increment()));
+            assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
+            assertThat(writesPerFlush).hasSize(n).containsOnly(1);
+        }
+        finally {
+            registry.close();
+            server.disposeNow();
+        }
     }
 
     @Test
