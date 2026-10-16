@@ -208,3 +208,22 @@ updates:
         update-types:
           - version-update:semver-major
     open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directories:
+      - "/dependencies/docker/*"
+    schedule:
+      interval: weekly
+    cooldown:
+      exclude:
+        - "*"
+    target-branch: "main"
+    milestone: 337
+    ignore:
+      # Elasticsearch 7 is tested with a pre-7.8 version on purpose, see AbstractElasticsearchMeterRegistryIntegrationTest
+      - dependency-name: "elasticsearch/elasticsearch"
+        versions: [">= 7.8, < 8"]
+      # upgrade minor and patch versions on main
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    open-pull-requests-limit: 10

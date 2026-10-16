@@ -53,11 +53,9 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     // as the mapped port is unknown during static initialization.
     private static final Network network = Network.newNetwork();
 
-    private static final DockerImageName INFLUXDB_IMAGE = DockerImageName
-        .parse("influxdb:" + getImageVersion("influxdb-image.version"));
+    private static final DockerImageName INFLUXDB_IMAGE = DockerImageName.parse(getImageName("influxdb-image.name"));
 
-    private static final DockerImageName TELEGRAF_IMAGE = DockerImageName
-        .parse("telegraf:" + getImageVersion("telegraf-image.version"));
+    private static final DockerImageName TELEGRAF_IMAGE = DockerImageName.parse(getImageName("telegraf-image.name"));
 
     @AfterAll
     static void tearDown() {
@@ -83,13 +81,13 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         .dependsOn(influxDB)
         .waitingFor(Wait.forListeningPorts(8125));
 
-    private static String getImageVersion(String systemProperty) {
-        String version = System.getProperty(systemProperty);
-        if (version == null) {
+    private static String getImageName(String systemProperty) {
+        String imageName = System.getProperty(systemProperty);
+        if (imageName == null) {
             throw new IllegalStateException("System property '" + systemProperty
-                    + "' is not set. This should be set in the build configuration for running from the command line. If you are running TelegrafStatsdLineBuilderIntegrationTest from an IDE, set the system property to the desired collector image version.");
+                    + "' is not set. This should be set in the build configuration for running from the command line. If you are running TelegrafStatsdLineBuilderIntegrationTest from an IDE, set the system property to the desired image name.");
         }
-        return version;
+        return imageName;
     }
 
     @Issue("#6513")
