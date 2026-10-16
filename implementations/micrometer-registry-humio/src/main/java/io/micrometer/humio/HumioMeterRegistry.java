@@ -16,6 +16,7 @@
 package io.micrometer.humio;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
@@ -32,8 +33,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
@@ -51,6 +55,11 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("humio-metrics-publisher");
 
     private final Logger logger = LoggerFactory.getLogger(HumioMeterRegistry.class);
+
+    /**
+     * Cache of per-meter `publishAverage` flags captured when meters are created.
+     */
+    private final Map<Meter.Id, Boolean> publishAvgFlags = new ConcurrentHashMap<>();
 
     private final HumioConfig config;
 
@@ -124,6 +133,32 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                 logger.warn("failed to send metrics to humio", e);
             }
         }
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, io.micrometer.core.instrument.distribution.DistributionStatisticConfig config,
+            io.micrometer.core.instrument.distribution.pause.PauseDetector pauseDetector) {
+
+        publishAvgFlags.put(id, config.isPublishingAverage());
+        return super.newTimer(id, config, pauseDetector);
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id,
+            io.micrometer.core.instrument.distribution.DistributionStatisticConfig config, double scale) {
+
+        publishAvgFlags.put(id, config.isPublishingAverage());
+        return super.newDistributionSummary(id, config, scale);
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+
+        // FunctionTimer has NO DistributionStatisticConfig → fallback to DEFAULT
+        publishAvgFlags.put(id,
+                io.micrometer.core.instrument.distribution.DistributionStatisticConfig.DEFAULT.isPublishingAverage());
+        return super.newFunctionTimer(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
     }
 
     @Override
@@ -225,8 +260,21 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
         // VisibleForTesting
         String writeFunctionTimer(FunctionTimer timer) {
-            return writeEvent(timer, event("count", timer.count()), event("sum", timer.totalTime(getBaseTimeUnit())),
-                    event("avg", timer.mean(getBaseTimeUnit())));
+            Boolean publishAvg = publishAvgFlags.getOrDefault(timer.getId(),
+                    io.micrometer.core.instrument.distribution.DistributionStatisticConfig.DEFAULT
+                        .isPublishingAverage());
+
+            Attribute avgAttr = publishAvg ? event("avg", timer.mean(getBaseTimeUnit())) : null;
+
+            if (avgAttr != null) {
+                return writeEvent(timer, event("count", timer.count()),
+                        event("sum", timer.totalTime(getBaseTimeUnit())), avgAttr);
+            }
+            else {
+                return writeEvent(timer, event("count", timer.count()),
+                        event("sum", timer.totalTime(getBaseTimeUnit())));
+            }
+
         }
 
         // VisibleForTesting
@@ -238,15 +286,42 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         String writeTimer(Timer timer) {
             HistogramSnapshot snap = timer.takeSnapshot();
-            return writeEvent(timer, event("count", (double) snap.count()), event("sum", snap.total(getBaseTimeUnit())),
-                    event("avg", snap.mean(getBaseTimeUnit())), event("max", snap.max(getBaseTimeUnit())));
+
+            Boolean publishAvg = publishAvgFlags.getOrDefault(timer.getId(),
+                    DistributionStatisticConfig.DEFAULT.isPublishingAverage());
+
+            Attribute avgAttr = publishAvg ? event("avg", snap.mean(getBaseTimeUnit())) : null;
+
+            if (avgAttr != null) {
+                return writeEvent(timer, event("count", (double) snap.count()),
+                        event("sum", snap.total(getBaseTimeUnit())), avgAttr,
+                        event("max", snap.max(getBaseTimeUnit())));
+            }
+            else {
+                return writeEvent(timer, event("count", (double) snap.count()),
+                        event("sum", snap.total(getBaseTimeUnit())), event("max", snap.max(getBaseTimeUnit())));
+            }
+
         }
 
         // VisibleForTesting
         String writeSummary(DistributionSummary summary) {
             HistogramSnapshot snap = summary.takeSnapshot();
-            return writeEvent(summary, event("count", (double) snap.count()), event("sum", snap.total()),
-                    event("avg", snap.mean()), event("max", snap.max()));
+            Boolean publishAvg = publishAvgFlags.getOrDefault(summary.getId(),
+                    io.micrometer.core.instrument.distribution.DistributionStatisticConfig.DEFAULT
+                        .isPublishingAverage());
+
+            Attribute avgAttr = publishAvg ? event("avg", snap.mean()) : null;
+
+            if (avgAttr != null) {
+                return writeEvent(summary, event("count", (double) snap.count()), event("sum", snap.total()), avgAttr,
+                        event("max", snap.max()));
+            }
+            else {
+                return writeEvent(summary, event("count", (double) snap.count()), event("sum", snap.total()),
+                        event("max", snap.max()));
+            }
+
         }
 
         // VisibleForTesting
