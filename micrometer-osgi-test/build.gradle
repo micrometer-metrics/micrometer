@@ -29,9 +29,6 @@ dependencies {
     testRuntimeOnly libs.slfj4Simple
     // prometheus-metrics-config imports javax.annotation, which nothing else on the runtime provides
     testRuntimeOnly libs.jsr305
-    // prometheus-metrics-core imports io.prometheus.metrics.tracer.initializer without resolution:=optional,
-    // so the bundle has to be on the runtime even though micrometer-registry-prometheus excludes the artifact
-    testRuntimeOnly libs.prometheusMetricsTracerInitializer
 }
 
 def testingBundle = tasks.register('testingBundle', Bundle) {
