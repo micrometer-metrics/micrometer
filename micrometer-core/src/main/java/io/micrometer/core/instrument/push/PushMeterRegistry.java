@@ -25,6 +25,24 @@ import org.jspecify.annotations.Nullable;
 import java.util.Random;
 import java.util.concurrent.*;
 
+/**
+ * Base class for registries that push (publish) metrics to a backend at a fixed interval.
+ * <p>
+ * A {@code PushMeterRegistry} has the following lifecycle:
+ * <ul>
+ * <li>{@link #start(ThreadFactory)} schedules {@link #publish()} to be called at a fixed
+ * interval.</li>
+ * <li>{@link #stop()} cancels scheduled publishing. It does not publish and it does not
+ * close the registry. A stopped registry can be {@link #start(ThreadFactory) started}
+ * again.</li>
+ * <li>{@link #close()} stops scheduled publishing, publishes a final time so that metrics
+ * recorded since the last scheduled publish are not lost, and releases the resources of
+ * the registry. A closed registry cannot be started again.</li>
+ * </ul>
+ * Implementations that hold resources such as clients or connections should keep them
+ * usable until the final publish in {@link #close()} has completed. See {@link #stop()}
+ * and {@link #close()} for details on where to release which resources.
+ */
 public abstract class PushMeterRegistry extends MeterRegistry {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
@@ -101,6 +119,18 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         start(Executors.defaultThreadFactory());
     }
 
+    /**
+     * Start publishing metrics at the interval configured by
+     * {@link PushRegistryConfig#step()}. If this registry is already started, it is
+     * {@link #stop() stopped} and then started again. If the registry is
+     * {@link PushRegistryConfig#enabled() disabled}, nothing is scheduled.
+     * <p>
+     * Implementations that need resources to publish (for example, a client or a
+     * connection) and release them in {@link #stop()} should create them again here
+     * before calling {@code super.start(threadFactory)} so that the registry can be
+     * restarted after it has been stopped.
+     * @param threadFactory thread factory to use for the thread that publishes metrics
+     */
     @SuppressWarnings("FutureReturnValueIgnored")
     public void start(ThreadFactory threadFactory) {
         if (scheduledExecutorService != null)
@@ -129,6 +159,18 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         return "Publishing metrics for " + getClass().getSimpleName() + " every " + TimeUtils.format(config.step());
     }
 
+    /**
+     * Stop scheduled publishing of metrics. Stopping does not publish. Metrics continue
+     * to be recorded while the registry is stopped, and the registry can be
+     * {@link #start(ThreadFactory) started} again to resume publishing. Calling this
+     * method on a registry that is not started has no effect.
+     * <p>
+     * This method is also called as the first step of {@link #close()}, which does a
+     * final publish after stopping. Implementations overriding this method must not
+     * release resources that are needed to publish; release those in {@link #close()}
+     * after {@code super.close()} returns. Only resources that
+     * {@link #start(ThreadFactory)} creates again should be released here.
+     */
     public void stop() {
         if (scheduledExecutorService != null) {
             scheduledExecutorService.shutdown();
@@ -136,6 +178,19 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         }
     }
 
+    /**
+     * Close this registry. Scheduled publishing is {@link #stop() stopped}, then a final
+     * {@link #publish()} is done (or the scheduled publish in progress is awaited) so
+     * that metrics recorded since the last scheduled publish are not lost, and then the
+     * registry and its meters are closed as described in {@link MeterRegistry#close()}.
+     * The final publish is skipped if the registry is {@link PushRegistryConfig#enabled()
+     * disabled} or already closed.
+     * <p>
+     * Once closed, a registry cannot be started again. Implementations that hold
+     * resources such as clients or connections should release them after
+     * {@code super.close()} returns so that they are still available for the final
+     * publish. Calling this method on an already closed registry has no effect.
+     */
     @Override
     public void close() {
         stop();
