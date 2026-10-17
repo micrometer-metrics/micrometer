@@ -15,6 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.opentelemetry.api.common.AttributeKey;
@@ -559,6 +560,46 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(buckets.getBucketCounts().get(53)).isEqualTo(1);
         assertThat(buckets.getBucketCounts().get(106)).isEqualTo(1);
         assertThat(buckets.getBucketCounts()).filteredOn(v -> v == 0).hasSize(104);
+    }
+
+    @Test
+    @Issue("gh-7201")
+    void testExponentialHistogramWithLongTaskTimer() {
+        LongTaskTimer taskTimer = LongTaskTimer.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        LongTaskTimer.Sample task1 = taskTimer.start();
+        LongTaskTimer.Sample task2 = taskTimer.start();
+        clock.add(exponentialHistogramOtlpConfig().step().multipliedBy(3));
+
+        MetricData metric = writeToMetric(taskTimer);
+        assertThat(metric.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM);
+        // both tasks have been active for the same 3 minutes, so they land in one
+        // bucket and the histogram stays at the max scale
+        assertExponentialHistogram(metric, 2, 360000, 0.0, 0, 20);
+        ExponentialHistogramPointData point = metric.getExponentialHistogramData().getPoints().iterator().next();
+        long startEpochNanos = point.getStartEpochNanos();
+        assertThat(point.getPositiveBuckets().getBucketCounts().stream().mapToLong(Long::longValue).sum()).isEqualTo(2);
+
+        // The active tasks are recorded again on every snapshot, so the bucket counts
+        // accumulate, the way CumulativeHistogramLongTaskTimer accumulates explicit
+        // bucket counts. The sum stays the total duration of the tasks active now, so
+        // like the explicit bucket data point it does not add up to the bucketed
+        // values. Recording 4 minutes next to 3 minutes needs a coarser scale.
+        clock.add(exponentialHistogramOtlpConfig().step());
+        metric = writeToMetric(taskTimer);
+        assertExponentialHistogram(metric, 4, 480000, 0.0, 0, 8);
+
+        task1.stop();
+        task2.stop();
+        clock.add(exponentialHistogramOtlpConfig().step());
+        metric = writeToMetric(taskTimer);
+        assertExponentialHistogram(metric, 4, 0, 0.0, 0, 8);
+        point = metric.getExponentialHistogramData().getPoints().iterator().next();
+        assertThat(point.getStartEpochNanos()).isEqualTo(startEpochNanos);
+        assertThat(point.getEpochNanos()).isGreaterThan(startEpochNanos);
     }
 
     @Test
