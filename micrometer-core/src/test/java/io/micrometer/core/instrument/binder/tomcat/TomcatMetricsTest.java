@@ -41,6 +41,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.junit.jupiter.api.Test;
 
 import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -60,6 +61,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 
@@ -132,6 +134,18 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.sessions.created").tags(tags).functionCounter().count()).isEqualTo(3.0);
         assertThat(registry.get("tomcat.sessions.alive.max").tags(tags).timeGauge().value()).isGreaterThan(1.0);
         // end::example[]
+    }
+
+    @Test
+    void closeIsIdempotent() {
+        MBeanServer mBeanServer = MBeanServerFactory.newMBeanServer();
+        // no Tomcat MBeans are present, so the binder registers notification listeners
+        TomcatMetrics tomcatMetrics = new TomcatMetrics(null, Tags.empty(), mBeanServer);
+        tomcatMetrics.bindTo(registry);
+
+        tomcatMetrics.close();
+
+        assertThatCode(tomcatMetrics::close).doesNotThrowAnyException();
     }
 
     private void sleep() {
