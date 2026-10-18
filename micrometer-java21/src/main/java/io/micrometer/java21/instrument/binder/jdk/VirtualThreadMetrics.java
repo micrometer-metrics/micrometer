@@ -17,10 +17,10 @@ package io.micrometer.java21.instrument.binder.jdk;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.java17.instrument.binder.jdk.JfrMeterBinder;
+import jdk.jfr.consumer.EventStream;
 import jdk.jfr.consumer.RecordingStream;
 
-import java.io.Closeable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -40,7 +40,7 @@ import static java.util.Collections.emptyList;
  * "https://www.oracle.com/java/technologies/javase/24-relnote-issues.html#JDK-8338890">jdk.management.VirtualThreadSchedulerMXBean</a>
  * @since 1.14.0
  */
-public class VirtualThreadMetrics implements MeterBinder, Closeable {
+public class VirtualThreadMetrics extends JfrMeterBinder {
 
     private static final String PINNED_EVENT = "jdk.VirtualThreadPinned";
 
@@ -49,8 +49,6 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
     private static final String LIVE_THREADS_DESCRIPTION = "Approximate current number of virtual threads that are unfinished";
 
     private static final String METER_NAME_PREFIX = "jvm.threads.virtual.";
-
-    private final RecordingStream recordingStream;
 
     private final Iterable<Tag> tags;
 
@@ -63,12 +61,12 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
     }
 
     private VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
-        this.recordingStream = createRecordingStream(config);
-        this.tags = tags;
+        super(createRecordingStream(config));
+        this.tags = Objects.requireNonNull(tags, "tags parameter must not be null");
     }
 
     @Override
-    public void bindTo(MeterRegistry registry) {
+    protected void register(MeterRegistry registry, EventStream eventStream) {
         Timer pinnedTimer = Timer.builder(METER_NAME_PREFIX + "pinned")
             .description("The duration while the virtual thread was pinned without releasing its platform thread")
             .tags(tags)
@@ -79,8 +77,8 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
             .tags(tags)
             .register(registry);
 
-        recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
-        recordingStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
+        eventStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
+        eventStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
 
         bindVirtualThreadSchedulerMXBean(registry);
     }
@@ -137,20 +135,12 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         }
     }
 
-    private RecordingStream createRecordingStream(RecordingConfig config) {
-        RecordingStream recordingStream = new RecordingStream();
-        recordingStream.enable(PINNED_EVENT).withThreshold(config.pinnedThreshold);
+    private static RecordingStream createRecordingStream(RecordingConfig config) {
+        RecordingStream recordingStream = JfrMeterBinder.createRecordingStream(config.jfrRecordingConfig());
+        recordingStream.enable(PINNED_EVENT).withThreshold(config.pinnedThreshold());
         recordingStream.enable(SUBMIT_FAILED_EVENT);
-        recordingStream.setMaxAge(config.maxAge);
-        recordingStream.setMaxSize(config.maxSizeBytes);
-        recordingStream.startAsync();
 
         return recordingStream;
-    }
-
-    @Override
-    public void close() {
-        recordingStream.close();
     }
 
     private record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {
@@ -161,9 +151,13 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         private RecordingConfig {
             Objects.requireNonNull(maxAge, "maxAge parameter must not be null");
             Objects.requireNonNull(pinnedThreshold, "pinnedThreshold must not be null");
-            if (maxSizeBytes < 0) {
+            if (maxSizeBytes < 1) {
                 throw new IllegalArgumentException("maxSizeBytes must be positive");
             }
+        }
+
+        private JfrMeterBinder.RecordingConfig jfrRecordingConfig() {
+            return new JfrMeterBinder.RecordingConfig(maxAge, maxSizeBytes);
         }
     }
 
