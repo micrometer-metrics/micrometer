@@ -17,12 +17,14 @@ package io.micrometer.atlas;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.netflix.spectator.api.Measurement;
+import com.netflix.spectator.api.Registry;
+import com.netflix.spectator.api.Utils;
 import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
-import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MockClock;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -30,11 +32,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 @ExtendWith(WiremockResolver.class)
 class AtlasMeterRegistryTest {
@@ -66,7 +72,55 @@ class AtlasMeterRegistryTest {
         AtomicLong count = new AtomicLong();
 
         MockClock clock = new MockClock();
-        AtlasMeterRegistry registry = new AtlasMeterRegistry(new AtlasConfig() {
+        AtlasMeterRegistry registry = newRegistry(clock);
+        try {
+            FunctionCounter.builder("test", count, AtomicLong::doubleValue).register(registry);
+
+            Supplier<Double> valueSupplier = () -> pollStatistics(registry, clock, "test").get("count");
+
+            count.addAndGet(60);
+            assertThat(valueSupplier.get()).isEqualTo(1.0);
+
+            count.addAndGet(120);
+            assertThat(valueSupplier.get()).isEqualTo(2.0);
+
+            count.addAndGet(90);
+            assertThat(valueSupplier.get()).isEqualTo(1.5);
+        }
+        finally {
+            registry.close();
+        }
+    }
+
+    @Test
+    void functionTimer() {
+        AtomicLong count = new AtomicLong();
+        AtomicLong totalTimeMillis = new AtomicLong();
+
+        MockClock clock = new MockClock();
+        AtlasMeterRegistry registry = newRegistry(clock);
+        try {
+            FunctionTimer
+                .builder("test", count, AtomicLong::get, c -> totalTimeMillis.doubleValue(), TimeUnit.MILLISECONDS)
+                .register(registry);
+
+            count.addAndGet(60);
+            totalTimeMillis.addAndGet(120_000);
+            assertThat(pollStatistics(registry, clock, "test")).containsOnly(entry("count", 1.0),
+                    entry("totalTime", 2.0));
+
+            count.addAndGet(120);
+            totalTimeMillis.addAndGet(30_000);
+            assertThat(pollStatistics(registry, clock, "test")).containsOnly(entry("count", 2.0),
+                    entry("totalTime", 0.5));
+        }
+        finally {
+            registry.close();
+        }
+    }
+
+    private static AtlasMeterRegistry newRegistry(MockClock clock) {
+        return new AtlasMeterRegistry(new AtlasConfig() {
 
             @Override
             public @Nullable String get(String k) {
@@ -74,8 +128,8 @@ class AtlasMeterRegistryTest {
             }
 
             @Override
-            public Duration step() {
-                return Duration.ofMinutes(1);
+            public boolean enabled() {
+                return false;
             }
 
             @Override
@@ -83,27 +137,19 @@ class AtlasMeterRegistryTest {
                 return step();
             }
         }, clock);
-        FunctionCounter.builder("test", count, AtomicLong::doubleValue).register(registry);
+    }
 
-        Supplier<Double> valueSupplier = () -> {
-            AtlasRegistry r = (AtlasRegistry) registry.getSpectatorRegistry();
-            PolledMeter.update(r);
-            clock.add(Duration.ofMinutes(1));
-            return r.measurements()
-                .filter(m -> m.id().name().equals("test"))
-                .findFirst()
-                .map(Measurement::value)
-                .orElse(Double.NaN);
-        };
-
-        count.addAndGet(60);
-        assertThat(valueSupplier.get()).isEqualTo(1.0);
-
-        count.addAndGet(120);
-        assertThat(valueSupplier.get()).isEqualTo(2.0);
-
-        count.addAndGet(90);
-        assertThat(valueSupplier.get()).isEqualTo(1.5);
+    /**
+     * Polls the function based meters, moves to the next step, and returns the values for
+     * the completed step by statistic.
+     */
+    private static Map<String, Double> pollStatistics(AtlasMeterRegistry registry, MockClock clock, String name) {
+        Registry r = registry.getSpectatorRegistry();
+        PolledMeter.update(r);
+        clock.add(Duration.ofMinutes(1));
+        return r.measurements()
+            .filter(m -> m.id().name().equals(name))
+            .collect(Collectors.toMap(m -> Utils.getTagValue(m.id(), "statistic"), Measurement::value));
     }
 
 }
