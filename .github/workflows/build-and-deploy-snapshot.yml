@@ -130,7 +130,7 @@ jobs:
         uses: ./.github/actions/upload-build-reports
         if: ${{ failure() }}
 
-  build-jdk27-no-aspectj-ltw-test:
+  build-jdk27:
     runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
     steps:
@@ -146,8 +146,7 @@ jobs:
           develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
       - name: Build
         shell: bash
-        # TODO: remove aspectj-ltw test exclusion once AspectJ releases Java 27 support, see gh-8090
-        run: ./gradlew build -PtoolchainVersion=27 -x :micrometer-test-aspectj-ltw:test
+        run: ./gradlew build -PtoolchainVersion=27
       - name: Upload Build Reports
         uses: ./.github/actions/upload-build-reports
         if: ${{ failure() }}
@@ -222,7 +221,7 @@ jobs:
   deploy:
     runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
-    needs: [ build-jdk25, build-jdk11, build-jdk17, build-jdk21, build-jdk26, build-jdk27-no-aspectj-ltw-test, docker-tests, concurrency-tests, stackdriver-it ]
+    needs: [ build-jdk25, build-jdk11, build-jdk17, build-jdk21, build-jdk26, build-jdk27, docker-tests, concurrency-tests, stackdriver-it ]
     steps:
       - name: "Check Out Code"
         uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # 7.0.1
