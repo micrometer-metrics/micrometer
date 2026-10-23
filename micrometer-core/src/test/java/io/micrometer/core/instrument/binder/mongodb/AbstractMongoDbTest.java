@@ -33,7 +33,7 @@ import org.testcontainers.utility.DockerImageName;
 abstract class AbstractMongoDbTest {
 
     @Container
-    private final MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:8.2.3"));
+    private final MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse(getMongoImageName()));
 
     String host;
 
@@ -43,6 +43,15 @@ abstract class AbstractMongoDbTest {
     void setUp() {
         host = mongoDBContainer.getHost();
         port = mongoDBContainer.getFirstMappedPort();
+    }
+
+    private static String getMongoImageName() {
+        String imageName = System.getProperty("mongo-image.name");
+        if (imageName == null) {
+            throw new IllegalStateException(
+                    "System property 'mongo-image.name' is not set. This should be set in the build configuration for running from the command line. If you are running MongoDB tests from an IDE, set the system property to the desired MongoDB image name.");
+        }
+        return imageName;
     }
 
 }
