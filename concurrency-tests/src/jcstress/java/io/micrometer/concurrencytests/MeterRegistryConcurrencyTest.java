@@ -51,6 +51,7 @@ public class MeterRegistryConcurrencyTest {
         }
 
         @Arbiter
+        @SuppressWarnings("ReferenceEquality")
         public void arbiter(Z_Result r) {
             r.r1 = c1 == c2;
         }
@@ -87,6 +88,7 @@ public class MeterRegistryConcurrencyTest {
         }
 
         @Arbiter
+        @SuppressWarnings("ReferenceEquality")
         public void arbiter(Z_Result r) {
             r.r1 = c1 == c2;
         }
