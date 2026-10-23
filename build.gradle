@@ -113,6 +113,7 @@ subprojects {
                     "NarrowCalculation",
                     "NullAway",
                     "OperatorPrecedence",
+                    "ReferenceEquality",
                     "StringCaseLocaleUsage",
                     "StringSplitter",
                     "UndefinedEquals",
