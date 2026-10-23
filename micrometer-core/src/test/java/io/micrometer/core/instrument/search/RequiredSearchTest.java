@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,7 +38,7 @@ class RequiredSearchTest {
         registry.counter("my.counter", "k", "v", "k2", "v2");
         registry.counter("my.other.counter", "k", "v", "k2", "v3");
         registry.timer("my.timer", "k", "v");
-        registry.gauge("gauge", 0);
+        registry.gauge("gauge", new AtomicInteger());
     }
 
     @Test

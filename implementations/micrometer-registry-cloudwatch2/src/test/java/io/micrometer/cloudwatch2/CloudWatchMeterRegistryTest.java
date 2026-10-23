@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -78,14 +79,15 @@ class CloudWatchMeterRegistryTest {
 
     @Test
     void metricData() {
-        registry.gauge("gauge", 1d);
+        AtomicInteger number = new AtomicInteger(1);
+        registry.gauge("gauge", number);
         List<MetricDatum> metricDatumStream = registry.metricData();
         assertThat(metricDatumStream.size()).isEqualTo(1);
     }
 
     @Test
     void metricDataWhenNaNShouldNotAdd() {
-        registry.gauge("gauge", Double.NaN);
+        registry.gauge("gauge", this, o -> Double.NaN);
 
         AtomicReference<Double> value = new AtomicReference<>(Double.NaN);
         registry.more().timeGauge("time.gauge", Tags.empty(), value, TimeUnit.MILLISECONDS, AtomicReference::get);
@@ -108,21 +110,21 @@ class CloudWatchMeterRegistryTest {
 
     @Test
     void batchFunctionCounterData() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(registry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", new AtomicInteger(1), AtomicInteger::doubleValue)
+            .register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionCounterData(counter)).hasSize(1);
     }
 
     @Test
     void batchFunctionCounterDataShouldClampInfiniteValues() {
-        FunctionCounter counter = FunctionCounter
-            .builder("my.positive.infinity", Double.POSITIVE_INFINITY, Number::doubleValue)
+        FunctionCounter counter = FunctionCounter.builder("my.positive.infinity", this, o -> Double.POSITIVE_INFINITY)
             .register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionCounterData(counter).findFirst().get().value())
             .isEqualTo(1.174271e+108);
 
-        counter = FunctionCounter.builder("my.negative.infinity", Double.NEGATIVE_INFINITY, Number::doubleValue)
+        counter = FunctionCounter.builder("my.negative.infinity", this, o -> Double.NEGATIVE_INFINITY)
             .register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionCounterData(counter).findFirst().get().value())
@@ -149,7 +151,7 @@ class CloudWatchMeterRegistryTest {
 
     @Test
     void writeShouldDropTagWithBlankValue() {
-        registry.gauge("my.gauge", Tags.of("accepted", "foo").and("empty", ""), 1d);
+        registry.gauge("my.gauge", Tags.of("accepted", "foo").and("empty", ""), new AtomicInteger());
         assertThat(registry.metricData()).hasSize(1)
             .allSatisfy(datum -> assertThat(datum.dimensions()).hasSize(1)
                 .contains(Dimension.builder().name("accepted").value("foo").build()));
@@ -157,8 +159,7 @@ class CloudWatchMeterRegistryTest {
 
     @Test
     void functionTimerData() {
-        FunctionTimer timer = FunctionTimer
-            .builder("my.function.timer", 1d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+        FunctionTimer timer = FunctionTimer.builder("my.function.timer", this, o -> 1, o -> 1, TimeUnit.MILLISECONDS)
             .register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionTimerData(timer)).hasSize(3);
@@ -167,7 +168,7 @@ class CloudWatchMeterRegistryTest {
     @Test
     void functionTimerDataWhenSumIsNaNShouldReturnEmptyStream() {
         FunctionTimer timer = FunctionTimer
-            .builder("my.function.timer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .builder("my.function.timer", this, o -> 0, o -> Double.NaN, TimeUnit.MILLISECONDS)
             .register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionTimerData(timer)).isEmpty();

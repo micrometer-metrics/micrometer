@@ -295,7 +295,7 @@ class NewRelicMeterRegistryTest {
 
     @Test
     void writeCounterWithFunctionCounter() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(registry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, o -> 1d).register(registry);
         clock.add(insightsApiConfig.step());
         // test API clientProvider
         writeCounterWithFunctionCounter(counter, getInsightsApiClientProvider(meterNameEventTypeEnabledConfig),
@@ -338,26 +338,24 @@ class NewRelicMeterRegistryTest {
 
     private void writeCounterWithFunctionCounterShouldDropInfiniteValues(
             NewRelicInsightsApiClientProvider clientProvider) {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, o -> Double.POSITIVE_INFINITY)
             .register(registry);
         clock.add(insightsApiConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
-            .register(registry);
+        counter = FunctionCounter.builder("myCounter", this, o -> Double.NEGATIVE_INFINITY).register(registry);
         clock.add(insightsApiConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
     }
 
     private void writeCounterWithFunctionCounterShouldDropInfiniteValues(
             NewRelicInsightsAgentClientProvider clientProvider) {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, o -> Double.POSITIVE_INFINITY)
             .register(registry);
         clock.add(insightsAgentConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
-            .register(registry);
+        counter = FunctionCounter.builder("myCounter", this, o -> Double.NEGATIVE_INFINITY).register(registry);
         clock.add(insightsAgentConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
     }
