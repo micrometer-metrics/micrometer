@@ -23,6 +23,7 @@ import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MockClock;
@@ -35,12 +36,14 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.Assertions.offset;
 
 @ExtendWith(WiremockResolver.class)
 class AtlasMeterRegistryTest {
@@ -119,12 +122,60 @@ class AtlasMeterRegistryTest {
         }
     }
 
+    @Test
+    void functionCounterWithFractionalValues() {
+        AtomicReference<Double> count = new AtomicReference<>(0.0);
+
+        MockClock clock = new MockClock();
+        AtlasMeterRegistry registry = newRegistry(clock);
+        try {
+            FunctionCounter.builder("test", count, AtomicReference::get).register(registry);
+            Supplier<Double> valueSupplier = () -> pollStatistics(registry, clock, "test").get("count");
+
+            // Increments of less than 1 would be lost if truncated to a long
+            count.set(0.6);
+            assertThat(valueSupplier.get()).isCloseTo(0.01, offset(1e-9));
+
+            count.set(1.5);
+            assertThat(valueSupplier.get()).isCloseTo(0.015, offset(1e-9));
+        }
+        finally {
+            registry.close();
+        }
+    }
+
+    @Test
+    void counterWithFractionalIncrements() {
+        MockClock clock = new MockClock();
+        AtlasMeterRegistry registry = newRegistry(clock);
+        try {
+            Counter counter = registry.counter("test");
+            Supplier<Double> valueSupplier = () -> pollStatistics(registry, clock, "test").get("count");
+
+            // Increments of less than 1 would be lost if truncated to a long
+            counter.increment(0.5);
+            counter.increment(0.5);
+            counter.increment(0.5);
+            assertThat(valueSupplier.get()).isCloseTo(0.025, offset(1e-9));
+
+            counter.increment(1.5);
+            assertThat(valueSupplier.get()).isCloseTo(0.025, offset(1e-9));
+        }
+        finally {
+            registry.close();
+        }
+    }
+
+    /**
+     * Create a registry with a 1 minute step that does not attempt to publish, so it can
+     * be closed at the end of the test without any network calls.
+     */
     private static AtlasMeterRegistry newRegistry(MockClock clock) {
         return new AtlasMeterRegistry(new AtlasConfig() {
 
             @Override
             public @Nullable String get(String k) {
-                return null;
+                return "atlas.enabled".equals(k) ? "false" : null;
             }
 
             @Override
