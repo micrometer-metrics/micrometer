@@ -33,6 +33,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -200,9 +201,17 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        TimeUnit baseTimeUnit = getBaseTimeUnit();
         FunctionTimer ft = new StepFunctionTimer<>(id, clock, atlasConfig.step().toMillis(), obj, countFunction,
-                totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
-        newMeter(id, Meter.Type.TIMER, ft.measure());
+                totalTimeFunction, totalTimeFunctionUnit, baseTimeUnit);
+        Id spectatorId = spectatorId(id);
+        PolledMeter.using(registry)
+            .withId(spectatorId.withTag(com.netflix.spectator.api.Statistic.count))
+            .monitorMonotonicCounter(obj, countFunction);
+        PolledMeter.using(registry)
+            .withId(spectatorId.withTag(com.netflix.spectator.api.Statistic.totalTime))
+            .monitorMonotonicCounterDouble(obj, obj2 -> TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2),
+                    totalTimeFunctionUnit, baseTimeUnit));
         return ft;
     }
 
