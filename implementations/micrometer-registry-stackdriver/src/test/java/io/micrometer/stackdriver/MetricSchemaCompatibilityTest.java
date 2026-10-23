@@ -60,12 +60,11 @@ class MetricSchemaCompatibilityTest {
                 registry.createLongTaskTimer(batch, LongTaskTimer.builder("longTaskTimer").register(registry)));
         assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DOUBLE)), registry.createTimeGauge(batch,
                 TimeGauge.builder("timeGauge", () -> 1, TimeUnit.SECONDS).register(registry)));
-        assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DOUBLE)), registry.createFunctionCounter(
-                batch, FunctionCounter.builder("functionCounter", 1, value -> 1).register(registry)));
-        assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DISTRIBUTION)),
-                registry.createFunctionTimer(batch,
-                        FunctionTimer.builder("functionTimer", 1, value -> 1, value -> 1, TimeUnit.SECONDS)
-                            .register(registry)));
+        assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DOUBLE)), registry
+            .createFunctionCounter(batch, FunctionCounter.builder("functionCounter", this, o -> 1).register(registry)));
+        assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DISTRIBUTION)), registry
+            .createFunctionTimer(batch,
+                    FunctionTimer.builder("functionTimer", this, o -> 1, o -> 1, TimeUnit.SECONDS).register(registry)));
         assertSchemaCompatibility(
                 Collections.singletonList(new Pair(GAUGE,
                         DOUBLE)),
@@ -98,13 +97,11 @@ class MetricSchemaCompatibilityTest {
                 registry.createLongTaskTimer(batch, LongTaskTimer.builder("longTaskTimer").register(registry)));
         assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DOUBLE)), registry.createTimeGauge(batch,
                 TimeGauge.builder("timeGauge", () -> 1, TimeUnit.SECONDS).register(registry)));
-        assertSchemaCompatibility(Collections.singletonList(new Pair(CUMULATIVE, DOUBLE)),
-                registry.createFunctionCounter(batch,
-                        FunctionCounter.builder("functionCounter", 1, value -> 1).register(registry)));
-        assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DISTRIBUTION)),
-                registry.createFunctionTimer(batch,
-                        FunctionTimer.builder("functionTimer", 1, value -> 1, value -> 1, TimeUnit.SECONDS)
-                            .register(registry)));
+        assertSchemaCompatibility(Collections.singletonList(new Pair(CUMULATIVE, DOUBLE)), registry
+            .createFunctionCounter(batch, FunctionCounter.builder("functionCounter", this, o -> 1).register(registry)));
+        assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DISTRIBUTION)), registry
+            .createFunctionTimer(batch,
+                    FunctionTimer.builder("functionTimer", this, o -> 1, o -> 1, TimeUnit.SECONDS).register(registry)));
         assertSchemaCompatibility(
                 Collections.singletonList(new Pair(GAUGE,
                         DOUBLE)),

@@ -122,7 +122,8 @@ subprojects {
                     "UnnecessaryAsync",
                     "UnnecessaryParentheses",
                     "UnusedMethod",
-                    "URLEqualsHashCode"
+                    "URLEqualsHashCode",
+                    "ValueClassIdentity"
                 )
 
                 option("NullAway:OnlyNullMarked", "true")

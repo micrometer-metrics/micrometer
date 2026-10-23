@@ -195,7 +195,7 @@ class LoggingMeterRegistryTest {
 
     @Test
     void printerValueWhenGaugeIsNaNShouldPrintNaN() {
-        registry.gauge("my.gauge", Double.NaN);
+        registry.gauge("my.gauge", this, o -> Double.NaN);
         Gauge gauge = registry.find("my.gauge").gauge();
         assertThat(gauge).isNotNull();
         LoggingMeterRegistry.Printer printer = registry.new Printer(gauge);
@@ -204,7 +204,7 @@ class LoggingMeterRegistryTest {
 
     @Test
     void printerValueWhenGaugeIsInfinityShouldPrintInfinity() {
-        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        registry.gauge("my.gauge", this, o -> Double.POSITIVE_INFINITY);
         Gauge gauge = registry.find("my.gauge").gauge();
         assertThat(gauge).isNotNull();
         LoggingMeterRegistry.Printer printer = registry.new Printer(gauge);

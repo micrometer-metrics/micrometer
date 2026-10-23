@@ -88,7 +88,7 @@ class DynatraceExporterV2Test {
 
     @Test
     void toGaugeLine() {
-        meterRegistry.gauge("my.gauge", 1.23);
+        meterRegistry.gauge("my.gauge", this, o -> 1.23);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         List<String> lines = exporter.toGaugeLine(gauge, SEEN_METADATA).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
@@ -97,18 +97,18 @@ class DynatraceExporterV2Test {
 
     @Test
     void toGaugeLineShouldDropNanValue() {
-        meterRegistry.gauge("my.gauge", NaN);
+        meterRegistry.gauge("my.gauge", this, o -> NaN);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
     }
 
     @Test
     void toGaugeLineShouldDropInfiniteValues() {
-        meterRegistry.gauge("my.gauge", POSITIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, o -> POSITIVE_INFINITY);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
 
-        meterRegistry.gauge("my.gauge", NEGATIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, o -> NEGATIVE_INFINITY);
         gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
     }
@@ -501,7 +501,7 @@ class DynatraceExporterV2Test {
 
     @Test
     void gaugeWithInvalidNameShouldBeDropped() {
-        meterRegistry.gauge("", 1.23);
+        meterRegistry.gauge("", this, o -> 1.23);
         Gauge gauge = meterRegistry.find("").gauge();
         assertThat(gauge).isNotNull();
         assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
@@ -586,7 +586,7 @@ class DynatraceExporterV2Test {
             tagList.add(Tag.of(String.format("key%d", i), String.format("val%d", i)));
         }
 
-        meterRegistry.gauge("serialized.as.too.long.line", tagList, 1.23);
+        meterRegistry.gauge("serialized.as.too.long.line", tagList, this, o -> 1.23);
         Gauge gauge = meterRegistry.find("serialized.as.too.long.line").gauge();
         assertThat(gauge).isNotNull();
 
@@ -602,7 +602,7 @@ class DynatraceExporterV2Test {
 
         Counter counter = meterRegistry.counter("my.counter");
         counter.increment(12d);
-        meterRegistry.gauge("my.gauge", 42d);
+        meterRegistry.gauge("my.gauge", this, o -> 42d);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         Timer timer = meterRegistry.timer("my.timer");
         timer.record(22, MILLISECONDS);

@@ -67,7 +67,7 @@ class ElasticMeterRegistryTest {
 
     @Test
     void writeFunctionCounter() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 123.0, Number::doubleValue).register(registry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, o -> 123.0).register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionCounter(counter)).contains(
                 "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":123.0}");
@@ -75,8 +75,7 @@ class ElasticMeterRegistryTest {
 
     @Test
     void nanFunctionCounterShouldNotBeWritten() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NaN, Number::doubleValue)
-            .register(registry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, o -> Double.NaN).register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionCounter(counter)).isEmpty();
     }
@@ -84,7 +83,7 @@ class ElasticMeterRegistryTest {
     @Test
     void nanFunctionTimerShouldNotBeWritten() {
         FunctionTimer timer = FunctionTimer
-            .builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .builder("myFunctionTimer", this, o -> 1, o -> Double.NaN, TimeUnit.MILLISECONDS)
             .register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionTimer(timer)).isEmpty();
@@ -92,15 +91,14 @@ class ElasticMeterRegistryTest {
 
     @Test
     void writeGauge() {
-        Gauge gauge = Gauge.builder("myGauge", 123.0, Number::doubleValue).register(registry);
+        Gauge gauge = Gauge.builder("myGauge", this, o -> 123.0).register(registry);
         assertThat(registry.writeGauge(gauge)).contains(
                 "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
     }
 
     @Test
     void writeTimeGauge() {
-        TimeGauge gauge = TimeGauge.builder("myGauge", 123.0, TimeUnit.MILLISECONDS, Number::doubleValue)
-            .register(registry);
+        TimeGauge gauge = TimeGauge.builder("myGauge", this, TimeUnit.MILLISECONDS, o -> 123.0).register(registry);
         assertThat(registry.writeTimeGauge(gauge)).contains(
                 "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
     }
@@ -185,15 +183,14 @@ class ElasticMeterRegistryTest {
     @Issue("#1134")
     @Test
     void infinityGaugeShouldNotBeWritten() {
-        Gauge gauge = Gauge.builder("myGauge", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
+        Gauge gauge = Gauge.builder("myGauge", this, o -> Double.NEGATIVE_INFINITY).register(registry);
         assertThat(registry.writeGauge(gauge)).isNotPresent();
     }
 
     @Issue("#1134")
     @Test
     void infinityTimeGaugeShouldNotBeWritten() {
-        TimeGauge gauge = TimeGauge
-            .builder("myGauge", Double.NEGATIVE_INFINITY, TimeUnit.MILLISECONDS, Number::doubleValue)
+        TimeGauge gauge = TimeGauge.builder("myGauge", this, TimeUnit.MILLISECONDS, o -> Double.NEGATIVE_INFINITY)
             .register(registry);
         assertThat(registry.writeTimeGauge(gauge)).isNotPresent();
     }

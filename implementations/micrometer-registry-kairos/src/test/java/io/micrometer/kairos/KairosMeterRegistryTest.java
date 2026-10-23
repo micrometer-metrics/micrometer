@@ -40,25 +40,25 @@ class KairosMeterRegistryTest {
 
     @Test
     void writeGauge() {
-        meterRegistry.gauge("my.gauge", 1d);
+        meterRegistry.gauge("my.gauge", this, o -> 1d);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge)).hasSize(1);
     }
 
     @Test
     void writeGaugeShouldDropNanValue() {
-        meterRegistry.gauge("my.gauge", Double.NaN);
+        meterRegistry.gauge("my.gauge", this, o -> Double.NaN);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
     }
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
-        meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, o -> Double.POSITIVE_INFINITY);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
 
-        meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, o -> Double.NEGATIVE_INFINITY);
         gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
     }
@@ -94,20 +94,19 @@ class KairosMeterRegistryTest {
 
     @Test
     void writeFunctionCounter() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, o -> 1d).register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).hasSize(1);
     }
 
     @Test
     void writeFunctionCounterShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, o -> Double.POSITIVE_INFINITY)
             .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
-            .register(meterRegistry);
+        counter = FunctionCounter.builder("myCounter", this, o -> Double.NEGATIVE_INFINITY).register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
     }
