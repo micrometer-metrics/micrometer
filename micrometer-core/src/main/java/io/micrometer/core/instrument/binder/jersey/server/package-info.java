@@ -15,7 +15,7 @@
  */
 
 /**
- * Meter binders for Jersey.
- * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
+ * Meter binders for Jersey. Deprecated since 1.13.0, use the jersey-micrometer module in
+ * the Jersey project instead.
  */
 package io.micrometer.core.instrument.binder.jersey.server;
