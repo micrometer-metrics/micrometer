@@ -278,7 +278,7 @@ public final class TestObservationRegistry
 
         @Override
         public int hashCode() {
-            return Objects.hash(this.context);
+            return Objects.hashCode(this.context);
         }
 
         TestObservationContext setObservationStarted(boolean observationStarted) {

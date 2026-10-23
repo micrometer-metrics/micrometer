@@ -99,6 +99,7 @@ class GrpcAsyncTest {
         // part of the response message.
         // This simulates a tracer with span.
         SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(this.channel);
+        @SuppressWarnings("UndefinedEquals")
         Map<ListenableFuture<SimpleResponse>, String> requestIds = new HashMap<>();
         int max = 40;
         for (int i = 0; i < max; i++) {
@@ -119,7 +120,7 @@ class GrpcAsyncTest {
         assertThat(futures).allSatisfy((future) -> {
             // Make sure the request-id in the response message matches with the one sent
             // to server.
-            @SuppressWarnings("CollectionUndefinedEquality")
+            @SuppressWarnings("UndefinedEquals")
             String expectedRequestId = requestIds.get(future);
             assertThat(future.get().getResponseMessage()).contains("request-id=" + expectedRequestId);
         });

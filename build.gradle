@@ -92,14 +92,12 @@ subprojects {
 
                 error(
                     "AlmostJavadoc",
-                    "ArrayAsKeyOfSetOrMap",
                     "AttemptedNegativeZero",
                     "BadImport",
                     "CatchAndPrintStackTrace",
                     "ClassCanBeStatic",
                     "ClassInitializationDeadlock",
                     "ClassName",
-                    "CollectionUndefinedEquality",
                     "DefaultCharset",
                     "DoNotCallSuggester",
                     "EnumOrdinal",
@@ -117,6 +115,7 @@ subprojects {
                     "OperatorPrecedence",
                     "StringCaseLocaleUsage",
                     "StringSplitter",
+                    "UndefinedEquals",
                     "UnnecessaryAsync",
                     "UnnecessaryParentheses",
                     "UnusedMethod",
