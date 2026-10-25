@@ -1280,6 +1280,14 @@ public abstract class MeterRegistry {
     /**
      * Closes this registry, releasing any resources in the process. Once closed, this
      * registry will no longer accept new meters and any publishing activity will cease.
+     * <p>
+     * Closing is terminal: a closed registry cannot be reopened or restarted. Calling
+     * this method on an already closed registry has no effect. Registries that publish
+     * metrics on a schedule, such as
+     * {@link io.micrometer.core.instrument.push.PushMeterRegistry}, stop publishing and
+     * typically publish a final time before closing; see their documentation for details.
+     * Implementations that hold resources such as clients, connections, or executors
+     * should release them when overriding this method.
      */
     public void close() {
         if (closed.compareAndSet(false, true)) {
