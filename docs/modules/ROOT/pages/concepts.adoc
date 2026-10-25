@@ -19,4 +19,7 @@ It does not require any third-party (non-Micrometer) dependencies on the classpa
 Use of the xref:./concepts/timers.adoc#_pause_detection[pause detection] feature requires the https://github.com/LatencyUtils/LatencyUtils[LatencyUtils] dependency (`org.latencyutils:LatencyUtils`) to be available on the classpath at runtime.
 Micrometer does not include LatencyUtils on the runtime classpath by default because pause detection is turned off by default.
 
-If you use xref:./concepts/histogram-quantiles.adoc[client-side percentiles], you need https://github.com/HdrHistogram/HdrHistogram[HdrHistogram] on the classpath at runtime. If you do not use client-side percentiles, you may exclude HdrHistogram from your application's runtime classpath.
+Use of xref:./concepts/histogram-quantiles.adoc[client-side percentiles] requires the https://github.com/HdrHistogram/HdrHistogram[HdrHistogram] dependency (`org.hdrhistogram:HdrHistogram`) to be available on the classpath at runtime.
+As of Micrometer 1.18.0, HdrHistogram is an optional dependency and is no longer pulled in transitively by `micrometer-core`, so you must declare it explicitly if you publish client-side percentiles.
+Registering a meter that publishes percentiles without HdrHistogram on the classpath fails with an `InvalidConfigurationException` naming the missing dependency.
+Note that `publishPercentileHistogram` and `serviceLevelObjectives` do not use HdrHistogram, so they work without it.

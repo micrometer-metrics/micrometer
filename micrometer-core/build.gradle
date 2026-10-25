@@ -93,8 +93,10 @@ dependencies {
     api project(":micrometer-commons")
     api project(":micrometer-observation")
 
-    // HdrHistogram is needed at runtime when client-side percentiles are configured
-    implementation libs.hdrhistogram
+    // HdrHistogram is only needed when client-side percentiles are configured, so it is
+    // optional. Micrometer fails with an actionable message if it is missing when needed;
+    // see HdrHistogramAvailability.
+    optionalApi libs.hdrhistogram
     // We need LatencyUtils to compile but users by default do not need it
     compileOnly(libs.latencyUtils) {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
