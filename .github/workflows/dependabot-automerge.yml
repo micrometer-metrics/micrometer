@@ -54,8 +54,6 @@ jobs:
               "io.dropwizard.metrics:metrics-graphite"|\
               "io.dropwizard.metrics:metrics-jmx"|\
               "com.signalfx.public:signalfx-java"|\
-              "org.slf4j:slf4j-api"|\
-              "org.eclipse.jetty:jetty-server"|\
               io.prometheus:*|\
               com.google.cloud:*|\
               com.google.auth:*)
