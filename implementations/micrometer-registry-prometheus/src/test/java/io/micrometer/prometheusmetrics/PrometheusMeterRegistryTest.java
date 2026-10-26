@@ -544,8 +544,6 @@ class PrometheusMeterRegistryTest {
                     .flatMap(snapshot -> snapshot.getDataPoints().stream())
                     .filter(SummarySnapshot.SummaryDataPointSnapshot.class::isInstance)
                     .map(SummarySnapshot.SummaryDataPointSnapshot.class::cast)
-                    // filter needed due to https://github.com/uber/NullAway/issues/1808
-                    .filter(Objects::nonNull)
                     .anyMatch(summaryDataPoint -> summaryDataPoint.getQuantiles().size() > 0),
                 "a summary with name `%s` and at least one quantile", name);
     }

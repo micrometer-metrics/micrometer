@@ -28,7 +28,6 @@ import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -180,8 +179,6 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         getMeters().stream()
             .filter(StepMeter.class::isInstance)
             .map(StepMeter.class::cast)
-            // filter needed due to https://github.com/uber/NullAway/issues/1808
-            .filter(Objects::nonNull)
             .forEach(StepMeter::_closingRollover);
     }
 
