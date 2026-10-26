@@ -9,7 +9,73 @@ on:
 run-name: Merge Dependabot PR ${{ github.ref_name }}
 
 jobs:
+  relabel-pr:
+    name: Relabel Dependabot PR
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Categorize dependency upgrade
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          DEP_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+          ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
+          DIRECTORY: ${{ steps.metadata.outputs.directory }}
+        run: |
+          # Only root Gradle dependencies can be transitive to consumers
+          if [ "$ECOSYSTEM" != "gradle" ] || [ "$DIRECTORY" != "/" ]; then
+            echo "Not a root Gradle dependency ($ECOSYSTEM in $DIRECTORY). Relabeling to type: task."
+            gh pr edit "$PR_NUMBER" --add-label "type: task" --remove-label "dependency-upgrade"
+            exit 0
+          fi
+
+          is_transitive=false
+          IFS=',' read -ra DEPS <<< "$DEP_NAMES"
+          for dep in "${DEPS[@]}"; do
+            dep=$(echo "$dep" | tr -d '[:space:]')
+            case "$dep" in
+              "org.hdrhistogram:HdrHistogram"|\
+              "org.jspecify:jspecify"|\
+              "io.micrometer:context-propagation"|\
+              "software.amazon.awssdk:cloudwatch"|\
+              "com.netflix.spectator:spectator-reg-atlas"|\
+              "com.microsoft.azure:applicationinsights-core"|\
+              "com.dynatrace.metric.util:dynatrace-metric-utils-java"|\
+              "info.ganglia.gmetric4j:gmetric4j"|\
+              "io.dropwizard.metrics:metrics-graphite"|\
+              "io.dropwizard.metrics:metrics-jmx"|\
+              "com.signalfx.public:signalfx-java"|\
+              "org.slf4j:slf4j-api"|\
+              "org.eclipse.jetty:jetty-server"|\
+              io.prometheus:*|\
+              com.google.cloud:*|\
+              com.google.auth:*)
+                is_transitive=true
+                echo "Matched transitive dependency: $dep"
+                break
+                ;;
+            esac
+          done
+
+          if [ "$is_transitive" = true ]; then
+            echo "PR contains transitive dependency upgrades. Keeping dependency-upgrade label."
+            gh pr edit "$PR_NUMBER" --add-label "dependency-upgrade" --remove-label "type: task"
+          else
+            echo "PR contains only optional/internal dependencies ($DEP_NAMES). Relabeling as type: task."
+            gh pr edit "$PR_NUMBER" --add-label "type: task" --remove-label "dependency-upgrade"
+          fi
+
   merge-dependabot-pr:
+    needs: relabel-pr
     permissions: write-all
 
     # Until v6 is released
@@ -17,3 +83,5 @@ jobs:
     with:
       autoMerge: true
       mergeArguments: --auto --squash
+      dependenciesLabel: dependency-upgrade
+      developmentLabel: "type: task"
