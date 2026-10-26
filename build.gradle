@@ -493,7 +493,9 @@ subprojects {
                     ignoreMissingClasses = true
                     includeSynthetic = true
 
-                    classExcludes = []
+                    // TODO remove TimeWindowPercentileHistogram from excludes when comparing against 1.18
+                    // superclass removed so HdrHistogram types are not in its signature
+                    classExcludes = [ 'io.micrometer.core.instrument.distribution.TimeWindowPercentileHistogram' ]
                     compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
 
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal', 'io.micrometer.registry.otlp.internal']

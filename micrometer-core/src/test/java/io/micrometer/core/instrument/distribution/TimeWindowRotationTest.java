@@ -30,11 +30,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TimeWindowRotationTest {
 
-    static Collection<Class<? extends AbstractTimeWindowHistogram<?, ?>>> histogramTypes() {
+    static Collection<Class<? extends Histogram>> histogramTypes() {
         return Arrays.asList(TimeWindowPercentileHistogram.class, TimeWindowFixedBoundaryHistogram.class);
     }
 
-    private static void expectValidationFailure(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType,
+    private static void expectValidationFailure(Class<? extends Histogram> histogramType,
             DistributionStatisticConfig badConfig) {
         assertThatThrownBy(() -> newHistogram(histogramType, new MockClock(),
                 badConfig.merge(DistributionStatisticConfig.DEFAULT)))
@@ -43,8 +43,7 @@ class TimeWindowRotationTest {
                 .hasMessageStartingWith("Invalid distribution configuration:"));
     }
 
-    private static AbstractTimeWindowHistogram<?, ?> newHistogram(
-            Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType, MockClock clock,
+    private static Histogram newHistogram(Class<? extends Histogram> histogramType, MockClock clock,
             DistributionStatisticConfig config) throws Exception {
         return histogramType.getDeclaredConstructor(Clock.class, DistributionStatisticConfig.class, Boolean.TYPE)
             .newInstance(clock, config, false);
@@ -52,7 +51,7 @@ class TimeWindowRotationTest {
 
     @ParameterizedTest
     @MethodSource("histogramTypes")
-    void rotationIntervalValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
+    void rotationIntervalValidation(Class<? extends Histogram> histogramType) {
         expectValidationFailure(histogramType,
                 DistributionStatisticConfig.builder().expiry(Duration.ofMillis(9)).bufferLength(10).build());
     }

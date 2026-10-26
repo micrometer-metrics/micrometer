@@ -12,8 +12,6 @@ dependencies {
     compileOnly "ch.qos.logback:logback-classic:$logback12Version"
     testRuntimeOnly "ch.qos.logback:logback-classic:$logback12Version"
     testImplementation libs.mockitoCore5
-    // needed for extending TimeWindowPercentileHistogram in StackdriverHistogramUtil
-    compileOnly libs.hdrhistogram
 
     testImplementation project(':micrometer-test')
 }
