@@ -26,7 +26,8 @@ jobs:
       - name: Categorize dependency upgrade
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
           DEP_NAMES: ${{ steps.metadata.outputs.dependency-names }}
           ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
           DIRECTORY: ${{ steps.metadata.outputs.directory }}
@@ -34,7 +35,7 @@ jobs:
           # Only root Gradle dependencies can be transitive to consumers
           if [ "$ECOSYSTEM" != "gradle" ] || [ "$DIRECTORY" != "/" ]; then
             echo "Not a root Gradle dependency ($ECOSYSTEM in $DIRECTORY). Relabeling to type: task."
-            gh pr edit "$PR_NUMBER" --add-label "type: task" --remove-label "dependency-upgrade"
+            gh pr edit "$PR_URL" --add-label "type: task" --remove-label "dependency-upgrade"
             exit 0
           fi
 
@@ -66,10 +67,10 @@ jobs:
 
           if [ "$is_transitive" = true ]; then
             echo "PR contains transitive dependency upgrades. Keeping dependency-upgrade label."
-            gh pr edit "$PR_NUMBER" --add-label "dependency-upgrade" --remove-label "type: task"
+            gh pr edit "$PR_URL" --add-label "dependency-upgrade" --remove-label "type: task"
           else
             echo "PR contains only optional/internal dependencies ($DEP_NAMES). Relabeling as type: task."
-            gh pr edit "$PR_NUMBER" --add-label "type: task" --remove-label "dependency-upgrade"
+            gh pr edit "$PR_URL" --add-label "type: task" --remove-label "dependency-upgrade"
           fi
 
   merge-dependabot-pr:
