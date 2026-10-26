@@ -80,7 +80,8 @@ public class TestObservationRegistryAssert
                     "There must be only a single observation, however there are <%s> registered observations with names <%s>",
                     contexts.size(), observationNames(contexts));
         }
-        return new TestObservationRegistryAssertReturningObservationContextAssert(contexts.peek(), this);
+        return new TestObservationRegistryAssertReturningObservationContextAssert(
+                Objects.requireNonNull(contexts.peek()), this);
     }
 
     private void failForNoObservations() {
@@ -103,11 +104,8 @@ public class TestObservationRegistryAssert
         TestObservationRegistry.TestObservationContext testObservationContext = contexts.stream()
             .filter(mock -> Objects.equals(name, mock.getContext().getName()))
             .findFirst()
-            .orElseGet(() -> {
-                failWithMessage("There are no observations with name equal to <%s>. Available names are <%s>", name,
-                        observationNames(contexts));
-                return null;
-            });
+            .orElseThrow(() -> failure("There are no observations with name equal to <%s>. Available names are <%s>",
+                    name, observationNames(contexts)));
         return new That(testObservationContext, this);
     }
 
@@ -134,12 +132,9 @@ public class TestObservationRegistryAssert
         TestObservationRegistry.TestObservationContext testObservationContext = contexts.stream()
             .filter(mock -> name != null && name.equalsIgnoreCase(mock.getContext().getName()))
             .findFirst()
-            .orElseGet(() -> {
-                failWithMessage(
-                        "There are no observations with name equal to ignoring case <%s>. Available names are <%s>",
-                        name, observationNames(contexts));
-                return null;
-            });
+            .orElseThrow(() -> failure(
+                    "There are no observations with name equal to ignoring case <%s>. Available names are <%s>", name,
+                    observationNames(contexts)));
         return new That(testObservationContext, this);
     }
 

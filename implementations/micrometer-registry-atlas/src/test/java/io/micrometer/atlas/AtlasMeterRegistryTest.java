@@ -33,6 +33,7 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -76,7 +77,8 @@ class AtlasMeterRegistryTest {
         try {
             FunctionCounter.builder("test", count, AtomicLong::doubleValue).register(registry);
 
-            Supplier<Double> valueSupplier = () -> pollStatistics(registry, clock, "test").get("count");
+            Supplier<Double> valueSupplier = () -> Objects
+                .requireNonNull(pollStatistics(registry, clock, "test").get("count"));
 
             count.addAndGet(60);
             assertThat(valueSupplier.get()).isEqualTo(1.0);

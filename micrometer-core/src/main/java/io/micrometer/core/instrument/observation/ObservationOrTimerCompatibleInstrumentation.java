@@ -109,7 +109,7 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
      * @param response response for the RequestReplySenderContext
      * @param <RES> type of the response
      */
-    public <RES> void setResponse(RES response) {
+    public <RES extends @Nullable Object> void setResponse(@Nullable RES response) {
         if (observationRegistry.isNoop() || !(context instanceof ResponseContext)) {
             return;
         }
