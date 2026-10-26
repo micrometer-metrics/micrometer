@@ -25,9 +25,10 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * HdrHistogram-backed implementation of {@link TimeWindowPercentileHistogram}. Kept
- * separate so HdrHistogram types do not appear in the signature of public classes, as
- * HdrHistogram is not on the compile classpath of consumers of micrometer-core.
+ * HdrHistogram-backed implementation of {@link AbstractTimeWindowHistogram}. Kept
+ * separate from {@link TimeWindowPercentileHistogram} so HdrHistogram types do not appear
+ * in the signature of public classes, as HdrHistogram is not on the compile classpath of
+ * consumers of micrometer-core.
  *
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
