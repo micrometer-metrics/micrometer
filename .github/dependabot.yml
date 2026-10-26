@@ -8,6 +8,8 @@ updates:
     cooldown:
       exclude:
         - "*"
+    labels:
+      - "type: task"
   - package-ecosystem: gradle
     directory: "/"
     schedule:
@@ -17,6 +19,8 @@ updates:
         - "*"
     target-branch: "1.16.x"
     milestone: 296
+    labels:
+      - "dependency-upgrade"
     ignore:
       # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
       # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
@@ -41,6 +45,8 @@ updates:
         - "*"
     target-branch: "1.16.x"
     milestone: 296
+    labels:
+      - "type: task"
     ignore:
       - dependency-name: "*"
         update-types:
@@ -60,6 +66,8 @@ updates:
         - "*"
     target-branch: "1.16.x"
     milestone: 296
+    labels:
+      - "type: task"
     ignore:
       - dependency-name: "*"
         update-types:
@@ -75,6 +83,8 @@ updates:
         - "*"
     target-branch: "1.17.x"
     milestone: 317
+    labels:
+      - "dependency-upgrade"
     ignore:
       # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
       # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
@@ -99,6 +109,8 @@ updates:
         - "*"
     target-branch: "1.17.x"
     milestone: 317
+    labels:
+      - "type: task"
     ignore:
       - dependency-name: "*"
         update-types:
@@ -118,6 +130,8 @@ updates:
         - "*"
     target-branch: "1.17.x"
     milestone: 317
+    labels:
+      - "type: task"
     ignore:
       - dependency-name: "*"
         update-types:
@@ -133,6 +147,8 @@ updates:
         - "*"
     target-branch: "1.17.x"
     milestone: 317
+    labels:
+      - "type: task"
     ignore:
       - dependency-name: "*"
         update-types:
@@ -148,6 +164,8 @@ updates:
         - "*"
     target-branch: "main"
     milestone: 337
+    labels:
+      - "dependency-upgrade"
     ignore:
       # update minor versions of shaded otel to get bug/CVE fixes
       - dependency-name: "io.opentelemetry:opentelemetry-bom"
@@ -171,6 +189,8 @@ updates:
         - "*"
     target-branch: "main"
     milestone: 337
+    labels:
+      - "type: task"
     ignore:
       - dependency-name: "*"
         update-types:
@@ -189,6 +209,8 @@ updates:
         - "*"
     target-branch: "main"
     milestone: 337
+    labels:
+      - "type: task"
     ignore:
       - dependency-name: "*"
         update-types:
@@ -203,6 +225,8 @@ updates:
         - "*"
     target-branch: "main"
     milestone: 337
+    labels:
+      - "type: task"
     ignore:
       - dependency-name: "*"
         update-types:
