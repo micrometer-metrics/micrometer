@@ -43,8 +43,7 @@ class TimeWindowRotationTest {
                 .hasMessageStartingWith("Invalid distribution configuration:"));
     }
 
-    private static Histogram newHistogram(
-            Class<? extends Histogram> histogramType, MockClock clock,
+    private static Histogram newHistogram(Class<? extends Histogram> histogramType, MockClock clock,
             DistributionStatisticConfig config) throws Exception {
         return histogramType.getDeclaredConstructor(Clock.class, DistributionStatisticConfig.class, Boolean.TYPE)
             .newInstance(clock, config, false);
