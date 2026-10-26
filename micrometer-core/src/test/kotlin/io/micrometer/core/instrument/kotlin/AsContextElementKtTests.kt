@@ -19,9 +19,12 @@ package io.micrometer.core.instrument.kotlin
 import io.micrometer.context.ContextRegistry
 import io.micrometer.observation.Observation
 import io.micrometer.observation.ObservationRegistry
+import io.micrometer.observation.tck.TestObservationRegistry
 import kotlinx.coroutines.*
+import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.assertj.core.api.BDDAssertions.then
 import org.junit.jupiter.api.Test
+import io.micrometer.observation.tck.TestObservationRegistryAssert.assertThat as assertThatObservationRegistry
 
 internal class AsContextElementKtTests {
 
@@ -60,5 +63,76 @@ internal class AsContextElementKtTests {
 
         then(element.currentObservation()).isSameAs(nextObservation)
         inScope.close()
+    }
+
+    @Test
+    fun `should observe blocking block from observation registry`() {
+        val registry = TestObservationRegistry.create()
+
+        val result = registry.observe("blocking.test") {
+            then(registry.currentObservation).isNotNull()
+            "test result"
+        }
+
+        then(result).isEqualTo("test result")
+        then(registry.currentObservation).isNull()
+        assertThatObservationRegistry(registry).hasSingleObservationThat()
+            .hasNameEqualTo("blocking.test")
+            .hasBeenStarted()
+            .hasBeenStopped()
+            .doesNotHaveError()
+    }
+
+    @Test
+    fun `should keep observation current across suspension in suspending block`(): Unit = runBlocking {
+        val registry = TestObservationRegistry.create()
+        var observationBeforeSuspension: Observation? = null
+        var observationAfterDelay: Observation? = null
+        var observationAfterDispatcherSwitch: Observation? = null
+
+        val result = registry.observeSuspend("suspend.test") {
+            observationBeforeSuspension = registry.currentObservation
+            delay(10)
+            observationAfterDelay = registry.currentObservation
+            withContext(Dispatchers.Default) {
+                observationAfterDispatcherSwitch = registry.currentObservation
+            }
+            "test result"
+        }
+
+        then(result).isEqualTo("test result")
+        then(observationBeforeSuspension).isNotNull()
+        then(observationAfterDelay).isSameAs(observationBeforeSuspension)
+        then(observationAfterDispatcherSwitch).isSameAs(observationBeforeSuspension)
+        then(registry.currentObservation).isNull()
+        assertThatObservationRegistry(registry).hasSingleObservationThat()
+            .hasNameEqualTo("suspend.test")
+            .hasBeenStarted()
+            .hasBeenStopped()
+            .doesNotHaveError()
+    }
+
+    @Test
+    fun `should record error from suspending block and rethrow it`(): Unit = runBlocking {
+        val registry = TestObservationRegistry.create()
+
+        assertThatExceptionOfType(IllegalStateException::class.java)
+            .isThrownBy {
+                runBlocking {
+                    registry.observeSuspend("suspend.error") {
+                        throw IllegalStateException("boom")
+                    }
+                }
+            }
+            .withMessage("boom")
+
+        then(registry.currentObservation).isNull()
+        assertThatObservationRegistry(registry).hasSingleObservationThat()
+            .hasNameEqualTo("suspend.error")
+            .hasBeenStarted()
+            .hasBeenStopped()
+            .thenError()
+            .isInstanceOf(IllegalStateException::class.java)
+            .hasMessage("boom")
     }
 }
