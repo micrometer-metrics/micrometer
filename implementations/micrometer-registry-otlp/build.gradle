@@ -19,6 +19,8 @@ dependencies {
         exclude group: 'io.opentelemetry', module: 'opentelemetry-sdk-extension-autoconfigure-spi'
     }
     implementation libs.openTelemetry.sdk.metrics
+    // needed because of NullAway
+    compileOnly libs.hdrhistogram
 
     testImplementation project(':micrometer-test')
     testImplementation libs.systemStubsJupiter
