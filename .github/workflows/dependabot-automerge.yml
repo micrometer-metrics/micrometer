@@ -32,8 +32,8 @@ jobs:
           ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
           DIRECTORY: ${{ steps.metadata.outputs.directory }}
         run: |
-          # Only root Gradle dependencies can be transitive to consumers
-          if [ "$ECOSYSTEM" != "gradle" ] || [ "$DIRECTORY" != "/" ]; then
+          # Non-Gradle or sample dependencies are not transitive to consumers
+          if [ "$ECOSYSTEM" != "gradle" ] || [[ "$DIRECTORY" == *samples* ]]; then
             echo "Not a root Gradle dependency ($ECOSYSTEM in $DIRECTORY). Relabeling to type: task."
             gh pr edit "$PR_URL" --add-label "type: task" --remove-label "dependency-upgrade"
             exit 0
