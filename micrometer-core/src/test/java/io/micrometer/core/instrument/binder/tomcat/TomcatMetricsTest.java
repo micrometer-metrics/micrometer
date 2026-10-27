@@ -39,8 +39,14 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.management.DynamicMBean;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanInfo;
 import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -62,6 +68,8 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link TomcatMetrics}.
@@ -321,6 +329,73 @@ class TomcatMetricsTest {
 
             return null;
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @Issue("#7214")
+    void servletMetricsAreDistinguishedByWebModule(boolean bindBeforeRegistration) throws Exception {
+        MBeanServer mBeanServer = MBeanServerFactory.newMBeanServer();
+        String firstWebModule = "//localhost/first";
+        String secondWebModule = "//localhost/second,\"quoted\"\\path";
+        try (TomcatMetrics metrics = new TomcatMetrics(null, Tags.of("application", "test"), mBeanServer)) {
+            metrics.setJmxDomain("Catalina");
+            if (bindBeforeRegistration) {
+                metrics.bindTo(registry);
+            }
+
+            mBeanServer.registerMBean(servletMBean(1, 2, 30, 20),
+                    new ObjectName("Catalina:j2eeType=Servlet,name=jsp,WebModule=" + firstWebModule));
+            mBeanServer.registerMBean(servletMBean(3, 4, 70, 40), new ObjectName(
+                    "Catalina:j2eeType=Servlet,name=jsp,WebModule=" + ObjectName.quote(secondWebModule)));
+
+            if (!bindBeforeRegistration) {
+                metrics.bindTo(registry);
+            }
+
+            for (String name : Arrays.asList("tomcat.servlet.error", "tomcat.servlet.request",
+                    "tomcat.servlet.request.max")) {
+                assertThat(registry.find(name).meters()).hasSize(2)
+                    .allSatisfy(meter -> assertThat(meter.getId().getTag("application")).isEqualTo("test"));
+            }
+            assertServletMetrics(firstWebModule, 1, 2, 30, 20);
+            assertServletMetrics(secondWebModule, 3, 4, 70, 40);
+        }
+    }
+
+    @Test
+    @Issue("#7214")
+    void servletMetricsWithoutWebModuleUseNone() throws Exception {
+        MBeanServer mBeanServer = MBeanServerFactory.newMBeanServer();
+        mBeanServer.registerMBean(servletMBean(1, 2, 30, 20), new ObjectName("Catalina:j2eeType=Servlet,name=jsp"));
+
+        try (TomcatMetrics metrics = new TomcatMetrics(null, Tags.empty(), mBeanServer)) {
+            metrics.setJmxDomain("Catalina");
+            metrics.bindTo(registry);
+
+            assertServletMetrics("none", 1, 2, 30, 20);
+        }
+    }
+
+    private DynamicMBean servletMBean(int errors, int requests, int processingTime, int maxTime) throws Exception {
+        DynamicMBean servlet = mock(DynamicMBean.class);
+        when(servlet.getMBeanInfo())
+            .thenReturn(new MBeanInfo("Servlet", "Servlet metrics", new MBeanAttributeInfo[0], null, null, null));
+        when(servlet.getAttribute("errorCount")).thenReturn(errors);
+        when(servlet.getAttribute("requestCount")).thenReturn(requests);
+        when(servlet.getAttribute("processingTime")).thenReturn(processingTime);
+        when(servlet.getAttribute("maxTime")).thenReturn(maxTime);
+        return servlet;
+    }
+
+    private void assertServletMetrics(String webModule, int errors, int requests, int processingTime, int maxTime) {
+        Tags tags = Tags.of("name", "jsp", "webmodule", webModule);
+        assertThat(registry.get("tomcat.servlet.error").tags(tags).functionCounter().count()).isEqualTo(errors);
+        FunctionTimer timer = registry.get("tomcat.servlet.request").tags(tags).functionTimer();
+        assertThat(timer.count()).isEqualTo(requests);
+        assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(processingTime);
+        assertThat(registry.get("tomcat.servlet.request.max").tags(tags).timeGauge().value(TimeUnit.MILLISECONDS))
+            .isEqualTo(maxTime);
     }
 
     @Test
