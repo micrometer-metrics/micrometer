@@ -95,7 +95,8 @@ class JvmGcMetricsTest {
             assertThat(registry.get("jvm.gc.live.data.size").gauge().value()).isPositive();
             assertThat(registry.get("jvm.gc.memory.allocated").counter().count()).isPositive();
             assertThat(registry.get("jvm.gc.max.data.size").gauge().value()).isPositive();
-            Timer gcTimer = registry.get("jvm.gc.pause").tag("cause", "System.gc()").timer();
+            // OpenJ9 reports the cause as "Java code has requested a System.gc()"
+            Timer gcTimer = registry.find("jvm.gc.pause").tag("cause", cause -> cause.endsWith("System.gc()")).timer();
             assertThat(gcTimer).isNotNull();
             assertThat(gcTimer.count()).isPositive();
             assertThat(gcTimer.getId().getTag("gc")).isNotBlank();

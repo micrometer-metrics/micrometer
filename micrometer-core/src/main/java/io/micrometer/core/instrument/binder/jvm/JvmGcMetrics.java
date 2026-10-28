@@ -83,8 +83,6 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private final Iterable<Tag> tags;
 
-    private @Nullable String allocationPoolName;
-
     private final Set<String> longLivedPoolNames = new HashSet<>();
 
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
@@ -94,8 +92,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private @Nullable Counter promotedBytes;
 
-    @SuppressWarnings("NullAway.Init")
-    private AtomicLong allocationPoolSizeAfter;
+    // pool name to its size after the last GC
+    private final Map<String, AtomicLong> allocationPoolSizesAfter = new HashMap<>();
 
     @SuppressWarnings("NullAway.Init")
     private AtomicLong liveDataSize;
@@ -111,10 +109,18 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         for (MemoryPoolMXBean mbean : ManagementFactory.getMemoryPoolMXBeans()) {
             String name = mbean.getName();
             if (isAllocationPool(name)) {
-                allocationPoolName = name;
+                allocationPoolSizesAfter.put(name, new AtomicLong());
             }
             if (isLongLivedPool(name)) {
                 longLivedPoolNames.add(name);
+            }
+        }
+        if (allocationPoolSizesAfter.isEmpty() && !isGenerationalGc) {
+            // Non-generational collectors without a dedicated allocation pool, such as
+            // OpenJ9's optthruput and optavgpause, allocate directly in the long-lived
+            // pools.
+            for (String name : longLivedPoolNames) {
+                allocationPoolSizesAfter.put(name, new AtomicLong());
             }
         }
         this.tags = tags;
@@ -165,7 +171,9 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     "Count of positive increases in the size of the old generation memory pool before GC to after GC")
             .register(registry) : null;
 
-        allocationPoolSizeAfter = new AtomicLong(0L);
+        for (AtomicLong allocationPoolSizeAfter : allocationPoolSizesAfter.values()) {
+            allocationPoolSizeAfter.set(0L);
+        }
 
         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
         try {
@@ -275,15 +283,16 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         }
 
         private void countPoolSizeDelta(Map<String, MemoryUsage> before, Map<String, MemoryUsage> after) {
-            if (allocationPoolName == null) {
-                return;
-            }
-            final long beforeBytes = Objects.requireNonNull(before.get(allocationPoolName)).getUsed();
-            final long afterBytes = Objects.requireNonNull(after.get(allocationPoolName)).getUsed();
-            final long delta = beforeBytes - allocationPoolSizeAfter.get();
-            allocationPoolSizeAfter.set(afterBytes);
-            if (delta > 0L) {
-                allocatedBytes.increment((double) delta);
+            for (Map.Entry<String, AtomicLong> entry : allocationPoolSizesAfter.entrySet()) {
+                String allocationPoolName = entry.getKey();
+                AtomicLong allocationPoolSizeAfter = entry.getValue();
+                final long beforeBytes = Objects.requireNonNull(before.get(allocationPoolName)).getUsed();
+                final long afterBytes = Objects.requireNonNull(after.get(allocationPoolName)).getUsed();
+                final long delta = beforeBytes - allocationPoolSizeAfter.get();
+                allocationPoolSizeAfter.set(afterBytes);
+                if (delta > 0L) {
+                    allocatedBytes.increment((double) delta);
+                }
             }
         }
 
