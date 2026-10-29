@@ -83,11 +83,11 @@ commands:
           path: ~/micrometer/test-results/
 
 jobs:
-  build-jdk26:
+  build-jdk27:
     executor: jdk25-executor
     steps:
       - gradlew-build:
-          toolchainVersion: '26'
+          toolchainVersion: '27'
 
   build-jdk25:
     executor: jdk25-executor
@@ -142,6 +142,6 @@ workflows:
       - build-jdk17
       - build-jdk21
       - build-jdk25
-      - build-jdk26
+      - build-jdk27
       - concurrency-tests
       - docker-tests
