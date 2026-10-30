@@ -153,7 +153,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             logger.warn("failed to send metrics to datadog", e);
         }
 
-        metadataToSend.forEach(this::postMetricMetadata);
+        for (Map.Entry<String, DatadogMetricMetadata> metadata : metadataToSend.entrySet()) {
+            if (!postMetricMetadata(metadata.getKey(), metadata.getValue())) {
+                // the rest of the metadata would most likely fail as well, so it is sent
+                // on the next publish instead
+                break;
+            }
+        }
     }
 
     private Stream<String> writeTimer(FunctionTimer timer, Map<String, DatadogMetricMetadata> metadata) {
@@ -262,44 +268,73 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     /**
-     * Set up metric metadata once per time series
+     * Set up metric metadata once per time series.
+     * @return {@code false} if the metadata of the other metrics should not be sent
+     * during this publish, because the request failed for a reason that is not specific
+     * to this metric (invalid keys, rate limiting, a server error or an exception)
      */
     // VisibleForTesting
     @SuppressWarnings("JdkObsolete")
-    void postMetricMetadata(String metricName, DatadogMetricMetadata metadata) {
+    boolean postMetricMetadata(String metricName, DatadogMetricMetadata metadata) {
         // no application key, or no data to post, or already posted the metadata
         if (config.applicationKey() == null || metadata.editMetadataBody() == null
                 || verifiedMetadata.contains(metricName)) {
-            return;
+            return true;
         }
 
         try {
-            httpClient.put(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8"))
+            HttpSender.Response response = httpClient
+                .put(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8"))
                 .withHeader("DD-API-KEY", config.apiKey())
                 .withHeader("DD-APPLICATION-KEY", config.applicationKey())
                 .withJsonContent(metadata.editMetadataBody())
-                .send()
-                .onSuccess(response -> verifiedMetadata.add(metricName))
-                .onError(response -> {
-                    if (logger.isErrorEnabled()) {
-                        String msg = response.body();
+                .send();
+            if (response.isSuccessful()) {
+                verifiedMetadata.add(metricName);
+                return true;
+            }
 
-                        // Ignore when the response content contains "metric_name not
-                        // found".
-                        // Metrics that are newly created in Datadog are not
-                        // immediately available
-                        // for metadata modification. We will keep trying this request
-                        // on subsequent publishes,
-                        // where it will eventually succeed.
-                        if (!msg.contains("metric_name not found")) {
-                            logger.error("failed to send metric metadata to datadog: {}", msg);
-                        }
-                    }
-                });
+            String msg = response.body();
+            // Metrics that are newly created in Datadog are not immediately available for
+            // metadata modification. We will keep trying this request on subsequent
+            // publishes, where it will eventually succeed.
+            if (msg.contains("metric_name not found")) {
+                return true;
+            }
+            int code = response.code();
+            if (code < 400) {
+                // not a failure Datadog reported, try again on the next publish
+                return true;
+            }
+            if (isNotSpecificToTheMetric(code)) {
+                if (code == 429) {
+                    logger.warn("failed to send metric metadata to datadog, rate limited: {}", msg);
+                }
+                else {
+                    logger.error("failed to send metric metadata to datadog: {}", msg);
+                }
+                return false;
+            }
+            logger.error("failed to send metric metadata to datadog: {}", msg);
+            if (code == 400) {
+                // the metadata of this metric is invalid and would be rejected again
+                verifiedMetadata.add(metricName);
+            }
+            return true;
         }
         catch (Throwable e) {
             logger.warn("failed to send metric metadata to datadog", e);
+            return false;
         }
+    }
+
+    /**
+     * Whether a failure of a metadata request is not specific to its metric, so that the
+     * requests for the other metrics would most likely fail as well: invalid keys, rate
+     * limiting or a server error.
+     */
+    private static boolean isNotSpecificToTheMetric(int code) {
+        return code == 401 || code == 403 || code == 429 || code >= 500;
     }
 
     @Override
