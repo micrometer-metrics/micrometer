@@ -28,6 +28,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.PlatformManagedObject;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.Collections.emptyList;
 
@@ -46,13 +47,23 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private static final String SUBMIT_FAILED_EVENT = "jdk.VirtualThreadSubmitFailed";
 
-    private static final String LIVE_THREADS_DESCRIPTION = "Approximate current number of virtual threads that are unfinished";
+    private static final String START_EVENT = "jdk.VirtualThreadStart";
+
+    private static final String END_EVENT = "jdk.VirtualThreadEnd";
+
+    private static final String MOUNTED_THREADS_DESCRIPTION = "Approximate current number of virtual threads that are unfinished and mounted to a platform thread by the scheduler";
+
+    private static final String QUEUED_THREADS_DESCRIPTION = "Approximate current number of virtual threads that are unfinished and queued waiting to be scheduled";
+
+    private static final String TOTAL_THREADS_DESCRIPTION = "Approximate number of virtual threads started after this binder began JFR recording that have not yet terminated";
 
     private static final String METER_NAME_PREFIX = "jvm.threads.virtual.";
 
     private final RecordingStream recordingStream;
 
     private final Iterable<Tag> tags;
+
+    private final AtomicLong liveVirtualThreadCount = new AtomicLong();
 
     public VirtualThreadMetrics() {
         this(new RecordingConfig(), emptyList());
@@ -63,8 +74,8 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
     }
 
     private VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
-        this.recordingStream = createRecordingStream(config);
         this.tags = tags;
+        this.recordingStream = createRecordingStream(config);
     }
 
     @Override
@@ -82,7 +93,17 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
         recordingStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
 
+        bindLiveVirtualThreadCount(registry);
         bindVirtualThreadSchedulerMXBean(registry);
+    }
+
+    private void bindLiveVirtualThreadCount(MeterRegistry registry) {
+        Gauge.builder(METER_NAME_PREFIX + "live", liveVirtualThreadCount, AtomicLong::doubleValue)
+            .tags(tags)
+            .tag("scheduling.status", "total")
+            .baseUnit(BaseUnits.THREADS)
+            .description(TOTAL_THREADS_DESCRIPTION)
+            .register(registry);
     }
 
     private void bindVirtualThreadSchedulerMXBean(MeterRegistry registry) {
@@ -113,13 +134,13 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
             Gauge.builder(METER_NAME_PREFIX + "live", platformMXBean, o -> invoke(getMountedVirtualThreadCount, o))
                 .tag("scheduling.status", "mounted")
                 .baseUnit(BaseUnits.THREADS)
-                .description(LIVE_THREADS_DESCRIPTION)
+                .description(MOUNTED_THREADS_DESCRIPTION)
                 .register(registry);
 
             Gauge.builder(METER_NAME_PREFIX + "live", platformMXBean, o -> invoke(getQueuedVirtualThreadCount, o))
                 .tag("scheduling.status", "queued")
                 .baseUnit(BaseUnits.THREADS)
-                .description(LIVE_THREADS_DESCRIPTION)
+                .description(QUEUED_THREADS_DESCRIPTION)
                 .register(registry);
         }
         catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | IllegalAccessException
@@ -141,8 +162,15 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         RecordingStream recordingStream = new RecordingStream();
         recordingStream.enable(PINNED_EVENT).withThreshold(config.pinnedThreshold);
         recordingStream.enable(SUBMIT_FAILED_EVENT);
+        recordingStream.enable(START_EVENT);
+        recordingStream.enable(END_EVENT);
         recordingStream.setMaxAge(config.maxAge);
         recordingStream.setMaxSize(config.maxSizeBytes);
+        // Register before startAsync so start/end events are not dropped. There is no
+        // reliable JDK API to seed with already-running virtual threads
+        // (Thread.getAllStackTraces() is platform-threads only).
+        recordingStream.onEvent(START_EVENT, event -> liveVirtualThreadCount.incrementAndGet());
+        recordingStream.onEvent(END_EVENT, event -> liveVirtualThreadCount.decrementAndGet());
         recordingStream.startAsync();
 
         return recordingStream;
