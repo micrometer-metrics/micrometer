@@ -109,7 +109,8 @@ public class MultiGauge {
                 }
                 else {
                     RowState newState = new RowState(row);
-                    registry.gauge(preFilteredId, newState, RowState::value);
+                    registry.gauge(preFilteredId, newState,
+                            new StrongReferenceGaugeFunction<>(newState, RowState::value));
                     registeredRows.put(rowId, newState);
                 }
             }
