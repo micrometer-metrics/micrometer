@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -92,6 +93,27 @@ class MultiGaugeTest {
         System.gc();
 
         assertThat(registry.get("colors").tag("color", "red").gauge().value()).isEqualTo(1);
+    }
+
+    @Test
+    void rowGaugesSurviveWhenMultiGaugeIsNotRetained() throws InterruptedException {
+        AtomicInteger state = new AtomicInteger(42);
+        WeakReference<MultiGauge> multiGauge = registerWithoutRetaining(state);
+
+        for (int i = 0; i < 50 && multiGauge.get() != null; i++) {
+            System.gc();
+            Thread.sleep(10);
+        }
+        System.gc();
+
+        assertThat(multiGauge.get()).isNull();
+        assertThat(registry.get("unretained").tag("state", "live").gauge().value()).isEqualTo(42);
+    }
+
+    private WeakReference<MultiGauge> registerWithoutRetaining(AtomicInteger state) {
+        MultiGauge multiGauge = MultiGauge.builder("unretained").register(registry);
+        multiGauge.register(Collections.singletonList(Row.of(Tags.of("state", "live"), state, AtomicInteger::get)));
+        return new WeakReference<>(multiGauge);
     }
 
     @Test
