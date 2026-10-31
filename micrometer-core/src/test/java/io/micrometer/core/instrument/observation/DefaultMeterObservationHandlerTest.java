@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.observation;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Event;
@@ -146,6 +147,43 @@ class DefaultMeterObservationHandlerTest {
             .isEqualTo(0);
 
         assertThat(meterRegistry.get("test.observation.test.event").tags("low", "1").counter().count()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldCustomizeErrorTagNameAndValue() {
+        ObservationRegistry observationRegistry = registryWith(
+                DefaultMeterObservationHandler.builder(this.meterRegistry)
+                    .errorTagName("error.type")
+                    .errorTagValue(error -> error.getClass().getName())
+                    .build());
+
+        Observation.createNotStarted("test.observation", observationRegistry)
+            .start()
+            .error(new SocketTimeoutException("simulated"))
+            .stop();
+
+        assertThat(meterRegistry.get("test.observation")
+            .tags("error.type", SocketTimeoutException.class.getName())
+            .timer()
+            .count()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldUseConfiguredErrorTagFromObservationContext() {
+        ObservationRegistry observationRegistry = registryWith(
+                DefaultMeterObservationHandler.builder(this.meterRegistry)
+                    .errorTagName("error.type")
+                    .errorTagValue(error -> error.getClass().getName())
+                    .build());
+
+        Observation.createNotStarted("test.observation", observationRegistry)
+            .lowCardinalityKeyValue("error.type", SocketTimeoutException.class.getName())
+            .start()
+            .error(new SocketTimeoutException("simulated"))
+            .stop();
+
+        assertThat(meterRegistry.get("test.observation").timer().getId().getTags())
+            .containsExactly(Tag.of("error.type", SocketTimeoutException.class.getName()));
     }
 
     @Nested

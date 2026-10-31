@@ -22,6 +22,8 @@ import io.micrometer.observation.Observation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Handler for {@link Timer.Sample} and {@link Counter}.
@@ -56,6 +58,10 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     private final MeterRegistry meterRegistry;
 
     private final boolean includeActiveObservationLongTaskTimer;
+
+    private final String errorTagName;
+
+    private final Function<Throwable, String> errorTagValue;
 
     /**
      * Creates the handler with the default configuration.
@@ -96,6 +102,8 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     DefaultMeterObservationHandler(Builder builder) {
         this.meterRegistry = builder.meterRegistry;
         this.includeActiveObservationLongTaskTimer = builder.includeActiveObservationLongTaskTimer;
+        this.errorTagName = builder.errorTagName;
+        this.errorTagValue = builder.errorTagValue;
     }
 
     /**
@@ -131,7 +139,9 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     @SuppressWarnings("NullAway")
     public void onStop(Observation.Context context) {
         List<Tag> tags = createTags(context);
-        tags.add(Tag.of("error", getErrorValue(context)));
+        if (tags.stream().noneMatch(tag -> tag.getKey().equals(this.errorTagName))) {
+            tags.add(Tag.of(this.errorTagName, getErrorValue(context)));
+        }
         Timer.Sample sample = context.getRequired(Timer.Sample.class);
         sample.stop(this.meterRegistry.timer(context.getName(), tags));
 
@@ -151,7 +161,7 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
 
     private String getErrorValue(Observation.Context context) {
         Throwable error = context.getError();
-        return error != null ? error.getClass().getSimpleName() : KeyValue.NONE_VALUE;
+        return error != null ? this.errorTagValue.apply(error) : KeyValue.NONE_VALUE;
     }
 
     private List<Tag> createTags(Observation.Context context) {
@@ -190,6 +200,10 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
 
         private boolean includeActiveObservationLongTaskTimer;
 
+        private String errorTagName = "error";
+
+        private Function<Throwable, String> errorTagValue = error -> error.getClass().getSimpleName();
+
         Builder(MeterRegistry meterRegistry) {
             this.meterRegistry = meterRegistry;
         }
@@ -209,6 +223,30 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
          */
         public Builder includeActiveObservationLongTaskTimer(boolean includeActiveObservationLongTaskTimer) {
             this.includeActiveObservationLongTaskTimer = includeActiveObservationLongTaskTimer;
+            return this;
+        }
+
+        /**
+         * Set the name of the error tag added to the observation timer. Defaults to
+         * {@code error}. If the observation already contains a low-cardinality key-value
+         * with this name, that value is used instead of adding another tag.
+         * @param errorTagName the error tag name
+         * @return this builder
+         */
+        public Builder errorTagName(String errorTagName) {
+            this.errorTagName = Objects.requireNonNull(errorTagName, "errorTagName must not be null");
+            return this;
+        }
+
+        /**
+         * Set the function used to derive the error tag value from an exception. The
+         * function is only called when the observation has an error. Defaults to the
+         * exception's simple class name.
+         * @param errorTagValue the function used to derive the error tag value
+         * @return this builder
+         */
+        public Builder errorTagValue(Function<Throwable, String> errorTagValue) {
+            this.errorTagValue = Objects.requireNonNull(errorTagValue, "errorTagValue must not be null");
             return this;
         }
 
