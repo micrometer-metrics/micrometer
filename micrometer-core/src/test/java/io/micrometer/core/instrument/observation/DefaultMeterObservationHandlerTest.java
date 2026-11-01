@@ -187,6 +187,8 @@ class DefaultMeterObservationHandlerTest {
     }
 
     @Test
+    // We test returning null even though the function type is non-null.
+    @SuppressWarnings("NullAway")
     void shouldFallBackToExceptionSimpleNameWhenErrorTagValueReturnsNull() {
         ObservationRegistry observationRegistry = registryWith(
                 DefaultMeterObservationHandler.builder(this.meterRegistry)
