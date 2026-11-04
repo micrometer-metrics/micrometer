@@ -30,12 +30,12 @@ public class SpectatorCounter extends AbstractMeter implements Counter {
 
     @Override
     public void increment(double amount) {
-        counter.increment((long) amount);
+        counter.add(amount);
     }
 
     @Override
     public double count() {
-        return counter.count();
+        return counter.actualCount();
     }
 
 }
