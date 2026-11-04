@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.cumulative;
 
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Meter;
@@ -23,6 +24,8 @@ import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
 public class CumulativeFunctionCounter<T> extends AbstractMeter implements FunctionCounter {
+
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(CumulativeFunctionCounter.class);
 
     private final WeakReference<T> ref;
 
@@ -40,7 +43,12 @@ public class CumulativeFunctionCounter<T> extends AbstractMeter implements Funct
     public double count() {
         T obj2 = ref.get();
         if (obj2 != null) {
-            last = f.applyAsDouble(obj2);
+            try {
+                last = f.applyAsDouble(obj2);
+            }
+            catch (Throwable ex) {
+                logger.log(() -> "Failed to apply the value function for the counter '" + getId().getName() + "'.", ex);
+            }
         }
         return last;
     }

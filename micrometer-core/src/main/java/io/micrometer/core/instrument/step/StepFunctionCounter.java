@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.FunctionCounter;
@@ -23,6 +24,8 @@ import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
 public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCounter, StepMeter {
+
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(StepFunctionCounter.class);
 
     private final WeakReference<T> ref;
 
@@ -43,9 +46,14 @@ public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCou
     public double count() {
         T obj2 = ref.get();
         if (obj2 != null) {
-            double prevLast = last;
-            last = f.applyAsDouble(obj2);
-            count.getCurrent().add(last - prevLast);
+            try {
+                double prevLast = last;
+                last = f.applyAsDouble(obj2);
+                count.getCurrent().add(last - prevLast);
+            }
+            catch (Throwable ex) {
+                logger.log(() -> "Failed to apply the value function for the counter '" + getId().getName() + "'.", ex);
+            }
         }
         return count.poll();
     }

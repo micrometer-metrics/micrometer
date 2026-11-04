@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -33,6 +34,8 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
+
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(StepFunctionTimer.class);
 
     private final Id id;
 
@@ -93,14 +96,25 @@ public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
     private void accumulateCountAndTotal() {
         T obj2 = ref.get();
         if (obj2 != null && clock.monotonicTime() - lastUpdateTime > 1e6) {
-            long prevLastCount = lastCount;
-            lastCount = Math.max(countFunction.applyAsLong(obj2), 0);
-            count.add(lastCount - prevLastCount);
+            try {
+                long prevLastCount = lastCount;
+                lastCount = Math.max(countFunction.applyAsLong(obj2), 0);
+                count.add(lastCount - prevLastCount);
+            }
+            catch (Throwable ex) {
+                logger.log(() -> "Failed to apply the count function for the timer '" + id.getName() + "'.", ex);
+            }
 
-            double prevLastTime = lastTime;
-            lastTime = Math.max(
-                    TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()), 0);
-            total.add(lastTime - prevLastTime);
+            try {
+                double prevLastTime = lastTime;
+                lastTime = Math.max(
+                        TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()),
+                        0);
+                total.add(lastTime - prevLastTime);
+            }
+            catch (Throwable ex) {
+                logger.log(() -> "Failed to apply the total time function for the timer '" + id.getName() + "'.", ex);
+            }
 
             lastUpdateTime = clock.monotonicTime();
         }
