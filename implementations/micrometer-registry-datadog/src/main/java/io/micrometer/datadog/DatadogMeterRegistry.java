@@ -228,7 +228,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         String metricName = getConventionName(fullId);
         if (!verifiedMetadata.contains(metricName)) {
-            metadata.put(metricName, new DatadogMetricMetadata(fullId, stat, config.descriptions(), overrideBaseUnit));
+            metadata.put(metricName,
+                    new DatadogMetricMetadata(fullId, sanitizeType(stat), config.descriptions(), overrideBaseUnit));
         }
     }
 
@@ -248,7 +249,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     .map(t -> ",\"host\":\"" + escapeJson(t.getValue()) + "\"")
                     .orElse("");
         // Create type attribute
-        String type = ",\"type\":\"" + DatadogMetricMetadata.sanitizeType(statistic) + "\"";
+        String sanitizedType = sanitizeType(statistic);
+        String type = ",\"type\":\"" + sanitizedType + "\"";
+        if ("rate".equals(sanitizedType)) {
+            long interval = config.step().getSeconds();
+            value = value / interval;
+            type += ",\"interval\":" + interval;
+        }
         // Create unit attribute
         String baseUnit = DatadogMetricMetadata.sanitizeBaseUnit(id.getBaseUnit(), overrideBaseUnit);
         String unit = baseUnit != null ? ",\"unit\":\"" + baseUnit + "\"" : "";
@@ -300,6 +307,11 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         catch (Throwable e) {
             logger.warn("failed to send metric metadata to datadog", e);
         }
+    }
+
+    private String sanitizeType(Statistic statistic) {
+        String type = DatadogMetricMetadata.sanitizeType(statistic);
+        return config.countsAsRate() && "count".equals(type) ? "rate" : type;
     }
 
     @Override

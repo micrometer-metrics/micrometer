@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
+import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -145,6 +146,65 @@ class DatadogMeterRegistryTest {
             .withHeader("DD-APPLICATION-KEY", equalTo("testApplicationKey"))
             .withRequestBody(equalToJson(
                     "{\"type\":\"count\",\"unit\":\"microsecond\",\"description\":\"metric description\"}")));
+
+        registry.close();
+    }
+
+    @Issue("#3911")
+    @Test
+    void publishCountsAsRateWhenEnabled(@WiremockResolver.Wiremock WireMockServer server) {
+        MockClock clock = new MockClock();
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "testApiKey";
+            }
+
+            @Override
+            public String applicationKey() {
+                return "testApplicationKey";
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            public boolean countsAsRate() {
+                return true;
+            }
+        }, clock);
+
+        server.stubFor(any(anyUrl()));
+
+        Counter.builder("my.counter").description("metric description").register(registry).increment(15);
+        Gauge.builder("my.gauge", () -> 3).register(registry);
+        clock.add(Duration.ofSeconds(10));
+        registry.publish();
+
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series")).withRequestBody(equalToJson(
+                "{\"series\":[{\"metric\":\"my.counter\",\"points\":[[10,1.5]],\"type\":\"rate\",\"interval\":10,\"tags\":[\"statistic:count\"]},"
+                        + "{\"metric\":\"my.gauge\",\"points\":[[10,3.0]],\"type\":\"gauge\",\"tags\":[\"statistic:value\"]}]}",
+                true, false)));
+
+        server.verify(putRequestedFor(urlEqualTo("/api/v1/metrics/my.counter"))
+            .withRequestBody(equalToJson("{\"type\":\"rate\",\"description\":\"metric description\"}")));
 
         registry.close();
     }
