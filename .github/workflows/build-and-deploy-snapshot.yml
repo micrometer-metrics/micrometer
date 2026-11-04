@@ -200,7 +200,7 @@ jobs:
   deploy:
     runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
-    needs: [ build-jdk25, build-jdk11, build-jdk17, build-jdk21, build-jdk26, build-jdk27, docker-tests, concurrency-tests, stackdriver-it ]
+    needs: [ build-jdk25, build-jdk11, build-jdk17, build-jdk21, build-jdk27, docker-tests, concurrency-tests, stackdriver-it ]
     steps:
       - name: "Check Out Code"
         uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # 7.0.1
