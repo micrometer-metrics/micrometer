@@ -157,9 +157,11 @@ class AtlasMeterRegistryTest {
             counter.increment(0.5);
             counter.increment(0.5);
             assertThat(valueSupplier.get()).isCloseTo(0.025, offset(1e-9));
+            assertThat(counter.count()).isEqualTo(1.5);
 
             counter.increment(1.5);
             assertThat(valueSupplier.get()).isCloseTo(0.025, offset(1e-9));
+            assertThat(counter.count()).isEqualTo(1.5);
         }
         finally {
             registry.close();
