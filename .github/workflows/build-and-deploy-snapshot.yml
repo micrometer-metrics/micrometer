@@ -109,27 +109,6 @@ jobs:
         uses: ./.github/actions/upload-build-reports
         if: ${{ failure() }}
 
-  build-jdk26:
-    runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
-    if: ${{ github.repository_owner == 'micrometer-metrics' }}
-    steps:
-      - name: "Check Out Code"
-        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # 7.0.1
-        with:
-          fetch-depth: "0"
-          ref: "${{ github.ref }}"
-      - name: Setup Build
-        uses: ./.github/actions/setup-build
-        with:
-          java-version: 26
-          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
-      - name: Build
-        shell: bash
-        run: ./gradlew build -PtoolchainVersion=26
-      - name: Upload Build Reports
-        uses: ./.github/actions/upload-build-reports
-        if: ${{ failure() }}
-
   build-jdk27:
     runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu22-4-16' || 'ubuntu-latest' }}
     if: ${{ github.repository_owner == 'micrometer-metrics' }}
