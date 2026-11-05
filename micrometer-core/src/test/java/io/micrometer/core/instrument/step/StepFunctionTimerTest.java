@@ -106,4 +106,18 @@ class StepFunctionTimerTest {
         assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(150);
     }
 
+    @Test
+    void shouldNotPropagateExceptionsFromFunctions() {
+        StepFunctionTimer<Object> functionTimer = new StepFunctionTimer<>(mock(Meter.Id.class), clock, 1000L,
+                new Object(), (o) -> {
+                    throw new IllegalStateException("simulated");
+                }, (o) -> {
+                    throw new IllegalStateException("simulated");
+                }, TimeUnit.SECONDS, TimeUnit.SECONDS);
+        clock.add(Duration.ofSeconds(1));
+        assertThat(functionTimer.count()).isZero();
+        assertThat(functionTimer.totalTime(TimeUnit.SECONDS)).isZero();
+        functionTimer._closingRollover();
+    }
+
 }

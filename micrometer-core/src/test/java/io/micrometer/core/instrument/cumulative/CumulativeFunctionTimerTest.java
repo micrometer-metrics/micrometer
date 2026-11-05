@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.cumulative;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tags;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -39,6 +40,28 @@ class CumulativeFunctionTimerTest {
         assertThat(functionTimer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(1000d);
         System.gc();
         assertThat(functionTimer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(1000d);
+        assertThat(functionTimer.totalTime(TimeUnit.SECONDS)).isEqualTo(1d);
+    }
+
+    @Test
+    void shouldKeepLastValuesWhenFunctionsThrow() {
+        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
+        AtomicBoolean fail = new AtomicBoolean();
+        CumulativeFunctionTimer<Object> functionTimer = new CumulativeFunctionTimer<>(id, new Object(), (o) -> {
+            if (fail.get()) {
+                throw new IllegalStateException("simulated");
+            }
+            return 1L;
+        }, (o) -> {
+            if (fail.get()) {
+                throw new IllegalStateException("simulated");
+            }
+            return 1d;
+        }, TimeUnit.SECONDS, TimeUnit.SECONDS);
+        assertThat(functionTimer.count()).isEqualTo(1d);
+        assertThat(functionTimer.totalTime(TimeUnit.SECONDS)).isEqualTo(1d);
+        fail.set(true);
+        assertThat(functionTimer.count()).isEqualTo(1d);
         assertThat(functionTimer.totalTime(TimeUnit.SECONDS)).isEqualTo(1d);
     }
 

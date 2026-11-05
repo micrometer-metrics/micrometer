@@ -83,4 +83,15 @@ class StepFunctionCounterTest {
         assertThat(counter.count()).isEqualTo(3);
     }
 
+    @Test
+    void shouldNotPropagateExceptionsFromFunction() {
+        FunctionCounter counter = FunctionCounter.builder("my.counter", new Object(), (o) -> {
+            throw new IllegalStateException("simulated");
+        }).register(registry);
+
+        assertThat(counter.count()).isZero();
+        clock.add(config.step());
+        assertThat(counter.count()).isZero();
+    }
+
 }
