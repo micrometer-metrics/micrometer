@@ -117,6 +117,12 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
             .merge(DistributionStatisticConfig.DEFAULT);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * In addition, this schedules the rollover of step meters at the start of each step
+     * so that rollover does not depend on when publishing happens.
+     */
     @Override
     @SuppressWarnings("FutureReturnValueIgnored")
     public void start(ThreadFactory threadFactory) {
@@ -130,6 +136,11 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * In addition, this stops the scheduled rollover of step meters.
+     */
     @Override
     public void stop() {
         super.stop();
@@ -138,6 +149,14 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * In addition, if the data of the last completed step has not been published yet, it
+     * is published first. Step meters are then rolled over so that the final publish done
+     * by {@link PushMeterRegistry#close()} includes the data recorded in the current,
+     * partial step.
+     */
     @Override
     public void close() {
         stop();
