@@ -337,4 +337,57 @@ class DatadogMeterRegistryTest {
         registry.close();
     }
 
+    @Test
+    void nonFiniteValuesAreNotPublished(@WiremockResolver.Wiremock WireMockServer server) {
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(seriesOnlyConfig(server), new MockClock());
+        server.stubFor(any(anyUrl()));
+
+        Gauge.builder("my.nan.gauge", () -> Double.NaN).register(registry);
+        Gauge.builder("my.infinite.gauge", () -> Double.POSITIVE_INFINITY).register(registry);
+        Gauge.builder("my.finite.gauge", () -> 42.0).register(registry);
+        registry.publish();
+
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series")).withRequestBody(equalToJson(
+                "{\"series\":[{\"metric\":\"my.finite.gauge\",\"points\":[[0,42.0]],\"type\":\"gauge\",\"tags\":[\"statistic:value\"]}]}")));
+
+        registry.close();
+    }
+
+    @Test
+    void batchWithOnlyNonFiniteValuesIsNotSent(@WiremockResolver.Wiremock WireMockServer server) {
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(seriesOnlyConfig(server), new MockClock());
+        server.stubFor(any(anyUrl()));
+
+        Gauge.builder("my.nan.gauge", () -> Double.NaN).register(registry);
+        registry.publish();
+
+        server.verify(0, postRequestedFor(urlEqualTo("/api/v1/series")));
+
+        registry.close();
+    }
+
+    private static DatadogConfig seriesOnlyConfig(WireMockServer server) {
+        return new DatadogConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "testApiKey";
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+        };
+    }
+
 }
