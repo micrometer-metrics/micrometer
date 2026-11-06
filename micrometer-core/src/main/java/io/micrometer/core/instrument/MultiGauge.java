@@ -36,6 +36,11 @@ import static java.util.stream.Collectors.toSet;
  * {@link Gauge} meters as rows are registered. Each row contributes unique tags and a
  * value function. Re-registering rows reconciles the gauges currently managed by this
  * instance with the supplied rows.
+ * <p>
+ * Keep a reference to the {@code MultiGauge} for as long as its rows should be reported,
+ * even if rows are registered only once. Rows are not guaranteed to keep reporting values
+ * after the {@code MultiGauge} has been garbage collected, even if the objects that the
+ * rows observe are still referenced.
  *
  * @author Jon Schneider
  * @since 1.1.0
