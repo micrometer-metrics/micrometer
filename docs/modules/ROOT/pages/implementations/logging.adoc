@@ -1,0 +1,60 @@
+= Micrometer Logging
+
+`LoggingMeterRegistry` writes meter measurements to a log, which can be useful when inspecting metrics locally without a monitoring backend.
+It is included in `micrometer-core`, so no additional registry dependency is needed.
+
+== Setup
+
+The default registry logs at INFO level through the `io.micrometer.core.instrument.logging.LoggingMeterRegistry` logger once per minute.
+Register meters on it as you would with any other registry:
+
+[source,java]
+----
+LoggingMeterRegistry registry = new LoggingMeterRegistry();
+registry.counter("orders.created", "region", "us-east").increment();
+----
+
+Keep the registry open while the application runs so that its background publisher can report measurements.
+Call `registry.close()` when the application shuts down.
+
+== Configuration
+
+Use `LoggingRegistryConfig` to change the reporting interval and whether inactive meters are logged:
+
+[source,java]
+----
+LoggingRegistryConfig config = new LoggingRegistryConfig() {
+    @Override
+    public String get(String key) {
+        return null;
+    }
+
+    @Override
+    public Duration step() {
+        return Duration.ofSeconds(10);
+    }
+
+    @Override
+    public boolean logInactive() {
+        return true;
+    }
+};
+LoggingMeterRegistry registry = new LoggingMeterRegistry(config, Clock.SYSTEM);
+----
+
+This example uses `java.time.Duration` and `io.micrometer.core.instrument.Clock`.
+By default, inactive counters and timers are omitted from the output.
+Counter and timer counts describe the reporting interval rather than the lifetime of the registry.
+
+== Custom Output
+
+You can replace the default logger with a `Consumer<String>` that receives each formatted measurement:
+
+[source,java]
+----
+LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
+    .loggingSink(System.out::println)
+    .build();
+----
+
+This sends measurements directly to standard output, independently of the application's log levels.
