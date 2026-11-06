@@ -54,6 +54,8 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
     private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new HashMap<>();
 
+    private final LoggerContextListener loggerContextListener;
+
     static {
         // see gh-2868. Without this called statically, the same call in the constructor
         // may return SubstituteLoggerFactory and fail to cast.
@@ -72,7 +74,7 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
         this.tags = tags;
         this.loggerContext = context;
 
-        loggerContext.addListener(new LoggerContextListener() {
+        this.loggerContextListener = new LoggerContextListener() {
             @Override
             public boolean isResetResistant() {
                 return true;
@@ -102,7 +104,8 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
             public void onLevelChange(Logger logger, Level level) {
                 // no-op
             }
-        });
+        };
+        loggerContext.addListener(this.loggerContextListener);
     }
 
     @Override
@@ -137,7 +140,10 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
             for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
                 loggerContext.getTurboFilterList().remove(metricsTurboFilter);
             }
+            metricsTurboFilters.clear();
         }
+        // the listener is reset resistant and would add the filters again on a reset
+        loggerContext.removeListener(loggerContextListener);
     }
 
 }
