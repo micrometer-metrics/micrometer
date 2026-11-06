@@ -79,10 +79,22 @@ public interface DatadogConfig extends StepRegistryConfig {
         return getBoolean(this, "compress").orElse(true);
     }
 
+    /**
+     * Return the version of the Datadog API to send the series of metrics to. Datadog
+     * accepts smaller payloads on the {@link DatadogApiVersion#V2 v2 API}, so
+     * {@link #compress() compression} should stay enabled, or the {@link #batchSize()
+     * batch size} be reduced, when using it.
+     * @return the version of the Datadog API, {@link DatadogApiVersion#V1} by default
+     * @since 1.18.0
+     */
+    default DatadogApiVersion apiVersion() {
+        return getEnum(this, DatadogApiVersion.class, "apiVersion").orElse(DatadogApiVersion.V1);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("apiKey", DatadogConfig::apiKey),
-                checkRequired("uri", DatadogConfig::uri));
+                checkRequired("uri", DatadogConfig::uri), checkRequired("apiVersion", DatadogConfig::apiVersion));
     }
 
 }
