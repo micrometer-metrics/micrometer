@@ -79,6 +79,17 @@ public interface DatadogConfig extends StepRegistryConfig {
         return getBoolean(this, "compress").orElse(true);
     }
 
+    /**
+     * Whether to publish counts as Datadog {@code rate} metrics, normalized per second
+     * over the step interval, matching what the Datadog Agent/DogStatsD does. Defaults to
+     * {@code false}, which publishes them as {@code count} metrics.
+     * @return {@code true} if counts should be published as rates.
+     * @since 1.18.0
+     */
+    default boolean countsAsRate() {
+        return getBoolean(this, "countsAsRate").orElse(false);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("apiKey", DatadogConfig::apiKey),

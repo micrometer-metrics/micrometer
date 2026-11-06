@@ -83,6 +83,9 @@ To find the correct `uri` for your account, do the following:
 
 For example, for the `US5` site, the correct API endpoint is `https://api.us5.datadoghq.com`. For the `US3` site, it is `https://api.us3.datadoghq.com`.
 
+By default, counts are sent as Datadog `count` metrics. The Datadog Agent and DogStatsD send counts as `rate` metrics instead, normalized per second over the flush interval.
+If you also publish the same metrics through DogStatsD, or are migrating between the two approaches, set `DatadogConfig.countsAsRate()` to `true` so that counts are sent as `rate` metrics with the step interval.
+
 === Through DogStatsD Approach
 
 ==== Gradle

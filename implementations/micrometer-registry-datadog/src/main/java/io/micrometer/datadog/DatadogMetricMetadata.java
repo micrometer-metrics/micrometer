@@ -67,11 +67,14 @@ class DatadogMetricMetadata {
 
     DatadogMetricMetadata(Meter.Id id, Statistic statistic, boolean descriptionsEnabled,
             @Nullable String overrideBaseUnit) {
+        this(id, sanitizeType(statistic), descriptionsEnabled, overrideBaseUnit);
+    }
+
+    DatadogMetricMetadata(Meter.Id id, String type, boolean descriptionsEnabled, @Nullable String overrideBaseUnit) {
         this.id = id;
         this.descriptionsEnabled = descriptionsEnabled;
         this.overrideBaseUnit = overrideBaseUnit;
-
-        this.type = sanitizeType(statistic);
+        this.type = type;
     }
 
     @Nullable String editMetadataBody() {
