@@ -602,6 +602,39 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
     }
 
     @Test
+    @Issue("gh-7201")
+    void testExponentialHistogramWithLongTaskTimer() {
+        LongTaskTimer taskTimer = LongTaskTimer.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        LongTaskTimer.Sample task1 = taskTimer.start();
+        LongTaskTimer.Sample task2 = taskTimer.start();
+        stepOverNStep(3);
+
+        MetricData metric = writeToMetric(taskTimer);
+        assertThat(metric.getType()).isEqualTo(MetricDataType.EXPONENTIAL_HISTOGRAM);
+        assertExponentialHistogram(metric, 2, 360000, 180000, 0, 20);
+        ExponentialHistogramBuckets buckets = metric.getExponentialHistogramData()
+            .getPoints()
+            .iterator()
+            .next()
+            .getPositiveBuckets();
+        assertThat(buckets.getBucketCounts().stream().mapToLong(Long::longValue).sum()).isEqualTo(2);
+
+        // only the tasks that are still active are reported
+        task1.stop();
+        metric = writeToMetric(taskTimer);
+        assertExponentialHistogram(metric, 1, 180000, 180000, 0, 20);
+
+        task2.stop();
+        stepOverNStep(1);
+        metric = writeToMetric(taskTimer);
+        assertExponentialHistogram(metric, 0, 0, 0, 0, 20);
+    }
+
+    @Test
     void testExponentialHistogramDs() {
         DistributionSummary ds = DistributionSummary.builder(METER_NAME)
             .description(METER_DESCRIPTION)
