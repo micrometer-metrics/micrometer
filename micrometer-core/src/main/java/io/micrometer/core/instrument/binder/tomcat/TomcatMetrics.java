@@ -211,22 +211,25 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private void registerServletMetrics(MeterRegistry registry) {
         registerMetricsEventually(":j2eeType=Servlet,name=*,*", (name, allTags) -> {
+            String webModule = name.getKeyProperty("WebModule");
+            Tags servletTags = Tags.concat(allTags, "webmodule",
+                    webModule == null ? "none" : unquoteKeyProperty(webModule));
             FunctionCounter
                 .builder("tomcat.servlet.error", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "errorCount")))
-                .tags(allTags)
+                .tags(servletTags)
                 .register(registry);
 
             FunctionTimer
                 .builder("tomcat.servlet.request", mBeanServer,
                         s -> safeLong(() -> s.getAttribute(name, "requestCount")),
                         s -> safeDouble(() -> s.getAttribute(name, "processingTime")), TimeUnit.MILLISECONDS)
-                .tags(allTags)
+                .tags(servletTags)
                 .register(registry);
 
             TimeGauge
                 .builder("tomcat.servlet.request.max", mBeanServer, TimeUnit.MILLISECONDS,
                         s -> safeDouble(() -> s.getAttribute(name, "maxTime")))
-                .tags(allTags)
+                .tags(servletTags)
                 .register(registry);
         });
     }
