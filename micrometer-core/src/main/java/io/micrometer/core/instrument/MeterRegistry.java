@@ -659,7 +659,7 @@ public abstract class MeterRegistry {
         return meterClass.cast(m);
     }
 
-    Meter.Id getMappedId(Meter.Id id) {
+    public Meter.Id getMappedId(Meter.Id id) {
         Meter m = preFilterIdToMeterMap.get(id);
         if (m != null && !isStaleId(id)) {
             return m.getId();
