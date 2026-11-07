@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -22,9 +23,12 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
@@ -34,6 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaStreamsMetricsTest {
 
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
+
+    private static final String STATE_METER_NAME = "kafka.stream.state";
 
     private Tags tags = Tags.of("app", "myapp", "version", "1");
 
@@ -85,6 +91,58 @@ class KafkaStreamsMetricsTest {
         finally {
             customScheduler.shutdownNow();
             assertThat(customScheduler.isShutdown()).isTrue();
+        }
+    }
+
+    @Test
+    void shouldReportApplicationStateAsStateSet() {
+        try (KafkaStreams kafkaStreams = createStreams();
+                KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams)) {
+            MeterRegistry registry = new SimpleMeterRegistry();
+
+            metrics.bindTo(registry);
+
+            List<Gauge> stateGauges = registry.find(STATE_METER_NAME).gauges().stream().collect(Collectors.toList());
+            // one time series per possible state
+            assertThat(stateGauges).extracting(gauge -> gauge.getId().getTag("state"))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(KafkaStreams.State.values()).map(Enum::name).collect(Collectors.toList()));
+            // exactly the current state reports 1, everything else 0
+            String currentState = kafkaStreams.state().name();
+            assertThat(stateGauges).allSatisfy(gauge -> {
+                double expected = gauge.getId().getTag("state").equals(currentState) ? 1 : 0;
+                assertThat(gauge.value()).isEqualTo(expected);
+            });
+            assertThat(stateGauges).filteredOn(gauge -> gauge.value() == 1)
+                .extracting(gauge -> gauge.getId().getTag("state"))
+                .containsExactly(currentState);
+        }
+    }
+
+    @Test
+    void stateGaugeShouldCarryConfiguredTags() {
+        try (KafkaStreams kafkaStreams = createStreams();
+                KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams, tags)) {
+            MeterRegistry registry = new SimpleMeterRegistry();
+
+            metrics.bindTo(registry);
+
+            assertThat(registry.find(STATE_METER_NAME).gauges()).isNotEmpty()
+                .allSatisfy(gauge -> assertThat(gauge.getId().getTag("app")).isEqualTo("myapp"));
+        }
+    }
+
+    @Test
+    void closeShouldRemoveStateGauges() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        try (KafkaStreams kafkaStreams = createStreams()) {
+            KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams);
+            metrics.bindTo(registry);
+            assertThat(registry.find(STATE_METER_NAME).gauges()).isNotEmpty();
+
+            metrics.close();
+
+            assertThat(registry.find(STATE_METER_NAME).gauges()).isEmpty();
         }
     }
 
