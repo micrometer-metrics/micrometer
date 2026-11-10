@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
@@ -74,7 +75,7 @@ class VirtualThreadMetricsReflectiveTests {
     void submitFailedEventsShouldBeRecorded() {
         try (ExecutorService cachedPool = Executors.newCachedThreadPool()) {
             ThreadFactory factory = virtualThreadFactoryFor(cachedPool);
-            Thread thread = factory.newThread(LockSupport::park);
+            Thread thread = Objects.requireNonNull(factory.newThread(LockSupport::park));
             thread.start();
 
             await().atMost(Duration.ofSeconds(2)).until(() -> thread.getState() == WAITING);
@@ -87,7 +88,7 @@ class VirtualThreadMetricsReflectiveTests {
             await().atMost(Duration.ofSeconds(2)).until(() -> counter.count() == 1);
 
             // park, the pool was shut down, this should fail
-            assertThatThrownBy(() -> factory.newThread(LockSupport::park).start())
+            assertThatThrownBy(() -> Objects.requireNonNull(factory.newThread(LockSupport::park)).start())
                 .isInstanceOf(RejectedExecutionException.class);
             await().atMost(Duration.ofSeconds(2)).until(() -> counter.count() == 2);
         }

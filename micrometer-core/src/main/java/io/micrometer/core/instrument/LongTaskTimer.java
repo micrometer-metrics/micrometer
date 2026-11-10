@@ -357,7 +357,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
          * @return This builder.
          * @since 1.5.0
          */
-        public Builder serviceLevelObjectives(@Nullable Duration... slos) {
+        public Builder serviceLevelObjectives(Duration @Nullable ... slos) {
             if (slos != null) {
                 this.distributionConfigBuilder
                     .serviceLevelObjectives(Arrays.stream(slos).mapToDouble(Duration::toNanos).toArray());

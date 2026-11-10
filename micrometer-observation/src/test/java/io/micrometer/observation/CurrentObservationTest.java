@@ -147,7 +147,7 @@ class CurrentObservationTest {
         registry.observationConfig()
             .observationHandler(context -> true)
             // .observationHandler(new ObservationTextPublisher())
-            .observationPredicate((name, context) -> !name.equals("b"));
+            .observationPredicate((name, context) -> !"b".equals(name));
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             assertThat(registry.getCurrentObservation()).isNull();

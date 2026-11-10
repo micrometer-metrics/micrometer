@@ -1227,7 +1227,10 @@ class PrometheusMeterRegistryTest {
             @Override
             public Properties prometheusProperties() {
                 Properties properties = new Properties();
-                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                Properties defaultProperties = PrometheusConfig.super.prometheusProperties();
+                if (defaultProperties != null) {
+                    properties.putAll(defaultProperties);
+                }
                 properties.setProperty("io.prometheus.exporter.includeCreatedTimestamps", "true");
                 return properties;
             }
@@ -1274,7 +1277,10 @@ class PrometheusMeterRegistryTest {
             @Override
             public Properties prometheusProperties() {
                 Properties properties = new Properties();
-                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                Properties defaultProperties = PrometheusConfig.super.prometheusProperties();
+                if (defaultProperties != null) {
+                    properties.putAll(defaultProperties);
+                }
                 properties.setProperty("io.prometheus.exporter.includeCreatedTimestamps", "false");
                 return properties;
             }
@@ -1373,7 +1379,10 @@ class PrometheusMeterRegistryTest {
             @Override
             public Properties prometheusProperties() {
                 Properties mergedProperties = new Properties();
-                mergedProperties.putAll(PrometheusConfig.super.prometheusProperties());
+                Properties defaultProperties = PrometheusConfig.super.prometheusProperties();
+                if (defaultProperties != null) {
+                    mergedProperties.putAll(defaultProperties);
+                }
                 properties.forEach((key, value) -> mergedProperties.setProperty(key.toString(), value.toString()));
                 return mergedProperties;
             }

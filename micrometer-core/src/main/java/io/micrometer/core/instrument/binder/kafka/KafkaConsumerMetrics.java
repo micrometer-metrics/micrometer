@@ -390,6 +390,8 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         };
     }
 
+    // Passing null handback to MBeanServer.addNotificationListener
+    @SuppressWarnings("NullAway")
     private void addNotificationListener(NotificationListener listener, NotificationFilter filter) {
         try {
             mBeanServer.addNotificationListener(MBeanServerDelegate.DELEGATE_NAME, listener, filter, null);

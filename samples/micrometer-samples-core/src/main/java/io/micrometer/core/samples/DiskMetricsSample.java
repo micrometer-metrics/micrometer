@@ -29,7 +29,8 @@ public class DiskMetricsSample {
 
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
-        new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
+        String userDir = System.getProperty("user.dir");
+        new DiskSpaceMetrics(new File(userDir != null ? userDir : ".")).bindTo(registry);
 
         Flux.never().blockLast();
     }

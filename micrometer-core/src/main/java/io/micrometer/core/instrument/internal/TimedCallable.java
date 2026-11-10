@@ -17,13 +17,14 @@ package io.micrometer.core.instrument.internal;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.Callable;
 
 /**
  * A wrapper for a {@link Callable} with idle and execution timings.
  */
-class TimedCallable<V> implements Callable<V> {
+class TimedCallable<V extends @Nullable Object> implements Callable<V> {
 
     private final MeterRegistry registry;
 

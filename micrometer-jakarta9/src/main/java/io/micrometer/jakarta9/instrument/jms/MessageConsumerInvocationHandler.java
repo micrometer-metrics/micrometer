@@ -55,9 +55,9 @@ class MessageConsumerInvocationHandler implements InvocationHandler {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public @Nullable Object invoke(Object proxy, Method method, @Nullable Object @Nullable [] args) throws Throwable {
         try {
-            if ("setMessageListener".equals(method.getName()) && args[0] != null) {
+            if ("setMessageListener".equals(method.getName()) && args != null && args[0] != null) {
                 MessageListener listener = (MessageListener) args[0];
                 return method.invoke(this.target,
                         new ObservedMessageListener(listener, this.registry, this.customConvention));
@@ -65,7 +65,8 @@ class MessageConsumerInvocationHandler implements InvocationHandler {
             return method.invoke(this.target, args);
         }
         catch (InvocationTargetException exc) {
-            throw exc.getTargetException();
+            Throwable targetException = exc.getTargetException();
+            throw targetException != null ? targetException : exc;
         }
     }
 

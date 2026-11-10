@@ -432,7 +432,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         AttributesBuilder builder = Attributes.builder();
         builder.put(TELEMETRY_SDK_NAME, "io.micrometer");
         builder.put(TELEMETRY_SDK_LANGUAGE, "java");
-        String micrometerCoreVersion = MeterRegistry.class.getPackage().getImplementationVersion();
+        Package pkg = MeterRegistry.class.getPackage();
+        String micrometerCoreVersion = pkg != null ? pkg.getImplementationVersion() : null;
         if (micrometerCoreVersion != null) {
             builder.put(TELEMETRY_SDK_VERSION, micrometerCoreVersion);
         }

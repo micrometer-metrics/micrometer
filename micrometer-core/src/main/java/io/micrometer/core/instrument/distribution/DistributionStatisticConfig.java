@@ -103,8 +103,12 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
         if (percentileHistogram != null && percentileHistogram && supportsAggregablePercentiles) {
             buckets.addAll(PercentileHistogramBuckets.buckets(this));
-            buckets.add(minimumExpectedValue);
-            buckets.add(maximumExpectedValue);
+            if (minimumExpectedValue != null) {
+                buckets.add(minimumExpectedValue);
+            }
+            if (maximumExpectedValue != null) {
+                buckets.add(maximumExpectedValue);
+            }
         }
 
         if (serviceLevelObjectives != null) {

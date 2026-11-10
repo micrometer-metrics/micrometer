@@ -355,7 +355,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * {@link Executors#newSingleThreadExecutor()} wrap a regular
      * {@link ThreadPoolExecutor}.
      */
-    private @Nullable ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor, Class<?> wrapper) {
+    private @Nullable ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor,
+            @Nullable Class<?> wrapper) {
+        if (wrapper == null) {
+            return null;
+        }
         try {
             Field e = wrapper.getDeclaredField("e");
             e.setAccessible(true);
