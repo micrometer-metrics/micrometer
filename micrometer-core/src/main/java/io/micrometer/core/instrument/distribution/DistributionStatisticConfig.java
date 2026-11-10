@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.internal.Mergeable;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.stream.LongStream;
@@ -62,6 +63,25 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     private @Nullable Duration expiry;
 
     private @Nullable Integer bufferLength;
+
+    public DistributionStatisticConfig() {
+    }
+
+    public DistributionStatisticConfig(DistributionStatisticConfig original) {
+        percentileHistogram = original.percentileHistogram;
+        if (original.percentiles != null) {
+            percentiles = Arrays.copyOf(original.percentiles, original.percentiles.length);
+        }
+        percentilePrecision = original.percentilePrecision;
+        if (original.serviceLevelObjectives != null) {
+            serviceLevelObjectives = Arrays.copyOf(original.serviceLevelObjectives,
+                    original.serviceLevelObjectives.length);
+        }
+        minimumExpectedValue = original.minimumExpectedValue;
+        maximumExpectedValue = original.maximumExpectedValue;
+        expiry = original.expiry;
+        bufferLength = original.bufferLength;
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -253,7 +273,15 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     public static class Builder {
 
-        private final DistributionStatisticConfig config = new DistributionStatisticConfig();
+        protected final DistributionStatisticConfig config;
+
+        public Builder() {
+            config = new DistributionStatisticConfig();
+        }
+
+        protected Builder(DistributionStatisticConfig config) {
+            this.config = config;
+        }
 
         public Builder percentilesHistogram(@Nullable Boolean enabled) {
             config.percentileHistogram = enabled;
@@ -438,11 +466,11 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @return A new immutable distribution configuration.
          */
         public DistributionStatisticConfig build() {
-            validate(config);
+            validate();
             return config;
         }
 
-        private void validate(DistributionStatisticConfig distributionStatisticConfig) {
+        protected void validate() {
             if (config.bufferLength != null && config.bufferLength <= 0) {
                 rejectConfig("bufferLength (" + config.bufferLength + ") must be greater than zero");
             }
@@ -470,8 +498,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
                         + ").");
             }
 
-            if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
-                for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
+            if (config.getServiceLevelObjectiveBoundaries() != null) {
+                for (double slo : config.getServiceLevelObjectiveBoundaries()) {
                     if (slo <= 0) {
                         rejectConfig("serviceLevelObjectiveBoundaries must contain only the values greater than 0. "
                                 + "Found " + slo);
@@ -480,7 +508,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
             }
         }
 
-        private static void rejectConfig(String msg) {
+        protected static void rejectConfig(String msg) {
             throw new InvalidConfigurationException("Invalid distribution configuration: " + msg);
         }
 
