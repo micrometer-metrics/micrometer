@@ -57,7 +57,7 @@ public interface NamingConvention {
         }
 
         private String toSnakeCase(String value) {
-            return Arrays.stream(value.split("\\.")).filter(Objects::nonNull).collect(Collectors.joining("_"));
+            return value.replace(".", "_");
         }
     };
 
