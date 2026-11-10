@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ToDoubleFunction;
@@ -50,9 +51,9 @@ public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
 
     private volatile long lastUpdateTime = (long) -2e6;
 
-    private volatile long lastCount;
+    private final AtomicLong lastCount = new AtomicLong();
 
-    private volatile double lastTime;
+    private final AtomicLong lastTime = new AtomicLong();
 
     private final LongAdder count = new LongAdder();
 
@@ -93,14 +94,17 @@ public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
     private void accumulateCountAndTotal() {
         T obj2 = ref.get();
         if (obj2 != null && clock.monotonicTime() - lastUpdateTime > 1e6) {
-            long prevLastCount = lastCount;
-            lastCount = Math.max(countFunction.applyAsLong(obj2), 0);
-            count.add(lastCount - prevLastCount);
+            // Swap the last observed values atomically so concurrent callers telescope
+            // the deltas
+            // instead of both applying the same increase (double-counting).
+            long newLastCount = Math.max(countFunction.applyAsLong(obj2), 0);
+            long prevLastCount = lastCount.getAndSet(newLastCount);
+            count.add(newLastCount - prevLastCount);
 
-            double prevLastTime = lastTime;
-            lastTime = Math.max(
+            double newLastTime = Math.max(
                     TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()), 0);
-            total.add(lastTime - prevLastTime);
+            double prevLastTime = Double.longBitsToDouble(lastTime.getAndSet(Double.doubleToLongBits(newLastTime)));
+            total.add(newLastTime - prevLastTime);
 
             lastUpdateTime = clock.monotonicTime();
         }

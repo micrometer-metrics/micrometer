@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -104,6 +106,56 @@ class StepFunctionTimerTest {
 
         assertThat(timer.count()).isEqualTo(2);
         assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(150);
+    }
+
+    @Test
+    void concurrentAccumulateDoesNotOverCount() throws InterruptedException {
+        AtomicLong wall = new AtomicLong();
+        AtomicLong mono = new AtomicLong();
+        // monotonicTime advances past the 1ms accumulate throttle on every call, so the
+        // read-modify-write is exercised on each call; wallTime stays within one step so
+        // the value does not roll over mid-test.
+        Clock stressClock = new Clock() {
+            @Override
+            public long wallTime() {
+                return wall.get();
+            }
+
+            @Override
+            public long monotonicTime() {
+                return mono.addAndGet((long) 2e6);
+            }
+        };
+
+        AtomicLong n = new AtomicLong();
+        Duration step = Duration.ofMillis(10);
+        StepFunctionTimer<Object> timer = new StepFunctionTimer<>(mock(Meter.Id.class), stressClock, step.toMillis(),
+                new Object(), t -> n.get(), t -> n.get(), TimeUnit.NANOSECONDS, TimeUnit.NANOSECONDS);
+
+        int threads = 4;
+        int incrementsPerThread = 10_000;
+        Thread[] workers = new Thread[threads];
+        for (int i = 0; i < threads; i++) {
+            workers[i] = new Thread(() -> {
+                for (int j = 0; j < incrementsPerThread; j++) {
+                    n.incrementAndGet();
+                    timer.count();
+                    timer.totalTime(TimeUnit.NANOSECONDS);
+                }
+            });
+            workers[i].start();
+        }
+        for (Thread worker : workers) {
+            worker.join();
+        }
+
+        // Flush the final delta into the current step, then roll it over.
+        timer.count();
+        wall.set(step.toMillis());
+        // Deltas must telescope to the total increments; a lost update would
+        // double-count.
+        assertThat(timer.count()).isEqualTo((double) (threads * incrementsPerThread));
+        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo((double) (threads * incrementsPerThread));
     }
 
 }
