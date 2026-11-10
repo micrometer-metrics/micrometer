@@ -300,3 +300,25 @@ tasks.register("openj9ConcurrentScavengeTest", Test) {
 
     jvmArgs '-Xgc:concurrentScavenge'
 }
+
+tasks.register("openj9OptthruputTest", Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-Xgcpolicy:optthruput'
+}
+
+tasks.register("openj9OptavgpauseTest", Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-Xgcpolicy:optavgpause'
+}
