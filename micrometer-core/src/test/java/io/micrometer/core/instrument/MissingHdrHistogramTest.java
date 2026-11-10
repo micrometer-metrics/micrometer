@@ -15,18 +15,22 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import io.micrometer.core.instrument.distribution.HdrHistogramAvailability;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.testsupport.classpath.ClassPathExclusions;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Tests for demonstrating that a timer works without HdrHistogram dependency if
- * percentiles are not used.
+ * Tests for demonstrating that meters work without the optional HdrHistogram dependency
+ * unless client-side percentiles are used, in which case a descriptive error is raised.
  *
  * @author Johnny Lim
+ * @author Rafael Winterhalter
  */
 @ClassPathExclusions("HdrHistogram-*.jar")
 class MissingHdrHistogramTest {
@@ -34,14 +38,39 @@ class MissingHdrHistogramTest {
     private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
+    void reportsHdrHistogramAsUnavailable() {
+        assertThat(HdrHistogramAvailability.isAvailable()).isFalse();
+    }
+
+    @Test
     void doesNotThrowAnyExceptionWhenPercentilesAreNotUsed() {
         assertThatCode(() -> Timer.builder("my.timer").register(registry)).doesNotThrowAnyException();
     }
 
     @Test
-    void throwsClassNotFoundExceptionWhenPercentilesAreUsed() {
+    void doesNotThrowAnyExceptionForHistogramsAndServiceLevelObjectives() {
+        assertThatCode(() -> Timer.builder("my.histogram.timer").publishPercentileHistogram().register(registry))
+            .doesNotThrowAnyException();
+        assertThatCode(
+                () -> DistributionSummary.builder("my.slo.summary").serviceLevelObjectives(1.0, 2.0).register(registry))
+            .doesNotThrowAnyException();
+    }
+
+    @Test
+    void throwsDescriptiveExceptionWhenTimerPercentilesAreUsed() {
         assertThatThrownBy(() -> Timer.builder("my.timer").publishPercentiles(0.5d, 0.9d).register(registry))
-            .hasCauseExactlyInstanceOf(ClassNotFoundException.class);
+            .isInstanceOf(InvalidConfigurationException.class)
+            .hasMessageContaining("HdrHistogram")
+            .hasMessageContaining("org.hdrhistogram:HdrHistogram")
+            .hasMessageContaining("not on the runtime classpath");
+    }
+
+    @Test
+    void throwsDescriptiveExceptionWhenDistributionSummaryPercentilesAreUsed() {
+        assertThatThrownBy(
+                () -> DistributionSummary.builder("my.summary").publishPercentiles(0.5d, 0.9d).register(registry))
+            .isInstanceOf(InvalidConfigurationException.class)
+            .hasMessageContaining("org.hdrhistogram:HdrHistogram");
     }
 
 }
