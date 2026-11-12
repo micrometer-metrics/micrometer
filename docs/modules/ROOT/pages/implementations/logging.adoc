@@ -1,60 +1,68 @@
-= Micrometer Logging
+= Micrometer Logging Registry
+:sectnums:
+:system: logging
 
-`LoggingMeterRegistry` writes meter measurements to a log, which can be useful when inspecting metrics locally without a monitoring backend.
-It is included in `micrometer-core`, so no additional registry dependency is needed.
+`LoggingMeterRegistry` is a `MeterRegistry` that publishes metrics to a logger (or to another `Consumer<String>`). It is useful for inspecting metrics locally without a metrics backend (in production, use a real metrics backend instead). `LoggingMeterRegistry` is included in `micrometer-core`, so no additional dependencies are needed.
 
 == Setup
 
-The default registry logs at INFO level through the `io.micrometer.core.instrument.logging.LoggingMeterRegistry` logger once per minute.
-Register meters on it as you would with any other registry:
+By default, the registry logs through the `io.micrometer.core.instrument.logging.LoggingMeterRegistry` logger once per minute on `INFO` level.
+You can use it to create meters and record measurements as you would with any other registry:
 
-[source,java]
-----
-LoggingMeterRegistry registry = new LoggingMeterRegistry();
-registry.counter("orders.created", "region", "us-east").increment();
-----
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/LoggingMeterRegistryTests.java[tags=setup,indent=0]
+-----
 
-Keep the registry open while the application runs so that its background publisher can report measurements.
-Call `registry.close()` when the application shuts down.
+NOTE: Keep the registry open while the application runs so that it can publish measurements in the background. Call its `close` method when the application shuts down and you don't need the registry anymore.
 
 == Configuration
 
-Use `LoggingRegistryConfig` to change the reporting interval and whether inactive meters are logged:
+Use `LoggingRegistryConfig` to configure the publish interval and/or whether meters that have no activity in an interval should still be logged.
 
-[source,java]
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/LoggingMeterRegistryTests.java[tags=config,indent=0]
+-----
+
+`LoggingRegistryConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source (for example, a simple `Map` can work), you can override the default configuration through properties:
+
+[source,java,subs=+attributes]
 ----
-LoggingRegistryConfig config = new LoggingRegistryConfig() {
-    @Override
-    public String get(String key) {
-        return null;
-    }
-
-    @Override
-    public Duration step() {
-        return Duration.ofSeconds(10);
-    }
-
-    @Override
-    public boolean logInactive() {
-        return true;
-    }
-};
-LoggingMeterRegistry registry = new LoggingMeterRegistry(config, Clock.SYSTEM);
+include::{include-java}/metrics/LoggingMeterRegistryTests.java[tags=properties_config,indent=0]
 ----
 
-This example uses `java.time.Duration` and `io.micrometer.core.instrument.Clock`.
-By default, inactive counters and timers are omitted from the output.
-Counter and timer counts describe the reporting interval rather than the lifetime of the registry.
+The supported properties are `logging.step`, `logging.logInactive`, and `logging.enabled` (set it to `false` to stop publishing).
 
-== Custom Output
+NOTE: By default, meters that had no activity in the publishing interval are omitted (a time gauge counts as inactive when it reports 0). Gauges and custom meters are always published.
+
+=== Custom Output
 
 You can replace the default logger with a `Consumer<String>` that receives each formatted measurement:
 
-[source,java]
+[source,java,subs=+attributes]
 ----
-LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
-    .loggingSink(System.out::println)
-    .build();
+include::{include-java}/metrics/LoggingMeterRegistryTests.java[tags=custom_output,indent=0]
 ----
 
-This sends measurements directly to standard output, independently of the application's log levels.
+This publishes measurements directly to standard output instead of using a logger.
+
+To change how meter IDs are formatted, use the `meterIdPrinter` method of the builder. The builder also lets you set a custom `Clock` and `ThreadFactory`.
+
+== Sample Output
+
+Registering the following meters on a `LoggingMeterRegistry` with the default configuration:
+
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/LoggingMeterRegistryTests.java[tags=sample_output,indent=0]
+----
+
+Should produce an output similar to this:
+
+[source]
+----
+demo.counter{app=demo} delta_count=1 throughput=0.016667/s
+demo.gauge{app=demo} value=0.385101
+demo.timer{app=demo} delta_count=1 throughput=0.016667/s mean=0.042s max=0.042s
+----
