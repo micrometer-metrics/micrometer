@@ -136,3 +136,6 @@ Use `overwrite=true` when each registration represents a new snapshot and previo
 Use `overwrite=false` when existing rows should remain unchanged on later registrations with the same tags.
 Rows that are no longer present in the new registration are removed.
 
+Keep a reference to the `MultiGauge` (for example, in a field) for as long as its rows should be reported, even if you register rows only once.
+Rows are not guaranteed to keep reporting values after the `MultiGauge` has been garbage collected, even if the objects that the rows observe are still referenced.
+
