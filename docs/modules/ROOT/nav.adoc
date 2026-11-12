@@ -31,6 +31,7 @@
 ** xref:implementations/instana.adoc[Instana]
 ** xref:implementations/jmx.adoc[JMX]
 ** xref:implementations/kairos.adoc[KairosDB]
+** xref:implementations/logging.adoc[Logging]
 ** xref:implementations/new-relic.adoc[New Relic]
 ** xref:implementations/otlp.adoc[OpenTelemetry Protocol (OTLP)]
 ** xref:implementations/prometheus.adoc[Prometheus]
