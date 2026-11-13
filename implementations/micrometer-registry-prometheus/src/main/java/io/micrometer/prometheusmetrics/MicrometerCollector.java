@@ -28,6 +28,7 @@ import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -48,14 +49,22 @@ class MicrometerCollector implements MultiCollector {
 
     private final String conventionName;
 
+    private final Consumer<MicrometerCollector> onEmpty;
+
     // the id of the meter used to create this MicrometerCollector
-    private final Meter.Id originalMeterId;
+    private Meter.Id originalMeterId;
 
     // take name to avoid calling NamingConvention#name after the call-site has already
     // done it
     MicrometerCollector(String name, Meter.Id id) {
+        this(name, id, collector -> {
+        });
+    }
+
+    MicrometerCollector(String name, Meter.Id id, Consumer<MicrometerCollector> onEmpty) {
         this.conventionName = name;
         this.originalMeterId = id;
+        this.onEmpty = onEmpty;
     }
 
     public void add(Meter.Id id, Child child) {
@@ -70,6 +79,17 @@ class MicrometerCollector implements MultiCollector {
         return children.isEmpty();
     }
 
+    void prepareForReuse(Meter.Id id) {
+        if (!isEmpty()) {
+            throw new IllegalStateException("Only empty collectors can be reused");
+        }
+        originalMeterId = id;
+    }
+
+    String getConventionName() {
+        return conventionName;
+    }
+
     Meter.Type getMeterType() {
         return originalMeterId.getType();
     }
@@ -81,6 +101,13 @@ class MicrometerCollector implements MultiCollector {
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public MetricSnapshots collect() {
+        if (children.isEmpty()) {
+            onEmpty.accept(this);
+            if (children.isEmpty()) {
+                return new MetricSnapshots(Collections.emptyList());
+            }
+        }
+
         Map<String, Family> families = new HashMap<>();
 
         for (Child child : children.values()) {
