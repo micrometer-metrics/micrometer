@@ -337,4 +337,92 @@ class DatadogMeterRegistryTest {
         registry.close();
     }
 
+    @Test
+    void publishesSeriesToTheV2Api(@WiremockResolver.Wiremock WireMockServer server) {
+        Clock clock = new MockClock();
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(v2Config(server, null), clock);
+
+        server.stubFor(any(anyUrl()));
+
+        Counter.builder("my.counter#abc")
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase(Locale.ROOT))
+            .description("metric description")
+            .register(registry)
+            .increment(Math.PI);
+        Gauge.builder("my.gauge", () -> 42.0).register(registry);
+        registry.publish();
+
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/series")).withHeader("DD-API-KEY", equalTo("testApiKey"))
+            .withoutHeader("DD-APPLICATION-KEY")
+            .withRequestBody(equalToJson("{\"series\":["
+                    + "{\"metric\":\"my.counter#abc\",\"type\":1,\"points\":[{\"timestamp\":0,\"value\":0.0}],"
+                    + "\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]},"
+                    + "{\"metric\":\"my.gauge\",\"type\":3,\"points\":[{\"timestamp\":0,\"value\":42.0}],"
+                    + "\"tags\":[\"statistic:value\"]}]}", true, false)));
+        server.verify(0, postRequestedFor(urlEqualTo("/api/v1/series")));
+        server.verify(putRequestedFor(urlEqualTo("/api/v1/metrics/my.counter%23abc"))
+            .withHeader("DD-APPLICATION-KEY", equalTo("testApplicationKey"))
+            .withRequestBody(equalToJson(
+                    "{\"type\":\"count\",\"unit\":\"microsecond\",\"description\":\"metric description\"}")));
+
+        registry.close();
+    }
+
+    @Test
+    void v2ApiSendsTheHostTagAsAResource(@WiremockResolver.Wiremock WireMockServer server) {
+        Clock clock = new MockClock();
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(v2Config(server, "host"), clock);
+
+        server.stubFor(any(anyUrl()));
+
+        Counter.builder("my.counter").tag("host", "web-1").register(registry).increment();
+        registry.publish();
+
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/series")).withRequestBody(equalToJson(
+                "{\"series\":[" + "{\"metric\":\"my.counter\",\"type\":1,\"points\":[{\"timestamp\":0,\"value\":0.0}],"
+                        + "\"resources\":[{\"name\":\"web-1\",\"type\":\"host\"}],"
+                        + "\"tags\":[\"host:web-1\",\"statistic:count\"]}]}")));
+
+        registry.close();
+    }
+
+    private static DatadogConfig v2Config(WireMockServer server, @Nullable String hostTag) {
+        return new DatadogConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "testApiKey";
+            }
+
+            @Override
+            public String applicationKey() {
+                return "testApplicationKey";
+            }
+
+            @Override
+            public @Nullable String hostTag() {
+                return hostTag;
+            }
+
+            @Override
+            public DatadogApiVersion apiVersion() {
+                return DatadogApiVersion.V2;
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+        };
+    }
+
 }
