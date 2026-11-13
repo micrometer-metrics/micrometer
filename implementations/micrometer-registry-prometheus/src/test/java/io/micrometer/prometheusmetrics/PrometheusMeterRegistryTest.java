@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.prometheus.metrics.expositionformats.OpenMetricsTextFormatWriter;
@@ -34,6 +35,9 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -1213,6 +1217,39 @@ class PrometheusMeterRegistryTest {
     void scrapeWhenMeterNameContainsSingleCharacter() {
         registry.counter("c").increment();
         assertThatNoException().isThrownBy(registry::scrape);
+    }
+
+    @Test
+    @Issue("#7564")
+    void scrapeHonorsEscapingSchemeFromAcceptHeader() {
+        registry.config().namingConvention(NamingConvention.identity);
+        registry.counter("tasks.completed").increment();
+
+        assertThat(registry.scrape("text/plain;version=1.0.0;escaping=allow-utf-8")).contains("tasks.completed")
+            .doesNotContain("tasks_completed");
+    }
+
+    @Test
+    @Issue("#7564")
+    void scrapeToOutputStreamHonorsEscapingSchemeFromAcceptHeader() throws IOException {
+        registry.config().namingConvention(NamingConvention.identity);
+        registry.counter("tasks.completed").increment();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        registry.scrape(outputStream, OpenMetricsTextFormatWriter.CONTENT_TYPE + "; escaping=allow-utf-8");
+
+        assertThat(outputStream.toString(StandardCharsets.UTF_8)).contains("tasks.completed")
+            .doesNotContain("tasks_completed");
+    }
+
+    @Test
+    @Issue("#7564")
+    void scrapeUsesDefaultEscapingSchemeWithoutEscapingInAcceptHeader() {
+        registry.config().namingConvention(NamingConvention.identity);
+        registry.counter("tasks.completed").increment();
+
+        assertThat(registry.scrape(PrometheusTextFormatWriter.CONTENT_TYPE)).contains("tasks_completed")
+            .doesNotContain("tasks.completed");
     }
 
     @Test
