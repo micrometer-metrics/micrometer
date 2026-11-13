@@ -123,6 +123,12 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
+    protected <T> FunctionCounter newFunctionTimeCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction,
+            TimeUnit countFunctionUnit) {
+        return new CompositeFunctionCounter<>(id, obj, countFunction, countFunctionUnit, getBaseTimeUnit());
+    }
+
+    @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
     }
