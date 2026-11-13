@@ -22,6 +22,8 @@ import io.micrometer.core.ipc.http.HttpSender;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.util.Locale;
@@ -335,6 +337,116 @@ class DatadogMeterRegistryTest {
         verify(httpSender).send(argThat(request -> !request.getRequestHeaders().containsKey("Content-Encoding")));
 
         registry.close();
+    }
+
+    @Issue("#4056")
+    @ParameterizedTest
+    @ValueSource(ints = { 401, 403, 429, 500 })
+    void metadataIsNotSentForTheRestOfThePublishAfterAnError(int status,
+            @WiremockResolver.Wiremock WireMockServer server) {
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(metadataConfig(server), new MockClock());
+        server.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(202)));
+        server.stubFor(put(urlPathMatching("/api/v1/metrics/.*"))
+            .willReturn(aResponse().withStatus(status).withBody("{\"errors\":[\"Request failed\"]}")));
+
+        Counter.builder("first.counter").description("first description").register(registry);
+        Counter.builder("second.counter").description("second description").register(registry);
+        Counter.builder("third.counter").description("third description").register(registry);
+        registry.publish();
+
+        server.verify(1, putRequestedFor(urlPathMatching("/api/v1/metrics/.*")));
+
+        registry.publish();
+
+        server.verify(2, putRequestedFor(urlPathMatching("/api/v1/metrics/.*")));
+
+        registry.close();
+    }
+
+    @Issue("#4056")
+    @Test
+    void metadataRejectedAsInvalidIsNotSentAgain(@WiremockResolver.Wiremock WireMockServer server) {
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(metadataConfig(server), new MockClock());
+        server.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(202)));
+        server.stubFor(put(urlPathMatching("/api/v1/metrics/.*"))
+            .willReturn(aResponse().withStatus(400).withBody("{\"errors\":[\"Invalid unit\"]}")));
+
+        Counter.builder("first.counter").description("first description").register(registry);
+        Counter.builder("second.counter").description("second description").register(registry);
+        registry.publish();
+        registry.publish();
+
+        server.verify(1, putRequestedFor(urlEqualTo("/api/v1/metrics/first.counter")));
+        server.verify(1, putRequestedFor(urlEqualTo("/api/v1/metrics/second.counter")));
+
+        registry.close();
+    }
+
+    @Issue("#4056")
+    @Test
+    void metadataOfOtherMetricsIsSentAfterAnErrorSpecificToAMetric(@WiremockResolver.Wiremock WireMockServer server) {
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(metadataConfig(server), new MockClock());
+        server.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(202)));
+        server.stubFor(put(urlEqualTo("/api/v1/metrics/first.counter"))
+            .willReturn(aResponse().withStatus(422).withBody("{\"errors\":[\"Unprocessable\"]}")));
+        server.stubFor(put(urlEqualTo("/api/v1/metrics/second.counter")).willReturn(aResponse().withStatus(200)));
+
+        Counter.builder("first.counter").description("first description").register(registry);
+        Counter.builder("second.counter").description("second description").register(registry);
+        registry.publish();
+        registry.publish();
+
+        server.verify(2, putRequestedFor(urlEqualTo("/api/v1/metrics/first.counter")));
+        server.verify(1, putRequestedFor(urlEqualTo("/api/v1/metrics/second.counter")));
+
+        registry.close();
+    }
+
+    @Test
+    void metadataOfMetricsNotFoundYetIsSentAgainOnTheNextPublish(@WiremockResolver.Wiremock WireMockServer server) {
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(metadataConfig(server), new MockClock());
+        server.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(202)));
+        server.stubFor(put(urlPathMatching("/api/v1/metrics/.*"))
+            .willReturn(aResponse().withStatus(404).withBody("{\"errors\":[\"metric_name not found\"]}")));
+
+        Counter.builder("first.counter").description("first description").register(registry);
+        Counter.builder("second.counter").description("second description").register(registry);
+        registry.publish();
+        registry.publish();
+
+        server.verify(2, putRequestedFor(urlEqualTo("/api/v1/metrics/first.counter")));
+        server.verify(2, putRequestedFor(urlEqualTo("/api/v1/metrics/second.counter")));
+
+        registry.close();
+    }
+
+    private static DatadogConfig metadataConfig(WireMockServer server) {
+        return new DatadogConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "testApiKey";
+            }
+
+            @Override
+            public String applicationKey() {
+                return "testApplicationKey";
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+        };
     }
 
 }
