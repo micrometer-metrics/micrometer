@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -125,7 +126,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                         ]
                 }"
                 */
-                String body = batch.stream().flatMap(meter -> meter.match(
+                List<String> series = batch.stream().flatMap(meter -> meter.match(
                         m -> writeMeter(m, metadataToSend), // visitGauge
                         m -> writeMeter(m, metadataToSend), // visitCounter
                         timer -> writeTimer(timer, metadataToSend), // visitTimer
@@ -135,8 +136,12 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                         m -> writeMeter(m, metadataToSend), // visitFunctionCounter
                         timer -> writeTimer(timer, metadataToSend), // visitFunctionTimer
                         m -> writeMeter(m, metadataToSend)) // visitMeter
-                ).collect(joining(",", "{\"series\":[", "]}"));
+                ).collect(toList());
                 // @formatter:on
+                if (series.isEmpty()) {
+                    continue;
+                }
+                String body = series.stream().collect(joining(",", "{\"series\":[", "]}"));
 
                 logger.trace("sending metrics batch to datadog:{}{}", System.lineSeparator(), body);
 
@@ -210,10 +215,16 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     private Stream<String> writeMeter(Meter m, Map<String, DatadogMetricMetadata> metadata) {
         long wallTime = clock.wallTime();
-        return stream(m.measure().spliterator(), false).map(ms -> {
+        return stream(m.measure().spliterator(), false).flatMap(ms -> {
+            double value = ms.getValue();
+            // NaN and infinite values are not valid JSON, and would make Datadog reject
+            // the whole request
+            if (!Double.isFinite(value)) {
+                return Stream.empty();
+            }
             Meter.Id id = m.getId().withTag(ms.getStatistic());
             addToMetadataList(metadata, id, null, ms.getStatistic(), null);
-            return writeMetric(id, null, wallTime, ms.getValue(), ms.getStatistic(), null);
+            return Stream.of(writeMetric(id, null, wallTime, value, ms.getStatistic(), null));
         });
     }
 
