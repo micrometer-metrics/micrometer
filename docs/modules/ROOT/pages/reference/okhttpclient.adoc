@@ -58,3 +58,16 @@ OkHttpClient client = new OkHttpClient.Builder()
 ----
 
 WARNING: The sample might trigger tag cardinality explosion, as a URI path itself is being used for tag values.
+
+The other tags of the requests can also have many values: the `target.host`, `target.port` and `target.scheme` tags have as many values as the hosts that the client calls.
+When the cardinality of these tags is a concern for your application, you can limit or remove them with a xref:../concepts/meter-filters.adoc[meter filter], without changing the instrumentation.
+For example, the following filters stop registering new `okhttp.requests` meters once 100 distinct `uri` values have been seen, and remove the `target.port` tag:
+
+[source,java]
+----
+registry.config()
+    .meterFilter(MeterFilter.maximumAllowableTags("okhttp.requests", "uri", 100, MeterFilter.deny()))
+    .meterFilter(MeterFilter.ignoreTags("target.port"));
+----
+
+NOTE: `MeterFilter.ignoreTags` applies to all the meters of the registry. See also the xref:../concepts/high-cardinality-tags-detector.adoc[High Cardinality Tags Detector] to find the meters whose tags have too many values.
