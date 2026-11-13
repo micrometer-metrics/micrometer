@@ -28,6 +28,8 @@ import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -44,6 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,6 +61,7 @@ import static java.util.stream.StreamSupport.stream;
  * {@link StepMeterRegistry} for Stackdriver.
  *
  * @author Jon Schneider
+ * @author Sharang Gupta
  * @since 1.1.0
  */
 public class StackdriverMeterRegistry extends StepMeterRegistry {
@@ -249,8 +254,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<TimeSeries> createFunctionCounter(Batch batch, FunctionCounter functionCounter) {
-        return Stream.of(batch.createTimeSeries(functionCounter, functionCounter.count(), null,
-                config.useSemanticMetricTypes() ? CUMULATIVE : GAUGE));
+        return Stream.of(batch.createTimeSeries(functionCounter, functionCounter.count(), null, counterMetricKind()));
     }
 
     // VisibleForTesting
@@ -275,8 +279,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<TimeSeries> createCounter(Batch batch, Counter counter) {
-        return Stream.of(batch.createTimeSeries(counter, counter.count(), null,
-                config.useSemanticMetricTypes() ? CUMULATIVE : GAUGE));
+        return Stream.of(batch.createTimeSeries(counter, counter.count(), null, counterMetricKind()));
     }
 
     // VisibleForTesting
@@ -297,6 +300,26 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             PauseDetector pauseDetector) {
         return new StackdriverTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 this.config.step().toMillis());
+    }
+
+    @Override
+    protected Counter newCounter(Meter.Id id) {
+        if (config.cumulativeCounters()) {
+            return new StackdriverCumulativeCounter(id);
+        }
+        return super.newCounter(id);
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        if (config.cumulativeCounters()) {
+            return new StackdriverCumulativeFunctionCounter<>(id, obj, countFunction);
+        }
+        return super.newFunctionCounter(id, obj, countFunction);
+    }
+
+    private MetricDescriptor.MetricKind counterMetricKind() {
+        return (config.cumulativeCounters() || config.useSemanticMetricTypes()) ? CUMULATIVE : GAUGE;
     }
 
     @Override
@@ -366,10 +389,13 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private final Timestamp endTime;
 
+        private final long endTimeMillis;
+
         Batch() {
             long wallTime = clock.wallTime();
             startTime = buildTimestamp(previousBatchEndTime + 1);
             endTime = buildTimestamp(wallTime);
+            endTimeMillis = wallTime;
             previousBatchEndTime = wallTime;
         }
 
@@ -425,7 +451,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     .build())
                 .setMetricKind(metricKind) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
                 .setValueType(valueType)
-                .addPoints(Point.newBuilder().setInterval(interval(metricKind)).setValue(typedValue).build())
+                .addPoints(Point.newBuilder().setInterval(interval(meter, metricKind)).setValue(typedValue).build())
                 .build();
         }
 
@@ -507,12 +533,21 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return metricType.toString();
         }
 
-        private TimeInterval interval(MetricDescriptor.MetricKind metricKind) {
+        private TimeInterval interval(Meter meter, MetricDescriptor.MetricKind metricKind) {
             TimeInterval.Builder builder = TimeInterval.newBuilder().setEndTime(endTime);
             if (metricKind == CUMULATIVE) {
-                builder.setStartTime(startTime);
+                builder.setStartTime((meter instanceof CumulativeStartTimeAware)
+                        ? cumulativeStartTime((CumulativeStartTimeAware) meter) : startTime);
             }
             return builder.build();
+        }
+
+        /**
+         * Return the start time of the time series of a cumulative counter: the time of
+         * its first publish minus the step, the same for all its points.
+         */
+        private Timestamp cumulativeStartTime(CumulativeStartTimeAware meter) {
+            return meter.cumulativeStartTime().getOrSet(() -> buildTimestamp(endTimeMillis - config.step().toMillis()));
         }
 
         // VisibleForTesting
@@ -584,6 +619,60 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     .build())
                 .addAllBucketCounts(bucketCounts)
                 .build();
+        }
+
+    }
+
+    /**
+     * The start time of the time series of a cumulative meter, set on its first publish
+     * and the same for all its points.
+     */
+    static final class CumulativeStartTime {
+
+        private @Nullable Timestamp startTime;
+
+        synchronized Timestamp getOrSet(Supplier<Timestamp> initialStartTime) {
+            if (this.startTime == null) {
+                this.startTime = initialStartTime.get();
+            }
+            return this.startTime;
+        }
+
+    }
+
+    interface CumulativeStartTimeAware {
+
+        CumulativeStartTime cumulativeStartTime();
+
+    }
+
+    static final class StackdriverCumulativeCounter extends CumulativeCounter implements CumulativeStartTimeAware {
+
+        private final CumulativeStartTime cumulativeStartTime = new CumulativeStartTime();
+
+        StackdriverCumulativeCounter(Meter.Id id) {
+            super(id);
+        }
+
+        @Override
+        public CumulativeStartTime cumulativeStartTime() {
+            return this.cumulativeStartTime;
+        }
+
+    }
+
+    static final class StackdriverCumulativeFunctionCounter<T> extends CumulativeFunctionCounter<T>
+            implements CumulativeStartTimeAware {
+
+        private final CumulativeStartTime cumulativeStartTime = new CumulativeStartTime();
+
+        StackdriverCumulativeFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+            super(id, obj, countFunction);
+        }
+
+        @Override
+        public CumulativeStartTime cumulativeStartTime() {
+            return this.cumulativeStartTime;
         }
 
     }
