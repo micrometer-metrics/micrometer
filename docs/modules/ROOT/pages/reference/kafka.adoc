@@ -29,6 +29,25 @@ Setting up instrumentation with Apache Kafka using Kafka Streams.
 include::{include-core-test-java}/io/micrometer/core/instrument/binder/kafka/KafkaStreamsMetricsTest.java[tags=example, indent=0]
 -----
 
+[[kafka-streams-state]]
+== Kafka Streams Application State
+
+`KafkaStreamsMetrics` reports the current https://kafka.apache.org/documentation/streams/[Kafka Streams] application state through the `kafka.stream.state` gauge.
+
+Kafka reports the state as an enum, which cannot be published as a numeric value directly. Rather than relying on the enum's numeric ordering (which is not part of Kafka's public API), the state is published following the https://github.com/prometheus/OpenMetrics/blob/main/specification/OpenMetrics.md#stateset-1[OpenMetrics StateSet] pattern: one time series is registered per possible state, tagged with `state`, where the current state reports `1` and all others report `0`.
+
+For example, while the client is `RUNNING`:
+
+[source]
+-----
+kafka_stream_state{state="RUNNING"} 1.0
+kafka_stream_state{state="REBALANCING"} 0.0
+kafka_stream_state{state="ERROR"} 0.0
+# ... one series per state
+-----
+
+This lets you build dashboards and alerts on the current state (for example, alerting when `state="ERROR"` reports `1`) and visualize state transitions over time.
+
 [[lifecycle]]
 == Lifecycle
 
