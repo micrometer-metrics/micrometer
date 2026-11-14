@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
@@ -81,6 +82,24 @@ class StepFunctionCounterTest {
         clock.add(config.step());
 
         assertThat(counter.count()).isEqualTo(3);
+    }
+
+    @Issue("#2489")
+    @Test
+    void countShouldNotGoNegativeWhenCountFunctionResets() {
+        AtomicInteger n = new AtomicInteger(100);
+        FunctionCounter counter = registry.more().counter("my.counter", Tags.empty(), n);
+
+        counter.count(); // read the initial value into the current step
+        clock.add(config.step());
+        assertThat(counter.count()).isEqualTo(100);
+
+        // The count function is expected to be monotonically increasing, but it can
+        // decrease when the monitored object is reset/replaced or a guarded function
+        // returns 0 after an exception. This must not record a negative count.
+        n.set(0);
+        clock.add(config.step());
+        assertThat(counter.count()).isEqualTo(0);
     }
 
 }

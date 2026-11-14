@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -104,6 +105,29 @@ class StepFunctionTimerTest {
 
         assertThat(timer.count()).isEqualTo(2);
         assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(150);
+    }
+
+    @Issue("#2489")
+    @Test
+    void countAndTotalTimeShouldNotGoNegativeWhenFunctionsReset() {
+        AtomicLong count = new AtomicLong(100);
+        AtomicLong totalTimeNanos = new AtomicLong(TimeUnit.SECONDS.toNanos(50));
+        Duration stepDuration = Duration.ofSeconds(60);
+        StepFunctionTimer<Object> timer = new StepFunctionTimer<>(mock(Meter.Id.class), clock, stepDuration.toMillis(),
+                new Object(), (o) -> count.get(), (o) -> totalTimeNanos.get(), TimeUnit.NANOSECONDS, TimeUnit.SECONDS);
+
+        clock.add(stepDuration);
+        assertThat(timer.count()).isEqualTo(100);
+        assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(50);
+
+        // The count and totalTime functions are expected to be monotonically
+        // increasing, but they can decrease on a reset. This must not record a
+        // negative count/total for the interval.
+        count.set(0);
+        totalTimeNanos.set(0);
+        clock.add(stepDuration);
+        assertThat(timer.count()).isEqualTo(0);
+        assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(0);
     }
 
 }
