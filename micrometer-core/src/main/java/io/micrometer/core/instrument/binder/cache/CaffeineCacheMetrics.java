@@ -182,8 +182,16 @@ public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache
             .register(registry);
 
         if (cache instanceof LoadingCache) {
-            // dividing these gives you a measure of load latency
-            TimeGauge.builder("cache.load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
+            // dividing these gives you a measure of load latency. totalLoadTime and the
+            // success/failure counts are monotonically increasing counters (see
+            // CacheStats#totalLoadTime), so this is a FunctionTimer rather than a
+            // TimeGauge, which would misrepresent an ever-growing total as a
+            // point-in-time value. See
+            // https://github.com/micrometer-metrics/micrometer/issues/5803
+            FunctionTimer
+                .builder("cache.load.duration", cache,
+                        c -> c.stats().loadSuccessCount() + c.stats().loadFailureCount(),
+                        c -> c.stats().totalLoadTime(), TimeUnit.NANOSECONDS)
                 .tags(getTagsWithCacheName())
                 .description("The time the cache has spent loading new values")
                 .register(registry);
