@@ -15,6 +15,7 @@
  */
 package io.micrometer.common;
 
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
@@ -31,7 +32,7 @@ class ValidatedKeyValue<T> implements KeyValue {
     private final String value;
 
     ValidatedKeyValue(String key, T value, Predicate<? super T> validator) {
-        this.key = key;
+        this.key = Objects.requireNonNull(key, "key must not be null");
         this.value = String.valueOf(assertValue(value, validator));
     }
 
