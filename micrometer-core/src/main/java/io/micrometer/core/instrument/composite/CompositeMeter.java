@@ -17,11 +17,12 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.jspecify.annotations.Nullable;
 
 interface CompositeMeter extends Meter {
 
-    void add(MeterRegistry registry);
+    @Nullable Meter add(MeterRegistry registry);
 
-    void remove(MeterRegistry registry);
+    @Nullable Meter remove(MeterRegistry registry);
 
 }
