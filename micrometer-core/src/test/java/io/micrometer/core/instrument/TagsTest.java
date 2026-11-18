@@ -205,6 +205,28 @@ class TagsTest {
     }
 
     @Test
+    void ofTagArrayShouldNotModifyTheGivenArray() {
+        Tag[] tags = { Tag.of("t2", "v2"), Tag.of("t1", "v1") };
+        Tags.of(tags);
+        assertThat(tags).containsExactly(Tag.of("t2", "v2"), Tag.of("t1", "v1"));
+    }
+
+    @Test
+    void ofTagArrayShouldNotBeAffectedByLaterChangesToTheArray() {
+        Tag[] tags = { Tag.of("t1", "v1") };
+        Tags of = Tags.of(tags);
+        tags[0] = Tag.of("t1", "v2");
+        assertTags(of, "t1", "v1");
+    }
+
+    @Test
+    void andTagArrayShouldNotModifyTheGivenArray() {
+        Tag[] tags = { Tag.of("t3", "v3"), Tag.of("t2", "v2") };
+        Tags.of("t1", "v1").and(tags);
+        assertThat(tags).containsExactly(Tag.of("t3", "v3"), Tag.of("t2", "v2"));
+    }
+
+    @Test
     void andTagsShouldReturnANewInstanceWithTags() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and(Tag.of("t2", "v2"));
