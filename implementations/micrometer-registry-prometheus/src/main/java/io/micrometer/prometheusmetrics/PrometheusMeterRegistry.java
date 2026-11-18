@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.prometheus.metrics.config.EscapingScheme;
 import io.prometheus.metrics.config.PrometheusProperties;
 import io.prometheus.metrics.config.PrometheusPropertiesLoader;
 import io.prometheus.metrics.expositionformats.ExpositionFormats;
@@ -128,10 +129,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * Get the metrics scrape body in a specific content type.
+     * Get the metrics scrape body in a specific content type. The {@code escaping}
+     * parameter (e.g. {@code escaping=allow-utf-8}), as sent by Prometheus in the
+     * {@code Accept} header, selects the {@link EscapingScheme} used for metric and label
+     * names; {@link EscapingScheme#DEFAULT} is used if it is absent.
      * @param contentType the scrape Content-Type
      * @return the scrape body
      * @see ExpositionFormats
+     * @see EscapingScheme
      */
     @SuppressWarnings("JdkObsolete")
     public String scrape(String contentType) {
@@ -149,28 +154,36 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     /**
      * Write the metrics scrape body in a specific content type to the given output
-     * stream.
+     * stream. The {@code escaping} parameter (e.g. {@code escaping=allow-utf-8}), as sent
+     * by Prometheus in the {@code Accept} header, selects the {@link EscapingScheme} used
+     * for metric and label names; {@link EscapingScheme#DEFAULT} is used if it is absent.
      * @param outputStream where to write the scrape body
      * @param contentType the Content-Type of the scrape
      * @throws IOException if writing fails
      * @see ExpositionFormats
+     * @see EscapingScheme
      */
     public void scrape(OutputStream outputStream, String contentType) throws IOException {
         scrape(outputStream, contentType, registry.scrape());
     }
 
     private void scrape(OutputStream outputStream, String contentType, MetricSnapshots snapshots) throws IOException {
-        expositionFormats.findWriter(contentType).write(outputStream, snapshots);
+        expositionFormats.findWriter(contentType)
+            .write(outputStream, snapshots, EscapingScheme.fromAcceptHeader(contentType));
     }
 
     /**
-     * Return text for scraping.
+     * Return text for scraping. The {@code escaping} parameter (e.g.
+     * {@code escaping=allow-utf-8}), as sent by Prometheus in the {@code Accept} header,
+     * selects the {@link EscapingScheme} used for metric and label names;
+     * {@link EscapingScheme#DEFAULT} is used if it is absent.
      * @param contentType the Content-Type of the scrape.
      * @param includedNames Sample names to be included. All samples will be included if
      * {@code null}.
      * @return Content that should be included in the response body for an endpoint
      * designated for Prometheus to scrape from.
      * @see ExpositionFormats
+     * @see EscapingScheme
      */
     @SuppressWarnings("JdkObsolete")
     public String scrape(String contentType, @Nullable Set<String> includedNames) {
@@ -186,13 +199,17 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * Scrape to the specified output stream.
+     * Scrape to the specified output stream. The {@code escaping} parameter (e.g.
+     * {@code escaping=allow-utf-8}), as sent by Prometheus in the {@code Accept} header,
+     * selects the {@link EscapingScheme} used for metric and label names;
+     * {@link EscapingScheme#DEFAULT} is used if it is absent.
      * @param outputStream Target that serves the content to be scraped by Prometheus.
      * @param contentType the Content-Type of the scrape.
      * @param includedNames Sample names to be included. All samples will be included if
      * {@code null}.
      * @throws IOException if writing fails
      * @see ExpositionFormats
+     * @see EscapingScheme
      */
     public void scrape(OutputStream outputStream, String contentType, @Nullable Set<String> includedNames)
             throws IOException {
