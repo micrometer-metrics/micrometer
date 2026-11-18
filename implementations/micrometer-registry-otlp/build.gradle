@@ -70,5 +70,5 @@ publishing {
 }
 
 dockerTest {
-    systemProperty 'otel-collector-image.version', '0.152.1'
+    systemProperty 'otel-collector-image.name', dockerImage('otel-collector')
 }

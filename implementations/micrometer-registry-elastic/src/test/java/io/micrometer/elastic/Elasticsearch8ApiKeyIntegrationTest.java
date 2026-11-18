@@ -23,8 +23,8 @@ package io.micrometer.elastic;
 class Elasticsearch8ApiKeyIntegrationTest extends AbstractElasticsearchApiKeyIntegrationTest {
 
     @Override
-    protected String getVersion() {
-        return VERSION_8;
+    protected String getDockerImageName() {
+        return IMAGE_NAME_8;
     }
 
 }

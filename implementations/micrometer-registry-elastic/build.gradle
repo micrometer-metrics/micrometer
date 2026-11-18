@@ -10,3 +10,9 @@ dependencies {
     testImplementation libs.jsonPath
     testImplementation "ch.qos.logback:logback-classic:$logback12Version"
 }
+
+dockerTest {
+    systemProperty 'elasticsearch7-image.name', dockerImage('elasticsearch7')
+    systemProperty 'elasticsearch8-image.name', dockerImage('elasticsearch8')
+    systemProperty 'elasticsearch9-image.name', dockerImage('elasticsearch9')
+}
