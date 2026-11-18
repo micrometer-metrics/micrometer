@@ -26,6 +26,8 @@ import io.micrometer.core.instrument.MeterRegistry;
  */
 public interface MeterBinder {
 
+    String DEFAULT_TAG_VALUE = "unknown";
+
     void bindTo(MeterRegistry registry);
 
 }
