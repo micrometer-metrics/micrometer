@@ -457,10 +457,13 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
             try {
                 this.mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener);
             }
-            catch (InstanceNotFoundException | ListenerNotFoundException ex) {
+            catch (ListenerNotFoundException ignore) {
+            }
+            catch (InstanceNotFoundException ex) {
                 throw new RuntimeException(ex);
             }
         }
+        this.notificationListeners.clear();
     }
 
 }
