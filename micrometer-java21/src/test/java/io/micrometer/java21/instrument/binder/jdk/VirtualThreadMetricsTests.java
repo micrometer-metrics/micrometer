@@ -60,6 +60,17 @@ class VirtualThreadMetricsTests {
     }
 
     @Test
+    void flightRecorderMetersShouldNotBeRegisteredWhenFlightRecorderIsNotAvailable() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        try (VirtualThreadMetrics virtualThreadMetrics = new VirtualThreadMetrics(TAGS, false)) {
+            virtualThreadMetrics.bindTo(registry);
+
+            assertThat(registry.find("jvm.threads.virtual.pinned").timer()).isNull();
+            assertThat(registry.find("jvm.threads.virtual.submit.failed").counter()).isNull();
+        }
+    }
+
+    @Test
     @DisabledForJreRange(min = JRE.JAVA_24,
             disabledReason = "It's not easy to test pinning with synchronized block pinning fixed in 24.")
     void pinnedEventsShouldBeRecorded() {

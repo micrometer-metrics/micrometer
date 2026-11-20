@@ -18,7 +18,9 @@ package io.micrometer.java21.instrument.binder.jdk;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import jdk.jfr.FlightRecorder;
 import jdk.jfr.consumer.RecordingStream;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
 import java.lang.invoke.MethodHandle;
@@ -33,6 +35,11 @@ import static java.util.Collections.emptyList;
 
 /**
  * Metrics instrumentation for Java Virtual Threads.
+ * <p>
+ * The {@code jvm.threads.virtual.pinned} and {@code jvm.threads.virtual.submit.failed}
+ * meters use JDK Flight Recorder events. They are not registered when Flight Recorder is
+ * not available, for example in a GraalVM native image that was built without
+ * {@code --enable-monitoring=jfr}.
  *
  * @author Artyom Gabeev
  * @see <a href="https://openjdk.org/jeps/425#JDK-Flight-Recorder-JFR">JEP 425</a>
@@ -49,7 +56,7 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private static final String METER_NAME_PREFIX = "jvm.threads.virtual.";
 
-    private final RecordingStream recordingStream;
+    private final @Nullable RecordingStream recordingStream;
 
     private final Iterable<Tag> tags;
 
@@ -62,12 +69,29 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
     }
 
     private VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
-        this.recordingStream = createRecordingStream(config);
+        this(config, tags, FlightRecorder.isAvailable());
+    }
+
+    // VisibleForTesting
+    VirtualThreadMetrics(Iterable<Tag> tags, boolean flightRecorderAvailable) {
+        this(new RecordingConfig(), tags, flightRecorderAvailable);
+    }
+
+    private VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags, boolean flightRecorderAvailable) {
+        this.recordingStream = flightRecorderAvailable ? createRecordingStream(config) : null;
         this.tags = tags;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
+        if (recordingStream != null) {
+            bindFlightRecorderEvents(registry, recordingStream);
+        }
+
+        bindVirtualThreadSchedulerMXBean(registry);
+    }
+
+    private void bindFlightRecorderEvents(MeterRegistry registry, RecordingStream recordingStream) {
         Timer pinnedTimer = Timer.builder(METER_NAME_PREFIX + "pinned")
             .description("The duration while the virtual thread was pinned without releasing its platform thread")
             .tags(tags)
@@ -80,8 +104,6 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
         recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
         recordingStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
-
-        bindVirtualThreadSchedulerMXBean(registry);
     }
 
     private void bindVirtualThreadSchedulerMXBean(MeterRegistry registry) {
@@ -149,7 +171,9 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     @Override
     public void close() {
-        recordingStream.close();
+        if (recordingStream != null) {
+            recordingStream.close();
+        }
     }
 
     private record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {

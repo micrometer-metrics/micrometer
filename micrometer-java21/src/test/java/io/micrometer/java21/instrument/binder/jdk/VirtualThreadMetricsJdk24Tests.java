@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @EnabledForJreRange(min = JRE.JAVA_24)
@@ -44,6 +45,19 @@ class VirtualThreadMetricsJdk24Tests {
     @AfterEach
     void tearDown() {
         virtualThreadMetrics.close();
+    }
+
+    @Test
+    void schedulerGaugesShouldBeRegisteredWhenFlightRecorderIsNotAvailable() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        try (VirtualThreadMetrics virtualThreadMetrics = new VirtualThreadMetrics(emptyList(), false)) {
+            virtualThreadMetrics.bindTo(registry);
+
+            assertThat(registry.get("jvm.threads.virtual.parallelism").gauge().value())
+                .isEqualTo(Runtime.getRuntime().availableProcessors());
+            assertThat(registry.get("jvm.threads.virtual.pool.size").gauge().value()).isGreaterThanOrEqualTo(0);
+            assertThat(registry.find("jvm.threads.virtual.pinned").timer()).isNull();
+        }
     }
 
     @Test
