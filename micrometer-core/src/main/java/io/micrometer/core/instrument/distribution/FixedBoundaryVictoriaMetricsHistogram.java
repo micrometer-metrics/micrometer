@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.distribution;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -22,6 +24,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -99,7 +102,7 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
         }
     }
 
-    final AtomicReferenceArray<AtomicLongArray> values;
+    final AtomicReferenceArray<@Nullable AtomicLongArray> values;
 
     final AtomicLong zeros;
 
@@ -141,8 +144,9 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
         AtomicLongArray hb = values.get(inxs.bucketIdx);
         if (hb == null) {
             hb = new AtomicLongArray(BUCKET_SIZE);
-            if (!values.compareAndSet(inxs.bucketIdx, null, hb))
-                hb = values.get(inxs.bucketIdx);
+            if (!values.compareAndSet(inxs.bucketIdx, null, hb)) {
+                hb = Objects.requireNonNull(values.get(inxs.bucketIdx));
+            }
         }
 
         hb.incrementAndGet(inxs.offset);

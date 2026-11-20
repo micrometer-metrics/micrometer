@@ -65,7 +65,7 @@ class StepFunctionTimerTest {
 
         Duration stepDuration = Duration.ofMillis(10);
         StepFunctionTimer<Object> ft = new StepFunctionTimer<>(mock(Meter.Id.class), clock, stepDuration.toMillis(),
-                new Object(), (o) -> counts.poll(), (o) -> totalTimes.poll(), TimeUnit.SECONDS, TimeUnit.SECONDS);
+                new Object(), (o) -> counts.remove(), (o) -> totalTimes.remove(), TimeUnit.SECONDS, TimeUnit.SECONDS);
 
         assertThat(ft.count()).isEqualTo(0.0);
 
@@ -90,7 +90,7 @@ class StepFunctionTimerTest {
 
         Duration stepDuration = Duration.ofMillis(10);
         StepFunctionTimer<Object> timer = new StepFunctionTimer<>(mock(Meter.Id.class), clock, stepDuration.toMillis(),
-                new Object(), (o) -> counts.poll(), (o) -> totalTimes.poll(), TimeUnit.SECONDS, TimeUnit.SECONDS);
+                new Object(), (o) -> counts.remove(), (o) -> totalTimes.remove(), TimeUnit.SECONDS, TimeUnit.SECONDS);
 
         assertThat(timer.count()).isZero();
         assertThat(timer.totalTime(TimeUnit.SECONDS)).isZero();

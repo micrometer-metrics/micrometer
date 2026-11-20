@@ -132,7 +132,8 @@ class ModifiedClassPathExtension implements InvocationInterceptor {
     private boolean isModifiedClassPathClassLoader(ExtensionContext extensionContext) {
         Class<?> testClass = extensionContext.getRequiredTestClass();
         ClassLoader classLoader = testClass.getClassLoader();
-        return classLoader.getClass().getName().equals(ModifiedClassPathClassLoader.class.getName());
+        return classLoader != null
+                && classLoader.getClass().getName().equals(ModifiedClassPathClassLoader.class.getName());
     }
 
 }
