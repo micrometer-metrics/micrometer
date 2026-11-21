@@ -44,4 +44,16 @@ class StackdriverConfigTest {
         assertThat(config.validate().isValid()).isTrue();
     }
 
+    @Test
+    void cumulativeCountersAreDisabledByDefault() {
+        assertThat(config.cumulativeCounters()).isFalse();
+    }
+
+    @Test
+    void cumulativeCountersCanBeEnabled() {
+        props.put("stackdriver.cumulativeCounters", "true");
+
+        assertThat(config.cumulativeCounters()).isTrue();
+    }
+
 }
