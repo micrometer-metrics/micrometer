@@ -63,7 +63,7 @@ If, in the implementation of `get(String k)`, rather than returning `null`, you 
 For example, Spring Boot's Micrometer support binds properties directly to the `DatadogConfig`.
 See the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.export.datadog[Datadog] section in the Spring Boot reference documentation.
 
-`DatadogConfig.hostTag()` specifies a tag key that is mapped to https://docs.datadoghq.com/api/v1/metrics/#submit-metrics[the `host` field] when shipping metrics to Datadog.
+`DatadogConfig.hostTag()` specifies a tag key that is mapped to https://docs.datadoghq.com/api/latest/metrics/submit-metrics/#submit-metrics-v1[the `host` field] when shipping metrics to Datadog.
 For example, if `DatadogConfig.hostTag()` returns `host`, the tag having `host` as its key is used.
 You can set the tag by using common tags, as follows:
 
