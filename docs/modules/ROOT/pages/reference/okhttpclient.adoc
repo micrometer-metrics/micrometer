@@ -1,7 +1,7 @@
 [[overview]]
 = OkHttpClient Instrumentation
 
-Micrometer supports https://square.github.io/okhttp/[OkHttp Client] instrumentation through Observation and metrics.
+Micrometer supports https://lysine.dev/okhttp/[OkHttp Client] instrumentation through Observation and metrics.
 
 [[okhttpclient-observation]]
 == OkHttpClient Observation
