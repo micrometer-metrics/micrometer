@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.prometheus.metrics.expositionformats.OpenMetricsTextFormatWriter;
 import io.prometheus.metrics.expositionformats.PrometheusTextFormatWriter;
+import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.tracer.common.SpanContext;
@@ -524,6 +525,50 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    void emptyCollectorIsReusedBeforeNextScrape() {
+        TrackingPrometheusRegistry prometheusRegistry = new TrackingPrometheusRegistry();
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry,
+                clock);
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1).register(registry);
+
+        registry.remove(gauge);
+        Gauge.builder("my.gauge", () -> 2).register(registry);
+
+        assertThat(prometheusRegistry.registrations.get()).isEqualTo(1);
+        assertThat(prometheusRegistry.unregistrations.get()).isZero();
+        assertThat(registry.scrape()).contains("my_gauge 2.0");
+    }
+
+    @Test
+    void emptyCollectorIsUnregisteredWhenScraped() {
+        TrackingPrometheusRegistry prometheusRegistry = new TrackingPrometheusRegistry();
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry,
+                clock);
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1).register(registry);
+
+        registry.remove(gauge);
+        assertThat(prometheusRegistry.unregistrations.get()).isZero();
+
+        assertThat(prometheusRegistry.scrape()).isEmpty();
+        assertThat(prometheusRegistry.unregistrations.get()).isEqualTo(1);
+    }
+
+    @Test
+    void emptyCollectorCanBeReusedForDifferentMeterType() {
+        TrackingPrometheusRegistry prometheusRegistry = new TrackingPrometheusRegistry();
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry,
+                clock);
+        Gauge gauge = Gauge.builder("my.meter", () -> 1).register(registry);
+
+        registry.remove(gauge);
+        Counter.builder("my.meter").register(registry).increment();
+
+        assertThat(prometheusRegistry.registrations.get()).isEqualTo(1);
+        assertThat(prometheusRegistry.unregistrations.get()).isZero();
+        assertThat(registry.scrape()).contains("my_meter_total 1.0");
+    }
+
+    @Test
     void timerQuantilesAreBasedOffOfOnlyRecentSamples() {
         Timer timer = Timer.builder("my.timer")
             .publishPercentiles(1.0)
@@ -946,6 +991,36 @@ class PrometheusMeterRegistryTest {
         scraperTask.get();
     }
 
+    @Issue("#8182")
+    @Test
+    void scrapeWhileOverwritingSingleMultiGaugeRowDoesNotCreateDuplicateLabels() throws Exception {
+        IntStream.range(0, 500).forEach(i -> Gauge.builder("other.gauge." + i, () -> i).register(registry));
+        MultiGauge multiGauge = MultiGauge.builder("my.gauge").register(registry);
+        List<MultiGauge.Row<?>> rows = List.of(MultiGauge.Row.of(Tags.of("key", "value"), 1));
+        multiGauge.register(rows, true);
+
+        AtomicBoolean stop = new AtomicBoolean();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<?> scraperTask = executor.submit(() -> {
+            while (!stop.get()) {
+                registry.scrape();
+            }
+        });
+
+        try {
+            for (int i = 0; i < 100_000; i++) {
+                multiGauge.register(rows, true);
+            }
+        }
+        finally {
+            stop.set(true);
+            executor.shutdown();
+            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+        }
+
+        scraperTask.get();
+    }
+
     @Test
     void duplicateTimeSeriesFromDifferentMetersThrowsOnScrape() {
         Timer.builder("test").register(registry).record(Duration.ofMillis(10));
@@ -1223,6 +1298,26 @@ class PrometheusMeterRegistryTest {
         public String tagKey(String key) {
             tagKeyCount.incrementAndGet();
             return super.tagKey(key);
+        }
+
+    }
+
+    private static class TrackingPrometheusRegistry extends PrometheusRegistry {
+
+        private final AtomicInteger registrations = new AtomicInteger();
+
+        private final AtomicInteger unregistrations = new AtomicInteger();
+
+        @Override
+        public void register(MultiCollector collector) {
+            super.register(collector);
+            registrations.incrementAndGet();
+        }
+
+        @Override
+        public void unregister(MultiCollector collector) {
+            super.unregister(collector);
+            unregistrations.incrementAndGet();
         }
 
     }

@@ -566,14 +566,24 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void onMeterRemoved(Meter meter) {
-        MicrometerCollector collector = collectorMap.get(getConventionName(meter.getId()));
-        if (collector != null) {
+        // Delay unregistering an empty collector until it is scraped so an immediate
+        // re-registration can reuse it. This prevents a weakly consistent Prometheus
+        // registry scrape from observing non-empty old and replacement collectors.
+        // See https://github.com/micrometer-metrics/micrometer/issues/8182.
+        collectorMap.computeIfPresent(getConventionName(meter.getId()), (name, collector) -> {
             collector.remove(meter.getId());
-            if (collector.isEmpty()) {
-                collectorMap.remove(getConventionName(meter.getId()));
-                getPrometheusRegistry().unregister(collector);
+            return collector;
+        });
+    }
+
+    private void unregisterIfEmpty(MicrometerCollector collector) {
+        collectorMap.computeIfPresent(collector.getConventionName(), (name, existingCollector) -> {
+            if (existingCollector == collector && collector.isEmpty()) {
+                registry.unregister(collector);
+                return null;
             }
-        }
+            return existingCollector;
+        });
     }
 
     private MetricMetadata getMetadata(String name, @Nullable String description) {
@@ -586,10 +596,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     private void applyToCollector(Meter.Id id, Consumer<MicrometerCollector> consumer) {
         collectorMap.compute(getConventionName(id), (name, existingCollector) -> {
             if (existingCollector == null) {
-                MicrometerCollector micrometerCollector = new MicrometerCollector(name, id);
+                MicrometerCollector micrometerCollector = new MicrometerCollector(name, id, this::unregisterIfEmpty);
                 consumer.accept(micrometerCollector);
                 registry.register(micrometerCollector);
                 return micrometerCollector;
+            }
+
+            if (existingCollector.isEmpty()) {
+                existingCollector.prepareForReuse(id);
             }
 
             if (!existingCollector.getOriginalId().getName().equals(id.getName())) {
