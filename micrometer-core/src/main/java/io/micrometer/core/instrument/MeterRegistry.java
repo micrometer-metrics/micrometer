@@ -273,6 +273,25 @@ public abstract class MeterRegistry {
     }
 
     /**
+     * Build a new function counter that tracks a time value, to be added to the registry.
+     * This is guaranteed to only be called if the function counter doesn't already exist.
+     * @param id The id that uniquely identifies the function counter, with the registry's
+     * base time unit as its base unit.
+     * @param obj State object used to compute a value.
+     * @param countFunction Function that produces a monotonically increasing time value
+     * from the state object.
+     * @param countFunctionUnit The unit of time produced by the count function.
+     * @param <T> The type of the state object from which the counter value is extracted.
+     * @return A new function counter that reports in the registry's base time unit.
+     * @since 1.18.0
+     */
+    protected <T> FunctionCounter newFunctionTimeCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction,
+            TimeUnit countFunctionUnit) {
+        return newFunctionCounter(id, obj,
+                obj2 -> TimeUtils.convert(countFunction.applyAsDouble(obj2), countFunctionUnit, getBaseTimeUnit()));
+    }
+
+    /**
      * Build a new function timer to be added to the registry. This is guaranteed to only
      * be called if the function timer doesn't already exist.
      * @param id The id that uniquely identifies the function timer.
@@ -1186,11 +1205,10 @@ public abstract class MeterRegistry {
          */
         <T> FunctionCounter functionTimeCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction,
                 TimeUnit functionTimeUnit) {
-            return registerMeterIfNecessary(FunctionCounter.class, id, (registry, mappedId) -> {
-                Meter.Id withUnit = mappedId.withBaseUnit(registry.getBaseTimeUnitStr());
-                return registry.newFunctionCounter(withUnit, obj, obj2 -> TimeUtils
-                    .convert(countFunction.applyAsDouble(obj2), functionTimeUnit, registry.getBaseTimeUnit()));
-            }, NoopFunctionCounter::new);
+            return registerMeterIfNecessary(FunctionCounter.class, id,
+                    (registry, mappedId) -> registry.newFunctionTimeCounter(
+                            mappedId.withBaseUnit(registry.getBaseTimeUnitStr()), obj, countFunction, functionTimeUnit),
+                    NoopFunctionCounter::new);
         }
 
         /**
