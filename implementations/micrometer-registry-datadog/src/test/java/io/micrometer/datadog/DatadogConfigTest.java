@@ -52,6 +52,27 @@ class DatadogConfigTest {
     }
 
     @Test
+    void defaultsApiVersionToV1() {
+        assertThat(config.apiVersion()).isEqualTo(DatadogApiVersion.V1);
+    }
+
+    @Test
+    void apiVersionCanBeSetToV2() {
+        props.put("datadog.apiVersion", "v2");
+
+        assertThat(config.apiVersion()).isEqualTo(DatadogApiVersion.V2);
+    }
+
+    @Test
+    void invalidApiVersion() {
+        props.put("datadog.apiKey", "secret");
+        props.put("datadog.apiVersion", "v3");
+
+        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
+            .containsExactly("should be one of 'V1', 'V2'");
+    }
+
+    @Test
     void compressCanBeDisabled() {
         props.put("datadog.compress", "false");
 
