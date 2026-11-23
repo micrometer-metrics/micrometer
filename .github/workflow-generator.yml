@@ -3,8 +3,8 @@ workflow.generator:
   workflows:
     release-train:
       build:
-        runs-on: ubuntu22-4-16
+        runs-on: ubuntu-latest-4-16-usw1
       test:
         additional-java-versions: [11, 17, 21, 26]
-        runs-on: ubuntu22-4-16
+        runs-on: ubuntu-latest-4-16-usw1
   project.java.versions.primary: 25
