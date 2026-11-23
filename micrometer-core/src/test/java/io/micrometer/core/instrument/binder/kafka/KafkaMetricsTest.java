@@ -26,6 +26,7 @@ import org.apache.kafka.common.metrics.KafkaMetric;
 import org.apache.kafka.common.metrics.MetricConfig;
 import org.apache.kafka.common.metrics.stats.Value;
 import org.apache.kafka.common.utils.Time;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -46,10 +49,15 @@ class KafkaMetricsTest {
     @SuppressWarnings("NullAway.Init")
     private KafkaMetrics kafkaMetrics;
 
+    private @Nullable ScheduledThreadPoolExecutor refreshScheduler;
+
     @AfterEach
     void afterEach() {
         if (kafkaMetrics != null)
             kafkaMetrics.close();
+        if (refreshScheduler != null) {
+            refreshScheduler.shutdownNow();
+        }
     }
 
     @Test
@@ -112,6 +120,20 @@ class KafkaMetricsTest {
 
         customScheduler.shutdownNow();
         assertThat(customScheduler.isShutdown()).isTrue();
+    }
+
+    @Test
+    void closeShouldCancelRefreshTaskOnCustomScheduler() {
+        ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+        this.refreshScheduler = scheduler;
+        KafkaMetrics metrics = new KafkaMetrics(Collections::emptyMap, Tags.empty(), scheduler, Duration.ofDays(1));
+        metrics.bindTo(new SimpleMeterRegistry());
+        ScheduledFuture<?> refreshTask = (ScheduledFuture<?>) scheduler.getQueue().element();
+
+        metrics.close();
+
+        assertThat(refreshTask.isCancelled()).isTrue();
+        assertThat(scheduler.isShutdown()).isFalse();
     }
 
     @Test
