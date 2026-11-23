@@ -25,7 +25,7 @@ concurrency:
 jobs:
   test-release:
     name: "Test Release"
-    runs-on: "ubuntu22-8-32"
+    runs-on: "ubuntu-latest-8-32-usw1"
     steps:
     - name: "Prevent Re-runs"
       id: "prevent-re-runs"
