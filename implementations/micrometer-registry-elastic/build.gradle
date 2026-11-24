@@ -4,8 +4,7 @@ dependencies {
     implementation libs.slf4jApi
 
     testImplementation project(':micrometer-test')
-    // TODO: upgrade when we figure out how to unbreak things due to this change: https://github.com/testcontainers/testcontainers-java/pull/5099
-    testImplementation 'org.testcontainers:elasticsearch:1.16.3'
+    testImplementation libs.testcontainers.elasticsearch
     testImplementation libs.testcontainers.junitJupiter
     testImplementation libs.jsonPath
     testImplementation "ch.qos.logback:logback-classic:$logback12Version"
