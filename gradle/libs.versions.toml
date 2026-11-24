@@ -170,7 +170,7 @@ openTelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref
 openTelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp" }
 openTelemetry-exporter-otlp-common = { module = "io.opentelemetry:opentelemetry-exporter-otlp-common" }
 openTelemetry-sdk-metrics = { module = "io.opentelemetry:opentelemetry-sdk-metrics" }
-osgiJunit5 = "org.osgi:org.osgi.test.junit5:1.3.0"
+osgiJunit5 = "org.osgi:org.osgi.test.junit5:1.4.0"
 postgre = { module = "org.postgresql:postgresql", version.ref = "postgre" }
 prometheusMetricsBom = { module = "io.prometheus:prometheus-metrics-bom", version.ref = "prometheus" }
 prometheusMetrics = { module = "io.prometheus:prometheus-metrics-core" }
