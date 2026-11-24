@@ -94,7 +94,10 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     }
 
     protected ElasticsearchContainer getContainer() {
+        // These tests exercise basic and API key authentication over HTTP.
         return new ElasticsearchContainer(DockerImageName.parse(getDockerImageName(getVersion())))
+            .withEnv("xpack.security.transport.ssl.enabled", "false")
+            .withEnv("xpack.security.http.ssl.enabled", "false")
             .withPassword(PASSWORD);
     }
 
