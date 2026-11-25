@@ -19,6 +19,9 @@ import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.config.validate.Validated;
 import org.jspecify.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.Properties;
 
@@ -26,6 +29,7 @@ import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getBoolean;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 
 /**
  * Configuration for {@link PrometheusMeterRegistry}.
@@ -64,6 +68,10 @@ public interface PrometheusConfig extends MeterRegistryConfig {
     }
 
     /**
+     * Prometheus client properties, with values from
+     * {@code prometheus.prometheusProperties} overriding the defaults. The value uses
+     * {@link Properties#load(java.io.Reader)} syntax: newline-separated entries, allowing
+     * commas within values.
      * @return an instance of {@link Properties} that contains Prometheus Java Client
      * config entries, for example
      * {@code io.prometheus.exporter.exemplarsOnAllMetricTypes=true}.
@@ -74,6 +82,12 @@ public interface PrometheusConfig extends MeterRegistryConfig {
     default @Nullable Properties prometheusProperties() {
         Properties properties = new Properties();
         properties.setProperty("io.prometheus.exporter.exemplarsOnAllMetricTypes", "true");
+        try {
+            properties.load(new StringReader(getString(this, "prometheusProperties").orElse("")));
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         return properties;
     }
 
