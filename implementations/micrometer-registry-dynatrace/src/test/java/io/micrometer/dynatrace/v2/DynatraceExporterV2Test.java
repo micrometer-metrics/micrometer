@@ -655,7 +655,7 @@ class DynatraceExporterV2Test {
                 + "  \"linesInvalid\": 0,\n" + "  \"error\": null,\n" + "  \"warnings\": null\n" + "}"));
 
         // fill the file with content
-        final String baseUri = "https://your-dynatrace-ingest-url/api/v2/metrics/ingest/";
+        final String baseUri = "https://test.example.org//api/v2/metrics/ingest/";
         final String firstUri = baseUri + "first";
         final String secondUri = baseUri + "second";
 

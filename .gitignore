@@ -26,3 +26,4 @@ bin/
 generated/
 results/
 jcstress-results-*.bin.gz
+.lycheecache

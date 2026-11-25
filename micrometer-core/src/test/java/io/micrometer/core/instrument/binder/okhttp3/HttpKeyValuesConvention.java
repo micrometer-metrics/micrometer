@@ -41,7 +41,7 @@ public interface HttpKeyValuesConvention<REQ, RES> extends KeyValuesConvention {
      * Usually the fragment is not transmitted over HTTP, but if it is known, it should be
      * included nevertheless.
      *
-     * Examples: https://www.foo.bar/search?q=OpenTelemetry#SemConv
+     * Example: {@code https://example.org/search?q=OpenTelemetry#SemConv}
      * @param request HTTP request
      * @return key value
      */
