@@ -6,5 +6,5 @@ workflow.generator:
         runs-on: ubuntu-latest-4-16-usw1
       test:
         additional-java-versions: [11, 17, 21, 26]
-        runs-on: ubuntu-latest-8-32-usw1
+        runs-on: ubuntu-latest-4-16-usw1
   project.java.versions.primary: 25
