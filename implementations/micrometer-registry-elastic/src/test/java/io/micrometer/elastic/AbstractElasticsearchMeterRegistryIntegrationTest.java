@@ -29,6 +29,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,9 +97,13 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     protected ElasticsearchContainer getContainer() {
         // These tests exercise basic and API key authentication over HTTP.
         return new ElasticsearchContainer(DockerImageName.parse(getDockerImageName(getVersion())))
+            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
             .withEnv("xpack.security.transport.ssl.enabled", "false")
             .withEnv("xpack.security.http.ssl.enabled", "false")
-            .withPassword(PASSWORD);
+            .withPassword(PASSWORD)
+            .withCreateContainerCmdModifier(cmd -> {
+                Objects.requireNonNull(cmd.getHostConfig()).withMemory(1024L * 1024 * 1024);
+            });
     }
 
     protected ElasticConfig getConfig() {
