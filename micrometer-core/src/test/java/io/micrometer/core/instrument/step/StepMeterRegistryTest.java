@@ -635,7 +635,8 @@ class StepMeterRegistryTest {
 
         AtomicBoolean isPublishing = new AtomicBoolean(false);
 
-        CompletableFuture<Void> scheduledPublishingFuture = CompletableFuture.completedFuture(null);
+        CompletableFuture<@Nullable Void> scheduledPublishingFuture = CompletableFuture.runAsync(() -> {
+        });
 
         MyStepMeterRegistry() {
             this(StepMeterRegistryTest.this.config, StepMeterRegistryTest.this.clock);

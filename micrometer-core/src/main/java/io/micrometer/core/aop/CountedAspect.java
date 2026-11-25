@@ -200,6 +200,9 @@ public class CountedAspect {
             declaringClass = pjp.getTarget().getClass();
         }
         Counted counted = declaringClass.getAnnotation(Counted.class);
+        if (counted == null) {
+            return pjp.proceed();
+        }
 
         return perform(pjp, counted);
     }

@@ -37,9 +37,6 @@ class HighCardinalityAnnotationHandler extends AnnotationHandler<Observation> {
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         super((keyValue, observation) -> observation.highCardinalityKeyValue(keyValue), resolverProvider,
                 expressionResolverProvider, HighCardinality.class, (annotation, o) -> {
-                    if (!(annotation instanceof HighCardinality)) {
-                        return null;
-                    }
                     HighCardinality highCardinality = (HighCardinality) annotation;
                     return KeyValue.of(resolveTagKey(highCardinality),
                             resolveTagValue(highCardinality, o, resolverProvider, expressionResolverProvider));

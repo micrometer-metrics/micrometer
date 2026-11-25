@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.util.TimeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -75,7 +76,7 @@ public final class CountAtBucket {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o)
             return true;
         if (o == null || getClass() != o.getClass())
