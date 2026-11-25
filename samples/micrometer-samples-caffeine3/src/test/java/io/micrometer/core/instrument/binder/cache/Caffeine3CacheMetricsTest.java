@@ -20,9 +20,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.assertj.core.data.Offset;
@@ -64,9 +64,10 @@ class Caffeine3CacheMetricsTest extends Caffeine3AbstractCacheMetricsTest {
         assertThat(evictionWeight.count()).isEqualTo((double) stats.evictionWeight());
 
         // specific to LoadingCache instance
-        TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
-        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isCloseTo((double) stats.totalLoadTime(),
+        FunctionTimer loadDuration = fetch(registry, "cache.load.duration").functionTimer();
+        assertThat(loadDuration.totalTime(TimeUnit.NANOSECONDS)).isCloseTo((double) stats.totalLoadTime(),
                 Offset.offset(0.1));
+        assertThat(loadDuration.count()).isEqualTo((double) (stats.loadSuccessCount() + stats.loadFailureCount()));
 
         FunctionCounter successfulLoad = fetch(registry, "cache.load", Tags.of("result", "success")).functionCounter();
         assertThat(successfulLoad.count()).isEqualTo((double) stats.loadSuccessCount());
@@ -91,7 +92,7 @@ class Caffeine3CacheMetricsTest extends Caffeine3AbstractCacheMetricsTest {
                 "testCache", expectedTag);
         metrics.bindTo(meterRegistry);
 
-        assertThat(meterRegistry.find("cache.load.duration").timeGauge()).isNull();
+        assertThat(meterRegistry.find("cache.load.duration").functionTimer()).isNull();
     }
 
     @Test
