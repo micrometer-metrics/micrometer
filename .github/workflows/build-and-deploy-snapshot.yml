@@ -8,8 +8,6 @@ permissions:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-env:
-  GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx4g"'
 jobs:
   build-jdk21:
     runs-on: ${{ startsWith(github.ref_name, 'release/') && 'ubuntu-latest-4-16-usw1' || 'ubuntu-latest' }}
