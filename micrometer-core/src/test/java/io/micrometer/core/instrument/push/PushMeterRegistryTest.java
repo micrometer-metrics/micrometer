@@ -87,6 +87,37 @@ class PushMeterRegistryTest {
     }
 
     @Test
+    @Issue("#4632")
+    void stopDoesNotPublishAndCloseAfterStopPublishesOnce() {
+        CountingPushMeterRegistry pushMeterRegistry = new CountingPushMeterRegistry(config, Clock.SYSTEM);
+        pushMeterRegistry.stop();
+        assertThat(pushMeterRegistry.publishCount.get()).isZero();
+        pushMeterRegistry.close();
+        assertThat(pushMeterRegistry.publishCount.get()).isOne();
+    }
+
+    @Test
+    @Issue("#4632")
+    void publishingResumesWhenStartedAfterStop() throws InterruptedException {
+        CountingPushMeterRegistry pushMeterRegistry = new CountingPushMeterRegistry(config, Clock.SYSTEM);
+        ThreadFactory threadFactory = new NamedThreadFactory("PushMeterRegistryTest");
+        pushMeterRegistry.start(threadFactory);
+        await().atMost(5, SECONDS).until(() -> pushMeterRegistry.publishCount.get() > 0);
+
+        pushMeterRegistry.stop();
+        // allow a publish that was in progress when stopping to finish
+        Thread.sleep(STEP_DURATION.toMillis() * 2);
+        int publishCountAfterStop = pushMeterRegistry.publishCount.get();
+        Thread.sleep(STEP_DURATION.toMillis() * 5);
+        assertThat(pushMeterRegistry.publishCount.get()).as("no publishing while stopped")
+            .isEqualTo(publishCountAfterStop);
+
+        pushMeterRegistry.start(threadFactory);
+        await().atMost(5, SECONDS).until(() -> pushMeterRegistry.publishCount.get() > publishCountAfterStop);
+        pushMeterRegistry.close();
+    }
+
+    @Test
     @Issue("#3712")
     void publishOnlyHappensOnceWithMultipleClose() {
         CountingPushMeterRegistry pushMeterRegistry = new CountingPushMeterRegistry(config, Clock.SYSTEM);
