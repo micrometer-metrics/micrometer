@@ -90,6 +90,15 @@ You can also configure resource labels with the `StackdriverConfig` method, `res
 
 IMPORTANT: When using Micrometer across multiple applications or instances, it is necessary that Stackdriver labels are unique per application or instance. Otherwise, you will see errors such as `One or more TimeSeries could not be written: One or more points were written more frequently than the maximum sampling period configured`. If using a resource type other than `global`, the resource labels may already make metrics unique per application instance. If not, a common tag with the hostname or platform-provided instance ID may be a good candidate for achieving this.
 
+== Cumulative Counters
+
+By default, counters and function counters are published as `GAUGE` metrics that hold the count of the last step.
+Starting with 1.18.0, the `StackdriverConfig` method `cumulativeCounters` can return `true` (or the `stackdriver.cumulativeCounters` property be set to `true`) to publish them as https://cloud.google.com/monitoring/api/v3/kinds-and-types[`CUMULATIVE` metrics] instead.
+Each point then holds the count since the start of the time series, and all the points of a time series share the same start time (the time of its first publish minus the step), which is what Stackdriver expects to compute rates.
+Timers and distribution summaries are not affected.
+
+If counters were already published with the `GAUGE` metric kind, their metric descriptors have to be deleted before they can be published with the `CUMULATIVE` metric kind.
+
 == Spring Boot
 
 Spring Boot provides auto-configuration for Micrometer's `StackdriverMeterRegistry`. For more information, see the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready-metrics-export-stackdriver[Spring Boot documentation].
