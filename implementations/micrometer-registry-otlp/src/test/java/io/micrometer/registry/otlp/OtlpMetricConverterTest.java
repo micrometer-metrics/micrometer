@@ -205,6 +205,36 @@ class OtlpMetricConverterTest {
     }
 
     @Test
+    void addMeterWithCustomMeasurements() {
+        Meter meter = Meter
+            .builder("test.custom", Meter.Type.OTHER,
+                    Arrays.asList(new Measurement(() -> 10, Statistic.TOTAL), new Measurement(() -> 3, Statistic.MAX)))
+            .tag("test.tag", "value")
+            .description("description")
+            .baseUnit("items")
+            .register(otlpMeterRegistry);
+
+        otlpMetricConverter.addMeter(meter);
+        List<MetricData> metrics = otlpMetricConverter.getAllMetrics();
+
+        assertThat(metrics).singleElement().satisfies(metric -> {
+            assertThat(metric.getType()).isEqualTo(MetricDataType.DOUBLE_GAUGE);
+            assertThat(metric.getName()).isEqualTo("test.custom");
+            assertThat(metric.getDescription()).isEqualTo("description");
+            assertThat(metric.getUnit()).isEqualTo("items");
+            assertThat(metric.getDoubleGaugeData().getPoints()).hasSize(2).satisfiesExactlyInAnyOrder(total -> {
+                assertThat(total.getValue()).isEqualTo(10);
+                assertThat(total.getAttributes().get(AttributeKey.stringKey("statistic"))).isEqualTo("total");
+                assertThat(total.getAttributes().get(AttributeKey.stringKey("test.tag"))).isEqualTo("value");
+            }, max -> {
+                assertThat(max.getValue()).isEqualTo(3);
+                assertThat(max.getAttributes().get(AttributeKey.stringKey("statistic"))).isEqualTo("max");
+                assertThat(max.getAttributes().get(AttributeKey.stringKey("test.tag"))).isEqualTo("value");
+            });
+        });
+    }
+
+    @Test
     void addMeterWithDistributionSummary() {
         DistributionSummary summary = DistributionSummary.builder("test.summary")
             .publishPercentiles(0.5)

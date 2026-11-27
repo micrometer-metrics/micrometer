@@ -109,9 +109,12 @@ class OtlpMetricConverter {
     }
 
     private void writeMeter(Meter meter) {
-        // TODO support writing custom meters
-        // one gauge per measurement
-        getOrCreateCollector(meter.getId(), MetricType.DOUBLE_GAUGE);
+        for (Measurement measurement : meter.measure()) {
+            Meter.Id id = meter.getId().withTag(measurement.getStatistic());
+            DoublePointData point = DoublePointData.create(0, TimeUnit.MILLISECONDS.toNanos(clock.wallTime()),
+                    getAttributesForId(id), measurement.getValue(), Collections.emptyList());
+            addDoublePointData(meter.getId(), MetricType.DOUBLE_GAUGE, point);
+        }
     }
 
     private void writeGauge(Gauge gauge) {
