@@ -208,6 +208,21 @@ class MicrometerHttpClientTests {
         assertThat(storeContextObservationHandler.context.getError()).isInstanceOf(CompletionException.class);
     }
 
+    @Test
+    void sendAsyncShouldNotWrapTheCompletionExceptionOfTheHttpClient(WireMockRuntimeInfo wmInfo) {
+        var request = HttpRequest.newBuilder(URI.create(wmInfo.getHttpBaseUrl() + "/test-fault")).GET().build();
+        var client = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry).build();
+
+        // The HttpClient fails with a CompletionException caused by the I/O error,
+        // and the instrumented client must keep this exception chain
+        assertThatThrownBy(() -> httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).join())
+            .isInstanceOf(CompletionException.class)
+            .hasCauseInstanceOf(IOException.class);
+        assertThatThrownBy(() -> client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).join())
+            .isInstanceOf(CompletionException.class)
+            .hasCauseInstanceOf(IOException.class);
+    }
+
     private void thenMeterRegistryContainsHttpClientTags() {
         then(meterRegistry.find("http.client.requests")
             .tag("method", "GET")
