@@ -83,6 +83,12 @@ To find the correct `uri` for your account, do the following:
 
 For example, for the `US5` site, the correct API endpoint is `https://api.us5.datadoghq.com`. For the `US3` site, it is `https://api.us3.datadoghq.com`.
 
+By default, the registry sends the metrics to the v1 series API (`/api/v1/series`).
+Starting with 1.18.0, `DatadogConfig.apiVersion()` can return `DatadogApiVersion.V2` to send them to the https://docs.datadoghq.com/api/latest/metrics/#submit-metrics[v2 series API] (`/api/v2/series`) instead, for instance with the `datadog.apiVersion` property set to `v2`.
+With the v2 API, the tag selected by `DatadogConfig.hostTag()` is sent as a `host` resource of each series.
+Datadog accepts smaller payloads on the v2 API (500 kilobytes, or 5 megabytes once decompressed for a compressed payload), so keep `DatadogConfig.compress()` enabled, which is the default, or reduce `DatadogConfig.batchSize()`.
+The metric metadata (such as the description and the base unit) is still sent to the v1 metric metadata API, which has no v2 equivalent.
+
 === Through DogStatsD Approach
 
 ==== Gradle
