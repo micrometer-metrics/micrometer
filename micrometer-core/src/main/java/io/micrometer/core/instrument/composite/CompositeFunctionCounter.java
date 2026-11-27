@@ -19,9 +19,11 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopFunctionCounter;
+import io.micrometer.core.instrument.util.TimeUtils;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
 public class CompositeFunctionCounter<T> extends AbstractCompositeMeter<FunctionCounter> implements FunctionCounter {
@@ -30,16 +32,38 @@ public class CompositeFunctionCounter<T> extends AbstractCompositeMeter<Function
 
     private final ToDoubleFunction<T> f;
 
+    private final @Nullable TimeUnit fUnit;
+
+    private final @Nullable TimeUnit baseTimeUnit;
+
     CompositeFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.f = f;
+        this.fUnit = null;
+        this.baseTimeUnit = null;
+    }
+
+    /**
+     * A function counter that tracks a time value, registered in each child registry with
+     * {@code fUnit} so that each child scales it to its own base time unit.
+     */
+    CompositeFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f, TimeUnit fUnit, TimeUnit baseTimeUnit) {
+        super(id);
+        this.ref = new WeakReference<>(obj);
+        this.f = f;
+        this.fUnit = fUnit;
+        this.baseTimeUnit = baseTimeUnit;
     }
 
     @Override
     public double count() {
         T value = ref.get();
-        return value != null ? f.applyAsDouble(value) : 0;
+        if (value == null) {
+            return 0;
+        }
+        double count = f.applyAsDouble(value);
+        return fUnit != null && baseTimeUnit != null ? TimeUtils.convert(count, fUnit, baseTimeUnit) : count;
     }
 
     @Override
@@ -52,6 +76,13 @@ public class CompositeFunctionCounter<T> extends AbstractCompositeMeter<Function
         final T obj = ref.get();
         if (obj == null) {
             return null;
+        }
+
+        if (fUnit != null) {
+            return FunctionCounter.builder(getId().getName(), obj, f, fUnit)
+                .tags(getId().getTagsAsIterable())
+                .description(getId().getDescription())
+                .register(registry);
         }
 
         return FunctionCounter.builder(getId().getName(), obj, f)

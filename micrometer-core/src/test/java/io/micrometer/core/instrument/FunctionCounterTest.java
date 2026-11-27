@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.junit.jupiter.api.Test;
@@ -124,6 +125,36 @@ class FunctionCounterTest {
             .register(registry);
 
         assertThat(counter.count()).isEqualTo(0.0015);
+    }
+
+    @Test
+    void compositeScalesToEachChildRegistryBaseTimeUnit() {
+        MeterRegistry millisRegistry = new SimpleMeterRegistry() {
+            @Override
+            protected TimeUnit getBaseTimeUnit() {
+                return TimeUnit.MILLISECONDS;
+            }
+        };
+        CompositeMeterRegistry composite = new CompositeMeterRegistry();
+        composite.add(millisRegistry);
+
+        AtomicLong state = new AtomicLong(5000);
+        FunctionCounter.builder("my.time.counter", state, AtomicLong::doubleValue, TimeUnit.MILLISECONDS)
+            .register(composite);
+        // added after registration, so the composite meter registers it here
+        composite.add(registry);
+
+        FunctionCounter compositeCounter = composite.get("my.time.counter").functionCounter();
+        assertThat(compositeCounter.count()).isEqualTo(5.0);
+        assertThat(compositeCounter.getId().getBaseUnit()).isEqualTo("seconds");
+
+        FunctionCounter millisCounter = millisRegistry.get("my.time.counter").functionCounter();
+        assertThat(millisCounter.count()).isEqualTo(5000.0);
+        assertThat(millisCounter.getId().getBaseUnit()).isEqualTo("milliseconds");
+
+        FunctionCounter secondsCounter = registry.get("my.time.counter").functionCounter();
+        assertThat(secondsCounter.count()).isEqualTo(5.0);
+        assertThat(secondsCounter.getId().getBaseUnit()).isEqualTo("seconds");
     }
 
 }
