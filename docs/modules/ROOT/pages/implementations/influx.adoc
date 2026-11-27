@@ -165,3 +165,64 @@ StatsdConfig config = new StatsdConfig() {
 
 MeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
 ----
+
+== Histograms and Percentiles
+
+When shipping directly to InfluxDB, `InfluxMeterRegistry` writes a `Timer` or a `DistributionSummary` as a single measurement tagged `metric_type=histogram`, with the `sum`, `count`, `mean`, and `upper` fields. Timer values are in milliseconds, the base time unit of this registry. A timer that recorded 75 ms and 250 ms is written as follows:
+
+[source,text]
+----
+http_server_requests,uri=/api/things,metric_type=histogram sum=325,count=2,mean=162.5,upper=250 1700000000000
+----
+
+Client-side percentiles and histogram buckets are not fields of that measurement. They go to separate measurements, named after the meter with a `_percentile` or `_histogram` suffix, tagged `metric_type=gauge` and carrying the tags of the meter they are derived from, each with a single `value` field. The meter name is converted to snake case by default, as it is for every Influx measurement name. `Timer`, `DistributionSummary`, and `LongTaskTimer` all publish these measurements.
+
+NOTE: For a `Timer` or a `DistributionSummary`, these values are read from a histogram that rotates over the publishing interval rather than accumulating for the lifetime of the application. Each published value covers roughly the last interval, can decrease, and need not agree exactly with the `count` of the meter's own measurement. A `LongTaskTimer` reports only the tasks that are in flight when the registry publishes.
+
+=== Client-Side Percentiles
+
+`publishPercentiles` writes one series to the `_percentile` measurement per percentile, distinguished by a `phi` tag. The value of a timer percentile is in milliseconds, while the value of a distribution summary percentile is in the unit that was recorded:
+
+[source,java]
+----
+Timer timer = Timer.builder("http.server.requests")
+    .tag("uri", "/api/things")
+    .publishPercentiles(0.5, 0.95)
+    .register(registry);
+
+timer.record(Duration.ofMillis(75));
+timer.record(Duration.ofMillis(250));
+----
+
+[source,text]
+----
+http_server_requests_percentile,phi=0.5,uri=/api/things,metric_type=gauge value=71.303168 1700000000000
+http_server_requests_percentile,phi=0.95,uri=/api/things,metric_type=gauge value=247.463936 1700000000000
+----
+
+Each value is an approximation computed by the application instance that published it, so it cannot be aggregated across instances or any other dimension.
+
+=== Histogram Buckets
+
+`serviceLevelObjectives` writes one series to the `_histogram` measurement per boundary, distinguished by a `le` tag. The value is the number of recorded events at or below that boundary, so the counts are cumulative across boundaries. They are not cumulative over the lifetime of the process: the underlying histogram keeps a rolling window, so a boundary's count can go down from one publish to the next. No `le=+Inf` series is written. The boundaries of a timer are written in milliseconds:
+
+[source,java]
+----
+Timer timer = Timer.builder("http.server.requests")
+    .tag("uri", "/api/things")
+    .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(500))
+    .register(registry);
+
+timer.record(Duration.ofMillis(75));
+timer.record(Duration.ofMillis(250));
+----
+
+[source,text]
+----
+http_server_requests_histogram,le=100,uri=/api/things,metric_type=gauge value=1 1700000000000
+http_server_requests_histogram,le=500,uri=/api/things,metric_type=gauge value=2 1700000000000
+----
+
+Every percentile and every boundary is published as its own series, so the number of series grows with the number of percentiles and boundaries that are configured.
+
+NOTE: Micrometer does not treat Influx as a system that can aggregate histograms to estimate percentiles, so `publishPercentileHistogram` adds no buckets for this registry. Use `serviceLevelObjectives` to choose the boundaries you need. See xref:../concepts/histogram-quantiles.adoc[client-side percentiles and percentile histograms] for the difference between the two approaches.
