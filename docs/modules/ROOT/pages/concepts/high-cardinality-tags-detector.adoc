@@ -102,6 +102,19 @@ This can be useful for:
 - Collecting metrics about high cardinality detections
 - Triggering any kind of custom actions
 
+=== Custom Selection
+
+By default, the detector selects the first Meter name whose count exceeds the threshold. You can use `highCardinalityMeterInfoSelector` to select a different candidate, such as the one with the highest count:
+
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=custom_selector,indent=0]
+----
+
+The selector receives a fresh sequential stream containing only candidates above the threshold. It must consume that stream during the call and return an `Optional` containing the selected candidate, or an empty `Optional` to report none. The same selection applies to one-time checks and scheduled monitoring.
+
+Selecting the maximum examines all candidates, while the default selection stops at the first match. Both strategies still count all registered Meters before selecting a candidate.
+
 == Preventing High Cardinality
 
 When the detector identifies high cardinality tags, consider the following possible solutions:
@@ -170,7 +183,7 @@ See xref:./meter-filters.adoc[Meter Filters] for more information.
   ** Random values appended to `Meter` names
   ** Memory leaks from other sources
   ** High cardinality that hasn't yet exceeded the threshold
-* The detector examines the first meter that exceeds the threshold. If multiple meters have high cardinality, you'll need to fix them iteratively.
+* The detector reports one Meter name per check. By default, this is the first candidate above the threshold; a custom selector can prioritize another candidate. If multiple Meters have high cardinality, you'll need to fix them iteratively.
 * The threshold is a heuristic based on memory and may need adjustment for your specific use case.
 
 == See Also
