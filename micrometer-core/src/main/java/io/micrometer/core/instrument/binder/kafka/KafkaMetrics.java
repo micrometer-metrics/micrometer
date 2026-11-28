@@ -30,10 +30,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
@@ -96,6 +93,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final ScheduledExecutorService scheduler;
 
+    private volatile @Nullable ScheduledFuture<?> refreshFuture;
+
     private final boolean schedulerExternallyManaged;
 
     private final Duration refreshInterval;
@@ -141,14 +140,13 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     @Override
-    @SuppressWarnings("FutureReturnValueIgnored")
     public void bindTo(MeterRegistry registry) {
         this.registry = registry;
 
         commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
         checkAndBindMetrics(registry);
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), refreshInterval.toMillis(),
+        refreshFuture = scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), refreshInterval.toMillis(),
                 refreshInterval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
@@ -364,6 +362,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void close() {
+        ScheduledFuture<?> future = this.refreshFuture;
+
+        if (future != null) {
+            future.cancel(false);
+        }
+
         if (!schedulerExternallyManaged) {
             this.scheduler.shutdownNow();
         }
