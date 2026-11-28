@@ -127,7 +127,7 @@ class DynatraceConfigTest {
     void invalidVersion() {
         Map<String, String> properties = new HashMap<>();
         properties.put("dynatrace.apiToken", "secret");
-        properties.put("dynatrace.uri", "https://uri.dynatrace.com");
+        properties.put("dynatrace.uri", "https://test.example.org");
         properties.put("dynatrace.deviceId", "device");
         properties.put("dynatrace.apiVersion", "v-INVALID");
         DynatraceConfig config = properties::get;
@@ -146,7 +146,7 @@ class DynatraceConfigTest {
     void valid() {
         Map<String, String> properties = new HashMap<>();
         properties.put("dynatrace.apiToken", "secret");
-        properties.put("dynatrace.uri", "https://uri.dynatrace.com");
+        properties.put("dynatrace.uri", "https://test.example.org");
         properties.put("dynatrace.deviceId", "device");
         DynatraceConfig config = properties::get;
         assertThat(config.validate().isValid()).isTrue();
@@ -156,7 +156,7 @@ class DynatraceConfigTest {
     void testFallbackToV1() {
         Map<String, String> properties = new HashMap<>();
         properties.put("dynatrace.apiToken", "secret");
-        properties.put("dynatrace.uri", "https://uri.dynatrace.com");
+        properties.put("dynatrace.uri", "https://test.example.org");
         properties.put("dynatrace.deviceId", "device");
 
         DynatraceConfig config = properties::get;
@@ -189,13 +189,13 @@ class DynatraceConfigTest {
         Map<String, String> properties = new HashMap<>();
         properties.put("dynatrace.apiVersion", "v1");
         properties.put("dynatrace.apiToken", "my.token");
-        properties.put("dynatrace.uri", "https://my.uri.com");
+        properties.put("dynatrace.uri", "https://test.example.org");
         properties.put("dynatrace.deviceId", "my.device.id");
         DynatraceConfig config = properties::get;
 
         assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V1);
         assertThat(config.apiToken()).isEqualTo("my.token");
-        assertThat(config.uri()).isEqualTo("https://my.uri.com");
+        assertThat(config.uri()).isEqualTo("https://test.example.org");
         assertThat(config.deviceId()).isEqualTo("my.device.id");
         assertThat(config.metricKeyPrefix()).isEmpty();
         assertThat(config.defaultDimensions()).isEmpty();
@@ -225,12 +225,12 @@ class DynatraceConfigTest {
     void testV2WithEndpointAndToken() {
         Map<String, String> properties = new HashMap<>();
         properties.put("dynatrace.apiVersion", "v2");
-        properties.put("dynatrace.uri", "https://uri.dynatrace.com");
+        properties.put("dynatrace.uri", "https://test.example.org");
         properties.put("dynatrace.apiToken", "secret");
 
         DynatraceConfig config = properties::get;
         assertThat(config.apiToken()).isEqualTo("secret");
-        assertThat(config.uri()).isEqualTo("https://uri.dynatrace.com");
+        assertThat(config.uri()).isEqualTo("https://test.example.org");
         assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V2);
 
         Validated<?> validated = config.validate();
@@ -312,7 +312,7 @@ class DynatraceConfigTest {
         String uuid = UUID.randomUUID().toString();
         final Path tempFile = Files.createTempFile(uuid, ".properties");
 
-        Files.write(tempFile, ("DT_METRICS_INGEST_URL = https://your-dynatrace-ingest-url/api/v2/metrics/ingest\n"
+        Files.write(tempFile, ("DT_METRICS_INGEST_URL = https://test.example.org/api/v2/metrics/ingest\n"
                 + "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN")
             .getBytes(StandardCharsets.UTF_8));
 
@@ -332,14 +332,14 @@ class DynatraceConfigTest {
         };
 
         await().atMost(1_000, MILLISECONDS).until(() -> config.apiToken().equals("YOUR.DYNATRACE.TOKEN"));
-        assertThat(config.uri()).isEqualTo("https://your-dynatrace-ingest-url/api/v2/metrics/ingest");
+        assertThat(config.uri()).isEqualTo("https://test.example.org/api/v2/metrics/ingest");
 
-        Files.write(tempFile, ("DT_METRICS_INGEST_URL = https://a-different-url/api/v2/metrics/ingest\n"
+        Files.write(tempFile, ("DT_METRICS_INGEST_URL = https://test.example.org/different-url/api/v2/metrics/ingest\n"
                 + "DT_METRICS_INGEST_API_TOKEN = A.DIFFERENT.TOKEN")
             .getBytes(StandardCharsets.UTF_8));
 
         await().atMost(1_000, MILLISECONDS).until(() -> config.apiToken().equals("A.DIFFERENT.TOKEN"));
-        assertThat(config.uri()).isEqualTo("https://a-different-url/api/v2/metrics/ingest");
+        assertThat(config.uri()).isEqualTo("https://test.example.org/different-url/api/v2/metrics/ingest");
 
         Files.deleteIfExists(tempFile);
     }

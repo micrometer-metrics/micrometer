@@ -1,0 +1,52 @@
+# Run locally:
+# GITHUB_TOKEN="$(gh auth token)" lychee .
+
+# Print the files that will be checked:
+# lychee --dump-inputs . | sort
+
+# Diff with "all" the files that could be checked shows what will not be checked:
+# find . -type f -not -path './.idea/*' -not -path '*/.gradle/*' -not -path '*/generated/*' -not -path '*/build/*' -not -name '*.jar' -not -name '*.png' | sort
+
+# Useful config options locally:
+# output = "lychee-report.md"
+# format = "markdown" # compact, detailed, json, junit, markdown (default: compact)
+# verbose = "warn" # error, warn, info, debug, trace (default: error)
+# mode = "color" # plain, color, emoji, task (default: color)
+
+cache = true
+max_cache_age = "1d"
+
+max_concurrency = 16
+host_concurrency = 4
+max_retries = 3
+retry_wait_time = 5
+timeout = 30
+
+scheme = [ "https", "http" ]
+# xml is not checked, lychee only supports extracting URLs from sitemaps, RSS and Atom feeds
+extensions = [ "md", "adoc", "html", "java", "kt", "gradle", "yml", "sh", "json", "properties", "toml", "txt" ]
+root_dir = '.'
+hidden = true
+exclude_all_private = true
+exclude_path = [ ".*/lychee.toml" ] # paths in .gitignore are also ignored
+
+# AsciiDoc handled as plain text, links like https://example.com[Label] include the "Label",
+# this strips everything after the first '['
+remap = [ "^(https?://[^\\[]+)\\[.*$ $1" ]
+
+exclude = [
+	# Endpoints that block automated requests
+	"^https://slack\\.micrometer\\.io/?$",
+	"^https://search\\.maven\\.org/.*$",
+	"^https://stackoverflow\\.com/.*$",
+	"^https://bugs\\.openjdk\\.org/.*$",
+	"^https://docs\\.splunk\\.com/.*$",
+
+	# Examples, placeholders, test values
+	"^https://example\\.org/.*$",
+	"^https://test\\.example\\.org/.*$",
+	"^https://github\\.com/Netflix/atlas/releases/download/.*$",
+
+	# root-relative links
+	"^/docs$" # README.md
+]

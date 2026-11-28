@@ -40,7 +40,7 @@ management.metrics.export.humio:
     step: 1m
 
     # The cluster Micrometer will send metrics to. The default is "https://cloud.humio.com"
-    uri: https://myhumiohost
+    uri: https://test.example.org
 ----
 
 == Graphing

@@ -59,24 +59,24 @@ class OtlpConfigTest {
 
     @Test
     void urlConfigTakesPrecedenceOverEnvVars() throws Exception {
-        OtlpConfig config = k -> "http://url1";
-        withEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", "http://url2")
-            .execute(() -> assertThat(config.url()).isEqualTo("http://url1"));
+        OtlpConfig config = k -> "https://test.example.org/url1";
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", "https://test.example.org/url2")
+            .execute(() -> assertThat(config.url()).isEqualTo("https://test.example.org/url1"));
     }
 
     @Test
     void urlUseEnvVarWhenConfigNotSet() throws Exception {
         OtlpConfig config = k -> null;
-        withEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", "http://url2")
-            .execute(() -> assertThat(config.url()).isEqualTo("http://url2/v1/metrics"));
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", "https://test.example.org/url2")
+            .execute(() -> assertThat(config.url()).isEqualTo("https://test.example.org/url2/v1/metrics"));
     }
 
     @Test
     void metricUrlHasPrecedence() throws Exception {
         OtlpConfig config = k -> null;
-        withEnvironmentVariables("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://url3", "OTEL_EXPORTER_OTLP_ENDPOINT",
-                "http://url2")
-            .execute(() -> assertThat(config.url()).isEqualTo("http://url3/v1/metrics"));
+        withEnvironmentVariables("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "https://test.example.org/url3",
+                "OTEL_EXPORTER_OTLP_ENDPOINT", "https://test.example.org/url2")
+            .execute(() -> assertThat(config.url()).isEqualTo("https://test.example.org/url3/v1/metrics"));
     }
 
     @Test

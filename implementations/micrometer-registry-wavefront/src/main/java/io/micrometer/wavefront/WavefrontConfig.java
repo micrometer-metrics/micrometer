@@ -82,7 +82,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      * <p>
      * If publishing metrics to a Wavefront proxy (as described in
      * https://docs.wavefront.com/proxies_installing.html), the host must be in the
-     * proxy://HOST:PORT format.
+     * proxy://<HOST>:<PORT> format.
      */
     default String uri() {
         return getUriString(this, "uri").required().get();

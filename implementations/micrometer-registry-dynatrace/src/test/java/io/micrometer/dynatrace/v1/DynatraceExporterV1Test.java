@@ -368,7 +368,7 @@ class DynatraceExporterV1Test {
     @Test
     void failOnPostShouldHaveProperLogging() throws Throwable {
         HttpSender httpClient = mock(HttpSender.class);
-        HttpSender.Request.Builder builder = HttpSender.Request.build("https://test", httpClient);
+        HttpSender.Request.Builder builder = HttpSender.Request.build("https://test.example.org", httpClient);
         when(httpClient.put(isA(String.class))).thenReturn(builder);
         when(httpClient.post(isA(String.class))).thenReturn(builder);
         when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(200, null),
